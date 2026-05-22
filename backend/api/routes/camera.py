@@ -34,18 +34,31 @@ VIDEO_PATH_FILE = os.path.join(PROJECT_DIR, 'video_path.txt')
 
 
 def read_video_path():
-    """Đọc đường dẫn video từ file text. Trả về None nếu file không tồn tại hoặc rỗng."""
+    """Đọc đường dẫn video đầu tiên từ file text. Trả về None nếu file không tồn tại hoặc rỗng."""
+    paths = read_video_paths()
+    return paths[0] if paths else None
+
+
+def read_video_paths():
+    """Đọc tất cả đường dẫn video từ file text (mỗi dòng một path).
+    Trả về list các path, bỏ qua dòng trống."""
     if os.path.exists(VIDEO_PATH_FILE):
         with open(VIDEO_PATH_FILE, "r", encoding="utf-8") as f:
-            path = f.read().strip()
-            return path if path else None
-    return None
+            lines = f.readlines()
+            paths = [line.strip() for line in lines if line.strip()]
+            return paths
+    return []
 
 
 def write_video_path(path):
-    """Ghi đường dẫn video vào file text."""
+    """Ghi đường dẫn video vào file text (dòng đầu tiên)."""
+    existing = read_video_paths()
+    if existing:
+        existing[0] = path.strip()
+    else:
+        existing = [path.strip()]
     with open(VIDEO_PATH_FILE, "w", encoding="utf-8") as f:
-        f.write(path.strip())
+        f.write("\n".join(existing))
 
 
 def find_first_camera():
@@ -380,9 +393,17 @@ def delete_recording(device_id, recording_id):
 @camera_bp.route('/video-path', methods=['GET'])
 @jwt_required()
 def get_video_path():
-    """Đọc đường dẫn video từ file text video_path.txt."""
+    """Đọc đường dẫn video đầu tiên từ file text video_path.txt."""
     path = read_video_path()
     return jsonify({'video_path': path}), 200
+
+
+@camera_bp.route('/video-paths', methods=['GET'])
+@jwt_required()
+def get_video_paths():
+    """Đọc tất cả đường dẫn video từ file text video_path.txt (mỗi dòng một path)."""
+    paths = read_video_paths()
+    return jsonify({'video_paths': paths}), 200
 
 
 @camera_bp.route('/video-path', methods=['PUT'])
