@@ -1010,7 +1010,19 @@
             
             if (availableCameras[index]) {
                 const cam = availableCameras[index];
-                camStatus.textContent = cam.status === 'online' ? `Trực tiếp: ${cam.name}` : `Đang kết nối ${cam.name}...`;
+                const isOnline = cam.status === 'online';
+                camStatus.textContent = isOnline ? `Trực tiếp: ${cam.name}` : (cam.status === 'connecting' ? `Đang kết nối ${cam.name}...` : `Mất tín hiệu: ${cam.name}`);
+                
+                // Ẩn video nếu camera không online (lỗi hoặc đang kết nối)
+                const player = document.getElementById('videoPlayer');
+                const placeholder = document.getElementById('videoPlaceholder');
+                if (!isOnline) {
+                    player.style.display = 'none';
+                    placeholder.style.display = 'flex';
+                    player.removeAttribute('src');
+                } else {
+                    playVideoFromFile();
+                }
                 
                 // Add a quick flash effect to indicate switching
                 const viewport = document.getElementById('mainViewport');
@@ -1326,13 +1338,18 @@
         };
 
         // Đọc video_path.txt và phát video trực tiếp trên viewport
-        async function playVideoFromFile() {
+        // Hỗ trợ nhiều path: mỗi dòng trong video_path.txt tương ứng 1 camera
+        async function playVideoFromFile(cameraIndex) {
             try {
-                const resp = await fetch('/api/camera/video-path', {
+                const index = (cameraIndex !== undefined) ? cameraIndex : currentCameraIndex;
+                const resp = await fetch('/api/camera/video-paths', {
                     headers: { 'Authorization': 'Bearer ' + getAuthToken() }
                 });
                 const data = await resp.json();
-                const path = data && data.video_path;
+                const paths = data && data.video_paths;
+                if (!paths || paths.length === 0) return;
+
+                const path = paths[index] || paths[0];
                 if (!path) return;
 
                 // Lấy tên file để hiển thị
@@ -1384,9 +1401,12 @@
         const origRender = renderCoopDetail;
         renderCoopDetail = async function(data) {
             origRender(data);
-            // Ưu tiên 1: phát video trực tiếp từ file text
-            await playVideoFromFile();
-            // Ưu tiên 2: tạo recording để lưu lịch sử
+            // Chỉ phát video nếu camera hiện tại đang online
+            const currentCam = availableCameras[currentCameraIndex];
+            if (currentCam && currentCam.status === 'online') {
+                await playVideoFromFile();
+            }
+            // Tạo recording để lưu lịch sử
             await autoLoadFromFile();
             // Tải danh sách recordings
             setTimeout(loadRecordings, 500);

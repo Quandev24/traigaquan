@@ -197,7 +197,8 @@ def seed_devices(coops):
     # Dictionary lưu danh sách thiết bị theo coop_id
     coop_devices_map = {}
     device_index = 1
-    
+    all_cameras = []
+
     for coop in coops:
         coop_devices_map[coop.id] = []
         
@@ -249,12 +250,13 @@ def seed_devices(coops):
                 name=f'Camera 1 - {coop.name}',
                 type='camera',
                 mac_address=f'CC:AA:BB:DD:EE:{str(device_index).zfill(2)}',
-                status=random.choice(statuses),
+                status='online',
                 is_active=True,
                 battery=100
             )
             db.session.add(camera_1)
             coop_devices_map[coop.id].append(camera_1)
+            all_cameras.append(camera_1)
             device_index += 1
 
             # Camera 2
@@ -262,16 +264,26 @@ def seed_devices(coops):
                 name=f'Camera 2 - {coop.name}',
                 type='camera',
                 mac_address=f'CC:AA:BB:DD:EE:{str(device_index).zfill(2)}',
-                status=random.choice(statuses),
+                status='online',
                 is_active=True,
                 battery=100
             )
             db.session.add(camera_2)
             coop_devices_map[coop.id].append(camera_2)
+            all_cameras.append(camera_2)
             device_index += 1
         
         count = len(coop_devices_map[coop.id])
         print(f"    [OK] {coop.name}: {count} thiết bị đã tạo")
+    
+    # Điều chỉnh status camera: 1 offline, 1 connecting, còn lại online
+    if all_cameras:
+        random.shuffle(all_cameras)
+        all_cameras[0].status = 'offline'
+        if len(all_cameras) > 1:
+            all_cameras[1].status = 'connecting'
+        for cam in all_cameras[2:]:
+            cam.status = 'online'
     
     db.session.commit()
     return coop_devices_map
