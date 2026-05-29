@@ -25,7 +25,7 @@ from flask import Flask
 from config import config
 
 # Import database models và db instance
-from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording
+from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, WarehouseInventory
 
 
 # =============================================================================
@@ -337,30 +337,31 @@ def seed_environments(coops):
     Giá trị được random với một chút biến đổi ngẫu nhiên để mô phỏng
     dữ liệu cảm biến thực tế.
     """
-    print("  Đang tạo dữ liệu môi trường (20 bản ghi/ chuồng)...")
+    print("  Đang tạo dữ liệu môi trường (24 bản ghi/ chuồng)...")
     
     # Thời gian hiện tại
     now = datetime.utcnow()
     
     for coop in coops:
-        # Tạo 20 bản ghi cho mỗi chuồng
-        for i in range(20):
-            # Thời gian ghi nhận: cách đều trong 24 giờ qua
-            # i=0: 24 giờ trước, i=19: hiện tại
-            hours_ago = 24 - (i * 1.2)
+        # Tạo 24 bản ghi cho mỗi chuồng (theo giờ trong 24h qua)
+        for i in range(24):
+            # Thời gian ghi nhận: i=0 là 23 giờ trước, i=23 là bây giờ
+            hours_ago = 23 - i
             recorded_at = now - timedelta(hours=hours_ago)
             
-            # Tạo giá trị cảm biến với biến đổi nhẹ
-            # Base temperature: 25°C với ±3°C biến đổi
-            temperature = random.uniform(22.0, 28.0)
+            # Nhiệt độ: 28-35°C (biến đổi nhẹ theo giờ)
+            base_temp = 31.5
+            hour_variation = (i / 24) * 4 - 2  # -2 đến +2 dao động trong ngày
+            temperature = base_temp + hour_variation + random.uniform(-1.0, 1.0)
+            temperature = max(28.0, min(35.0, temperature))
             
-            # Base humidity: 65% với ±10% biến đổi
-            humidity = random.uniform(55.0, 75.0)
+            # Độ ẩm: 60-80%
+            humidity = random.uniform(60.0, 80.0)
             
-            # Feed level: 60% với ±30% biến đổi
+            # Feed level: 30-90%
             feed_level = random.uniform(30.0, 90.0)
             
-            # Water level: 70% với ±30% biến đổi
+            # Water level: 40-95%
             water_level = random.uniform(40.0, 95.0)
             
             env = Environment(
@@ -552,6 +553,42 @@ def seed_unconnected_devices():
 
 
 # =============================================================================
+# SEED DỮ LIỆU KHO
+# =============================================================================
+
+def seed_warehouse():
+    """
+    Tạo dữ liệu kho thức ăn mẫu.
+    
+    Gồm 2-3 loại thức ăn với số lượng 500-3000 kg.
+    """
+    print("  Đang tạo dữ liệu kho thức ăn...")
+    
+    feed_items = [
+        {'item_name': 'Cám tổng hợp', 'quantity_kg': 2500},
+        {'item_name': 'Cám viên',     'quantity_kg': 1800},
+        {'item_name': 'Cám gà con',   'quantity_kg': 1200},
+    ]
+    
+    for item in feed_items:
+        existing = WarehouseInventory.query.filter_by(item_name=item['item_name']).first()
+        if existing:
+            print(f"    [Bỏ qua] {item['item_name']} đã tồn tại")
+            continue
+        
+        inv = WarehouseInventory(
+            item_name=item['item_name'],
+            item_type='feed',
+            quantity_kg=item['quantity_kg'],
+            unit='kg'
+        )
+        db.session.add(inv)
+        print(f"    [OK] {item['item_name']}: {item['quantity_kg']} kg")
+    
+    db.session.commit()
+
+
+# =============================================================================
 # SEED CẢNH BÁO MẪU
 # =============================================================================
 
@@ -622,6 +659,9 @@ def reset_database():
     # Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoài
     print("    Xóa VideoRecording...")
     VideoRecording.query.delete()
+
+    print("    Xóa WarehouseInventory...")
+    WarehouseInventory.query.delete()
 
     print("    Xóa Alert...")
     Alert.query.delete()
@@ -698,13 +738,17 @@ def run_seed():
         print("\n[7] Seed FeedSchedules...")
         seed_feed_schedules(coops)
 
-        # Bước 7: Seed Video Recordings
-        print("\n[6.1] Seed Video Recordings...")
+        # Bước 7.1: Seed Video Recordings
+        print("\n[7.1] Seed Video Recordings...")
         seed_video_recordings(coops, devices)
 
-        # Bước 7.1: Seed Unconnected Devices
-        print("\n[7.1] Seed Unconnected Devices...")
+        # Bước 7.2: Seed Unconnected Devices
+        print("\n[7.2] Seed Unconnected Devices...")
         seed_unconnected_devices()
+
+        # Bước 7.3: Seed Warehouse
+        print("\n[7.3] Seed Warehouse...")
+        seed_warehouse()
         
         # Bước 8: Seed Alerts
         print("\n[8] Seed Alerts...")
@@ -721,6 +765,7 @@ def run_seed():
         print(f"  Environments: {Environment.query.count()}")
         print(f"  FeedSchedules: {FeedSchedule.query.count()}")
         print(f"  VideoRecordings: {VideoRecording.query.count()}")
+        print(f"  WarehouseInventory: {WarehouseInventory.query.count()}")
         print(f"  Alerts:       {Alert.query.count()}")
         print("=" * 60)
         
