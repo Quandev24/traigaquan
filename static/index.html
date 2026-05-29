@@ -1,1540 +1,2352 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="vi" class="">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChickenFarm - Quản lý Trang trại Gà</title>
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            farm: { 50: '#f0faf4', 100: '#d9f0e3', 200: '#b5e0c8', 300: '#84c9a5', 400: '#52b788', 500: '#2d6a4f', 600: '#1b4d3a', 700: '#163a2b', 800: '#112b20', 900: '#0c1f16' },
+            amber: { 50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#fcd34d', 400: '#fbbf24', 500: '#d97706', 600: '#b45309', 700: '#92400e', 800: '#78350f', 900: '#451a03' },
+          }
+        }
+      }
+    }
+  </script>
 
-    <title>Trang chủ - Dashboard | Quản lý Trang trại Gà</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Custom fonts for this template-->
-    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-        rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Custom styles for this template-->
-    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <style>
-        /* Donut Chart */
-        .donut-chart-container-coop {
-            position: relative;
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-        }
-        .donut-chart-coop {
-            position: relative;
-            width: 220px;
-            height: 220px;
-            margin: 0 auto;
-        }
-        .donut-chart-coop svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-        .donut-segment-coop {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .donut-segment-coop:hover {
-            stroke-width: 28;
-            filter: brightness(1.15);
-        }
-        .donut-center-coop {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        .donut-total-coop {
-            display: block;
-            font-size: 32px;
-            font-weight: 700;
-            color: #1f2937;
-            line-height: 1;
-        }
-        .donut-label-coop {
-            display: block;
-            font-size: 11px;
-            color: #6b7280;
-            margin-top: 2px;
-        }
-        .donut-tooltip-coop {
-            display: none;
-            position: fixed;
-            background: white;
-            border-radius: 8px;
-            padding: 10px 14px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center;
-            z-index: 1000;
-            min-width: 100px;
-            pointer-events: none;
-        }
-        .donut-tooltip-coop.show {
-            display: block;
-        }
-        .tooltip-content-coop {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
-        .tooltip-name-coop {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-        .tooltip-percent-coop {
-            font-size: 18px;
-            font-weight: 700;
-        }
-        .donut-legend-coop {
-            display: flex;
-            justify-content: center;
-            gap: 16px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
-        .legend-item-coop {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: #374151;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .legend-text-coop {
-            font-weight: 500;
-        }
-        .legend-dot-coop {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        .legend-count-coop {
-            margin-left: auto;
-            font-weight: 600;
-            color: #374151;
-        }
-        /* Giá trị trung bình */
-        .coop-temp-humid {
-            display: flex;
-            gap: 15px;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 6px;
-        }
-        .coop-temp, .coop-humid {
-            flex: 1;
-            text-align: center;
-        }
-        .coop-temp-icon, .coop-humid-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-        .coop-temp-value, .coop-humid-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        .coop-temp-label, .coop-humid-label {
-            font-size: 12px;
-            color: #6c757d;
-        }
-        /* Card Chuồng */
-        .coop-summary-card {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: stretch;
-            border-left: 4px solid #22c55e;
-            border-radius: 8px;
-            padding: 10px 12px;
-            background: #fff;
-            margin-bottom: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            min-height: 70px;
-            height: auto;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .coop-summary-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .coop-summary-card.online { border-left-color: #22c55e; }
-        .coop-summary-card.warning { border-left-color: #ffc107; }
-        .coop-summary-card.error { border-left-color: #dc3545; }
-        .coop-summary-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-            flex-shrink: 0;
-        }
-        .coop-summary-name {
-            font-weight: 600;
-            font-size: 14px;
-            color: #2c3e50;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .coop-summary-status {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            white-space: nowrap;
-        }
-        .coop-summary-status.online { background: #d1fae5; color: #065f46; }
-        .coop-summary-status.warning { background: #fef3c7; color: #92400e; }
-        .coop-summary-status.error { background: #fee2e2; color: #991b1b; }
-        .coop-summary-info {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            color: #6c757d;
-            flex-shrink: 0;
-        }
-        .coop-summary-info span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        /* Thiết bị gần đây Card */
-        .device-recent-card {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 10px 12px;
-            background: #fff;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            min-height: 60px;
-            border-left: 4px solid #4CAF50;
-        }
-        .device-recent-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-        }
-        .device-recent-card.active { border-left-color: #4CAF50; }
-        .device-recent-card.connecting { border-left-color: #FFC107; }
-        .device-recent-card.error { border-left-color: #F44336; }
-        .device-recent-card.waiting { border-left-color: #9E9E9E; }
-        .device-recent-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-        .device-recent-name {
-            font-weight: 600;
-            font-size: 13px;
-            color: #2c3e50;
-        }
-        .device-recent-coop {
-            font-size: 11px;
-            color: #6c757d;
-            background: #f8f9fa;
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-        .device-recent-status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .status-dot.active { background: #4CAF50; }
-        .status-dot.connecting { background: #FFC107; }
-        .status-dot.error { background: #F44336; }
-        .status-dot.waiting { background: #9E9E9E; }
-        .status-text {
-            font-size: 12px;
-            font-weight: 500;
-        }
-        .status-text.active { color: #4CAF50; }
-        .status-text.connecting { color: #FFC107; }
-        .status-text.error { color: #F44336; }
-        .status-text.waiting { color: #9E9E9E; }
-        /* FAB Bottom Navigation */
-        .fab-nav {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            height: 70px;
-            background: white;
-            border-radius: 35px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.2), 0 2px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
-            padding: 0 10px;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .fab-nav-container {
-            position: relative;
-            display: flex;
-            width: 100%;
-            height: 100%;
-            justify-content: space-around;
-            align-items: center;
-        }
-        .fab-nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 10px;
-            color: #9ca3af;
-            text-decoration: none;
-            font-size: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .fab-nav-item:hover {
-            color: #6f42c1;
-            text-decoration: none;
-        }
-        .fab-nav-item i {
-            font-size: 20px;
-            margin-bottom: 4px;
-            display: block;
-            transition: all 0.3s ease;
-        }
-        .fab-nav-item span {
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .fab-nav-item.active {
-            color: #6f42c1;
-        }
-        .fab-nav-item.active i {
-            transform: scale(1.1);
-        }
-        .fab-nav-item.active span {
-            font-weight: 700;
-        }
-        .fab-home-wrapper {
-            position: relative;
-            z-index: 10;
-        }
-.fab-home-btn {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #0d00ff 0%, #5569db 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: -30px;
-            box-shadow: 0 4px 15px rgb(57 58 202 / 50%);
-            transition: all 0.2s ease;
-            cursor: pointer;
-            border: none;
-        }
-        .fab-home-btn i {
-            font-size: 22px;
-            color: white;
-            margin: 0;
-        }
-        .fab-home-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgb(57 58 202 / 60%);
-        }
-        .fab-home-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 10px rgb(57 58 202 / 40%);
-        }
-        .fab-home-btn span {
-            font-size: 10px;
-            color: #5569db;
-            font-weight: 700;
-            margin-top: 2px;
-            display: block;
-        }
-        .fab-home-btn i {
-            font-size: 22px;
-            color: white;
-            margin: 0;
-        }
-        .fab-home-btn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
-        }
-        .fab-home-btn:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 10px rgba(255, 107, 107, 0.4);
-        }
-        .fab-home-btn span {
-            font-size: 10px;
-            color: #ff6b6b;
-            font-weight: 700;
-            margin-top: 2px;
-            display: block;
-        }
-        
-        /* Responsive styles */
-        @media (max-width: 767px) {
-            .fab-nav { display: flex; }
-            .bottom-nav { display: none; }
-            #accordionSidebar { display: none !important; }
-            body { padding-bottom: 20px; overflow-x: hidden; }
-            
-            /* Modal fullscreen on mobile */
-            .modal-dialog { margin: 0; max-width: 100%; }
-            .modal-content { border-radius: 0; min-height: 100vh; }
-            
-            /* Touch targets */
-            .btn, button, a.nav-link, .form-control { min-height: 44px; }
-            
-            /* Donut chart */
-            .donut-chart-container-coop { max-width: 100%; }
-            .donut-chart-coop { width: 180px; height: 180px; margin: 0 auto; }
-            
-            /* Stats cards */
-            .col-xl-3 { margin-bottom: 1rem; }
-        }
-    </style>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #f8faf0;
+      color: #1c1917;
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+    html.dark body { background: #0f172a; color: #e2e8f0; }
 
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* ===== Navigation ===== */
+    .nav-bar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    html.dark .nav-bar {
+      background: rgba(15,23,42,0.9);
+      border-bottom: 1px solid #1e293b;
+    }
+    .nav-tab {
+      position: relative;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #78716c;
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+      border-radius: 0.5rem;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    html.dark .nav-tab { color: #94a3b8; }
+    .nav-tab:hover { color: #2d6a4f; background: #f0faf4; }
+    html.dark .nav-tab:hover { color: #52b788; background: rgba(45,106,79,0.15); }
+    .nav-tab.active { color: #2d6a4f; background: #d9f0e3; }
+    html.dark .nav-tab.active { color: #52b788; background: rgba(45,106,79,0.2); }
+    .nav-tab i { font-size: 1.1rem; }
+
+    /* ===== Cards ===== */
+    .stat-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1.25rem;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      will-change: transform;
+      position: relative;
+      overflow: hidden;
+    }
+    html.dark .stat-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .stat-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+    html.dark .stat-card:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .stat-card .icon-box {
+      width: 52px; height: 52px;
+      border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.75rem;
+    }
+    .stat-card .trend-up { color: #16a34a; }
+    .stat-card .trend-down { color: #dc2626; }
+    html.dark .stat-card .trend-up { color: #4ade80; }
+    html.dark .stat-card .trend-down { color: #f87171; }
+
+    /* ===== Quick Navigation ===== */
+    .quick-nav-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1rem;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    html.dark .quick-nav-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .quick-nav-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+    html.dark .quick-nav-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .quick-nav-card .q-icon {
+      width: 44px; height: 44px;
+      border-radius: 0.75rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .quick-nav-card .q-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #1c1917;
+    }
+    html.dark .quick-nav-card .q-title { color: #e2e8f0; }
+    .quick-nav-card .q-desc {
+      font-size: 0.75rem;
+      color: #a8a29e;
+      margin-top: 0.125rem;
+    }
+    html.dark .quick-nav-card .q-desc { color: #64748b; }
+
+    .coop-card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    html.dark .coop-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .coop-card:hover {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    html.dark .coop-card:hover {
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+
+    /* ===== Overview Coop Row ===== */
+    .ov-coop-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.5rem;
+      background: #f8fafc;
+      transition: background 0.2s;
+    }
+    html.dark .ov-coop-row { background: #0f172a; }
+    .ov-coop-row:hover { background: #f1f5f9; }
+    html.dark .ov-coop-row:hover { background: #1e293b; }
+    .ov-coop-row .ocr-name { font-weight: 500; font-size: 0.875rem; color: #1c1917; }
+    html.dark .ov-coop-row .ocr-name { color: #e2e8f0; }
+    .ov-coop-row .ocr-stat { font-size: 0.75rem; color: #78716c; }
+    html.dark .ov-coop-row .ocr-stat { color: #94a3b8; }
+    .ov-coop-row .ocr-stat i { width: 1rem; text-align: center; }
+
+    /* ===== Tab Content ===== */
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== Alert Items ===== */
+    .alert-item {
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      border-left: 3px solid;
+      margin-bottom: 0.5rem;
+      background: #fefce8;
+      transition: background 0.3s;
+    }
+    html.dark .alert-item { background: rgba(251,191,36,0.05); }
+    .alert-item.warning { border-left-color: #d97706; }
+    .alert-item.critical { border-left-color: #dc2626; }
+    .alert-item.info { border-left-color: #3b82f6; }
+
+    /* ===== Placeholder tabs ===== */
+    .placeholder-tab {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 60vh; text-align: center;
+      color: #a8a29e;
+    }
+    html.dark .placeholder-tab { color: #64748b; }
+    .placeholder-tab i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+    .placeholder-tab h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: #57534e; }
+    html.dark .placeholder-tab h3 { color: #94a3b8; }
+
+    /* ===== Progress bar ===== */
+    .progress-fill {
+      height: 100%; border-radius: inherit;
+      transition: width 1s ease;
+    }
+
+    /* ===== Dark Mode Toggle ===== */
+    .theme-toggle {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 60;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #1e293b; color: #fbbf24;
+      border: none; cursor: pointer; font-size: 1.25rem;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+      transition: all 0.3s;
+    }
+    html.dark .theme-toggle { background: #fbbf24; color: #1e293b; }
+    .theme-toggle:hover { transform: scale(1.1); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .nav-tab span { display: none; }
+      .nav-tab { padding: 0.75rem; font-size: 1rem; }
+      .nav-tab i { font-size: 1.25rem; }
+      .stat-card { padding: 1rem; }
+      .stat-card .icon-box { width: 40px; height: 40px; font-size: 1.375rem; }
+      .quick-nav-card { padding: 0.75rem; }
+      .quick-nav-card .q-icon { width: 36px; height: 36px; font-size: 1rem; }
+      .quick-nav-card .q-desc { display: none; }
+      .ov-coop-row { flex-wrap: wrap; gap: 0.25rem; }
+      .ov-coop-row .ocr-stat { font-size: 0.7rem; }
+    }
+
+    /* ===== Coop Management ===== */
+    .coop-mgmt-card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      border: 1px solid #e2e8f0;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    html.dark .coop-mgmt-card {
+      background: #1e293b;
+      border-color: #334155;
+    }
+    .coop-mgmt-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+    }
+    html.dark .coop-mgmt-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .mgmt-mini-bar {
+      height: 4px; border-radius: 2px; overflow: hidden;
+      background: #e2e8f0;
+    }
+    html.dark .mgmt-mini-bar { background: #334155; }
+    .mgmt-mini-bar-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 1s ease;
+    }
+
+    /* ===== Detail Panel ===== */
+    .detail-panel {
+      position: fixed; top: 0; right: 0; z-index: 50;
+      height: 100%; width: 100%; max-width: 42rem;
+      background: #ffffff; box-shadow: -8px 0 30px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      animation: slideInRight 0.3s ease;
+    }
+    html.dark .detail-panel { background: #1e293b; }
+    @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    /* ===== Coop Detail Tabs ===== */
+    .coop-tab-btn {
+      position: relative;
+      padding: 0.625rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: #78716c;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: nowrap;
+    }
+    .coop-tab-btn:hover { color: #44403c; }
+    .coop-tab-btn.active { color: #2d6a4f; border-bottom-color: #2d6a4f; }
+    html.dark .coop-tab-btn { color: #a8a29e; }
+    html.dark .coop-tab-btn:hover { color: #e7e5e4; }
+    html.dark .coop-tab-btn.active { color: #6ee7b7; border-bottom-color: #6ee7b7; }
+    .coop-tab-pane { display: none; }
+    .coop-tab-pane.active { display: block; }
+
+    /* ===== Coop Detail: Device Cards ===== */
+    .device-card-detail {
+      background: #ffffff;
+      border-left: 4px solid #22c55e;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    html.dark .device-card-detail { background: #1e293b; }
+    .device-card-detail.status-active { border-left-color: #22c55e; }
+    .device-card-detail.status-connecting { border-left-color: #f59e0b; }
+    .device-card-detail.status-error { border-left-color: #ef4444; }
+    .device-card-detail.status-waiting { border-left-color: #9ca3af; }
+    .status-dot-detail {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-dot-detail.active { background: #22c55e; }
+    .status-dot-detail.connecting { background: #f59e0b; }
+    .status-dot-detail.error { background: #ef4444; }
+    .status-dot-detail.waiting { background: #9ca3af; }
+    .device-toggle-btn {
+      padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      border: none; cursor: pointer; min-width: 60px; transition: all 0.2s ease;
+    }
+    .device-toggle-btn.on { background: #22c55e; color: white; }
+    .device-toggle-btn.off { background: #9ca3af; color: white; }
+    .device-toggle-btn:hover { opacity: 0.85; transform: scale(1.02); }
+    .device-delete-btn {
+      padding: 6px 12px; border-radius: 6px; font-size: 12px;
+      border: 1px solid #fca5a5; color: #dc2626; background: transparent;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .device-delete-btn:hover { background: #fef2f2; }
+    html.dark .device-delete-btn { border-color: #7f1d1d; color: #fca5a5; }
+    html.dark .device-delete-btn:hover { background: #450a0a; }
+
+    /* ===== Donut Chart ===== */
+    .donut-container-detail {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0.75rem; border-radius: 0.5rem;
+      background: #f8fafc; margin-bottom: 0.75rem;
+    }
+    html.dark .donut-container-detail { background: #1a2332; }
+    .donut-chart-detail { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+    .donut-chart-detail svg { width: 100%; height: 100%; }
+    .donut-center-detail {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .donut-center-detail .total { font-size: 1.25rem; font-weight: 700; color: #1e293b; display: block; line-height: 1; }
+    html.dark .donut-center-detail .total { color: #f1f5f9; }
+    .donut-center-detail .label { font-size: 0.65rem; color: #94a3b8; }
+    .donut-legend-detail {
+      display: flex; flex-direction: column; gap: 0.25rem; flex: 1;
+    }
+    .donut-legend-item-detail {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.75rem; color: #64748b; cursor: pointer;
+    }
+    html.dark .donut-legend-item-detail { color: #94a3b8; }
+    .donut-legend-dot-detail {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .donut-tooltip-detail {
+      position: fixed; z-index: 9999;
+      background: #1e293b; color: white;
+      padding: 6px 12px; border-radius: 6px;
+      font-size: 0.75rem; pointer-events: none;
+      display: none; white-space: nowrap;
+    }
+    .donut-tooltip-detail.show { display: block; }
+    .donut-segment-detail { cursor: pointer; transition: stroke-width 0.2s, filter 0.2s; }
+
+    /* ===== Camera Cards ===== */
+    .camera-card-detail {
+      border-radius: 0.75rem; overflow: hidden;
+      background: #1e293b; border: 1px solid #334155;
+      transition: border-color 0.3s;
+    }
+    .camera-card-detail.status-online { border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.15); }
+    .camera-card-detail.status-connecting { border-color: #f59e0b; }
+    .camera-card-detail.status-offline { border-color: #64748b; }
+    .camera-card-placeholder {
+      aspect-ratio: 16/9;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      color: rgba(255,255,255,0.5);
+      font-size: 0.8125rem;
+    }
+    .camera-card-placeholder i { font-size: 2.5rem; opacity: 0.5; }
+    .camera-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.5rem 0.75rem;
+      background: rgba(0,0,0,0.3);
+    }
+    .camera-card-footer .name { font-size: 0.8125rem; font-weight: 600; color: #e2e8f0; }
+    .camera-card-footer .live-badge {
+      display: flex; align-items: center; gap: 0.375rem;
+      font-size: 0.6875rem; font-weight: 700; color: #ef4444;
+    }
+    .camera-card-footer .live-badge .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #ef4444; animation: pulseLive 1.5s infinite;
+    }
+    @keyframes pulseLive {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ===== Modal ===== */
+    .mgmt-modal-overlay {
+      position: fixed; inset: 0; z-index: 50;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+    .mgmt-modal-box {
+      position: relative; z-index: 10;
+      background: #ffffff; border-radius: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      width: 100%; max-width: 28rem; margin: 1rem;
+      padding: 1.5rem;
+      animation: fadeIn 0.2s ease;
+    }
+    html.dark .mgmt-modal-box { background: #1e293b; }
+
+    /* ===== Skeleton Loading ===== */
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .skeleton {
+      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 0.375rem;
+    }
+    html.dark .skeleton {
+      background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+      background-size: 200% 100%;
+    }
+    .skeleton-text { height: 1.25rem; width: 60%; margin-top: 0.375rem; }
+    .skeleton-stat { height: 2.25rem; width: 40%; margin-top: 0.25rem; }
+    .skeleton-trend { height: 0.875rem; width: 35%; margin-top: 0.375rem; }
+
+    /* ===== Error Banner ===== */
+    .error-banner {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #dc2626;
+    }
+    html.dark .error-banner {
+      background: rgba(220,38,38,0.1);
+      border-color: rgba(220,38,38,0.3);
+      color: #fca5a5;
+    }
+    .error-banner.show { display: flex; }
+    .error-banner button {
+      margin-left: auto;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: #dc2626;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    html.dark .error-banner button { background: #ef4444; }
+    .error-banner button:hover { opacity: 0.9; }
+
+    /* ===== Inline Edit ===== */
+    .inline-edit-input {
+      width: 100px;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid #2d6a4f;
+      border-radius: 0.375rem;
+      font-size: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      outline: none;
+      background: #ffffff;
+      color: #1c1917;
+    }
+    html.dark .inline-edit-input {
+      background: #1e293b;
+      color: #f1f5f9;
+      border-color: #52b788;
+    }
+    .inline-edit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      font-size: 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    html.dark .inline-edit-item { border-color: #334155; }
+    .inline-edit-item:last-child { border-bottom: none; }
+  </style>
 </head>
+<body>
 
-<body id="page-top">
-
-    <!-- Page Wrapper -->
-    <div id="wrapper">
-
-        <!-- Sidebar -->
-        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
-            <!-- Sidebar - Brand -->
-            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-                <div class="sidebar-brand-icon rotate-n-15">
-                    <i class="fas fa-seedling"></i>
-                </div>
-                <div class="sidebar-brand-text mx-3">Chicken Farm<sup>2</sup></div>
-            </a>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider my-0">
-
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
-                <a class="nav-link" href="index.html">
-                    <i class="fas fa-fw fa-home"></i>
-                    <span>Trang chủ</span></a>
-            </li>
-
-            <!-- Nav Item - Quản lý Chuồng -->
-            <li class="nav-item">
-                <a class="nav-link" href="/coops">
-                    <i class="fas fa-fw fa-home"></i>
-                    <span>Quản lý chuồng</span></a>
-            </li>
-
-            <!-- Nav Item - Quản lý Thiết bị IoT -->
-            <li class="nav-item">
-                <a class="nav-link" href="device-list.html">
-                    <i class="fas fa-fw fa-wifi"></i>
-                    <span>Thiết bị IoT</span></a>
-            </li>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider">
-
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Hệ thống
-            </div>
-
-            <!-- Nav Item - Camera -->
-            <li class="nav-item">
-                <a class="nav-link" href="camera.html">
-                    <i class="fas fa-fw fa-video"></i>
-                    <span>Camera</span></a>
-            </li>
-
-            <!-- Nav Item - Tiện ích -->
-            <li class="nav-item">
-                <a class="nav-link" href="other.html">
-                    <i class="fas fa-fw fa-cogs"></i>
-                    <span>Tiện ích</span></a>
-            </li>
-
-            <!-- Divider -->
-            <hr class="sidebar-divider d-none d-md-block">
-
-            <!-- Sidebar Toggler (Sidebar) -->
-            <div class="text-center d-none d-md-inline">
-                <button class="rounded-circle border-0" id="sidebarToggle"></button>
-            </div>
-
-        </ul>
-        <!-- End of Sidebar -->
-
-        <!-- Content Wrapper -->
-        <div id="content-wrapper" class="d-flex flex-column">
-
-            <!-- Main Content -->
-            <div id="content">
-
-                <!-- Topbar -->
-                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-                    <!-- Sidebar Toggle (Topbar) -->
-                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-                        <i class="fa fa-bars"></i>
-                    </button>
-
-                    <!-- Topbar Navbar -->
-                    <ul class="navbar-nav ml-auto">
-
-                        <!-- Nav Item - Alerts -->
-                        <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-bell fa-fw"></i>
-                                <!-- Counter - Alerts -->
-                                <span class="badge badge-danger badge-counter">3+</span>
-                            </a>
-                            <!-- Dropdown - Alerts -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                aria-labelledby="alertsDropdown">
-                                <h6 class="dropdown-header">
-                                    Alerts Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-primary">
-                                            <i class="fas fa-file-alt text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 12, 2019</div>
-                                        <span class="font-weight-bold">A new monthly report is ready to download!</span>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-success">
-                                            <i class="fas fa-donate text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 7, 2019</div>
-                                        $290.29 has been deposited into your account!
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="mr-3">
-                                        <div class="icon-circle bg-warning">
-                                            <i class="fas fa-exclamation-triangle text-white"></i>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="small text-gray-500">December 2, 2019</div>
-                                        Spending Alert: We've noticed unusually high spending for your account.
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Show All Alerts</a>
-                            </div>
-                        </li>
-
-                        <!-- Nav Item - Messages -->
-                        <li class="nav-item dropdown no-arrow mx-1">
-                            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-envelope fa-fw"></i>
-                                <!-- Counter - Messages -->
-                                <span class="badge badge-danger badge-counter">7</span>
-                            </a>
-                            <!-- Dropdown - Messages -->
-                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                aria-labelledby="messagesDropdown">
-                                <h6 class="dropdown-header">
-                                    Message Center
-                                </h6>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_1.svg"
-                                            alt="...">
-                                        <div class="status-indicator bg-success"></div>
-                                    </div>
-                                    <div class="font-weight-bold">
-                                        <div class="text-truncate">Hi there! I am wondering if you can help me with a
-                                            problem I've been having.</div>
-                                        <div class="small text-gray-500">Emily Fowler · 58m</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_2.svg"
-                                            alt="...">
-                                        <div class="status-indicator"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">I have the photos that you ordered last month, how
-                                            would you like them sent to you?</div>
-                                        <div class="small text-gray-500">Jae Chun · 1d</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="img/undraw_profile_3.svg"
-                                            alt="...">
-                                        <div class="status-indicator bg-warning"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">Last month's report looks great, I am very happy with
-                                            the progress so far, keep up the good work!</div>
-                                        <div class="small text-gray-500">Morgan Alvarez · 2d</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item d-flex align-items-center" href="#">
-                                    <div class="dropdown-list-image mr-3">
-                                        <img class="rounded-circle" src="https://source.unsplash.com/Mv9hjnEUHR4/60x60"
-                                            alt="...">
-                                        <div class="status-indicator bg-success"></div>
-                                    </div>
-                                    <div>
-                                        <div class="text-truncate">Am I a good boy? The reason I ask is because someone
-                                            told me that people say this to all dogs, even if they aren't good...</div>
-                                        <div class="small text-gray-500">Chicken the Dog · 2w</div>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item text-center small text-gray-500" href="#">Read More Messages</a>
-                            </div>
-                        </li>
-
-                        <div class="topbar-divider d-none d-sm-block"></div>
-
-                        <!-- Nav Item - User Information -->
-                        <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Quản trị viên</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
-                            </a>
-                            <!-- Dropdown - User Information -->
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Hồ sơ
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Cài đặt
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Nhật ký hoạt động
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
-                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Đăng xuất
-                                </a>
-                            </div>
-                        </li>
-
-                    </ul>
-
-                </nav>
-                <!-- End of Topbar -->
-
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-
-                    <!-- Page Heading -->
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Trang chủ - Tổng quan</h1>
-                        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm"><i
-                                class="fas fa-download fa-sm text-white-50"></i> Tải báo cáo</a>
-                    </div>
-
-                    <!-- Content Row -->
-                    <div class="row">
-
-                        <!-- Tổng số chuồng -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-primary shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                                Tổng số chuồng</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCoopsDisplay">...</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-home fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Tổng thiết bị -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Tổng thiết bị đã được kết nối</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalDevicesDisplay">...</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-wifi fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thiết bị đang hoạt động -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-info shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Thiết bị Đang Hoạt Động
-                                            </div>
-                                            <div class="row no-gutters align-items-center">
-                                                <div class="col-auto">
-                                                    <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="onlineDevicesDisplay">...</div>
-                                                </div>
-                                                <div class="col">
-                                                    <div class="progress progress-sm mr-2">
-                                                        <div class="progress-bar bg-info" role="progressbar"
-                                                            style="width: 90%" aria-valuenow="90" aria-valuemin="0"
-                                                            aria-valuemax="100"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Cảnh báo -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-warning shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                                Cảnh báo</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="alertsCountDisplay">...</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Content Row -->
-
-                    <div class="row">
-
-                        <!-- Giá trị trung bình các chuồng -->
-                        <div class="col-xl-8 col-lg-7">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Nhiệt độ và độ ẩm trung bình các chuồng</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="coop-temp-humid">
-                                        <div class="coop-temp">
-                                            <div class="coop-temp-icon"><i class="fas fa-thermometer-half" style="color: #dc3545;"></i></div>
-                                            <div class="coop-temp-value" id="avgTemperature">--°C</div>
-                                            <div class="coop-temp-label">Nhiệt độ</div>
-                                        </div>
-                                        <div class="coop-humid">
-                                            <div class="coop-humid-icon"><i class="fas fa-tint" style="color: #17a2b8;"></i></div>
-                                            <div class="coop-humid-value" id="avgHumidity">--%</div>
-                                            <div class="coop-humid-label">Độ ẩm</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Pie Chart -->
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card shadow mb-4">
-                                <!-- Card Header - Dropdown -->
-                                <div
-                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Sơ đồ trạng thái thiết bị</h6>
-                                    <div class="dropdown no-arrow">
-                                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
-                                            aria-labelledby="dropdownMenuLink">
-                                            <div class="dropdown-header">Tùy chọn:</div>
-                                            <a class="dropdown-item" href="#">Xem chi tiết</a>
-                                            <a class="dropdown-item" href="#">Xuất dữ liệu</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Card Body -->
-                                <div class="card-body">
-                                    <div class="donut-chart-container-coop">
-                                        <div class="donut-chart-coop" id="donutChartCoop">
-                                            <svg viewBox="0 0 200 200">
-                                                <!-- Đang hoạt động -->
-                                                <circle class="donut-segment-coop" cx="100" cy="100" r="70"
-                                                    fill="none" stroke="#4CAF50" stroke-width="22"
-                                                    stroke-dasharray="0 440" stroke-dashoffset="0"
-                                                    data-segment="active" data-name="Đang hoạt động" data-count="0" data-percent="0">
-                                                </circle>
-                                                <!-- Đang kết nối -->
-                                                <circle class="donut-segment-coop" cx="100" cy="100" r="70"
-                                                    fill="none" stroke="#FFC107" stroke-width="22"
-                                                    stroke-dasharray="0 440" stroke-dashoffset="0"
-                                                    data-segment="connecting" data-name="Đang kết nối" data-count="0" data-percent="0">
-                                                </circle>
-                                                <!-- Lỗi -->
-                                                <circle class="donut-segment-coop" cx="100" cy="100" r="70"
-                                                    fill="none" stroke="#F44336" stroke-width="22"
-                                                    stroke-dasharray="0 440" stroke-dashoffset="0"
-                                                    data-segment="error" data-name="Lỗi" data-count="0" data-percent="0">
-                                                </circle>
-                                                <!-- Đang chờ được kết nối -->
-                                                <circle class="donut-segment-coop" cx="100" cy="100" r="70"
-                                                    fill="none" stroke="#9E9E9E" stroke-width="22"
-                                                    stroke-dasharray="0 440" stroke-dashoffset="0"
-                                                    data-segment="waiting" data-name="Đang chờ được kết nối" data-count="0" data-percent="0">
-                                                </circle>
-                                                <!-- Center circle -->
-                                                <circle cx="100" cy="100" r="52" fill="white"></circle>
-                                            </svg>
-                                            <div class="donut-center-coop">
-                                                <span class="donut-total-coop" id="donutTotalDisplay">...</span>
-                                                <span class="donut-label-coop">thiết bị</span>
-                                            </div>
-                                        </div>
-                                        <div class="donut-tooltip-coop" id="donutTooltipCoop">
-                                            <div class="tooltip-content-coop">
-                                                <span class="tooltip-name-coop">Hoạt động</span>
-                                                <span class="tooltip-percent-coop">60%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="donut-legend-coop">
-                                        <div class="legend-item-coop" data-segment="active">
-                                            <span class="legend-dot-coop" style="background: #4CAF50;"></span>
-                                            <span class="legend-text-coop">Đang hoạt động</span>
-                                            <span class="legend-count-coop">(0)</span>
-                                        </div>
-                                        <div class="legend-item-coop" data-segment="connecting">
-                                            <span class="legend-dot-coop" style="background: #FFC107;"></span>
-                                            <span class="legend-text-coop">Đang kết nối</span>
-                                            <span class="legend-count-coop">(0)</span>
-                                        </div>
-                                        <div class="legend-item-coop" data-segment="error">
-                                            <span class="legend-dot-coop" style="background: #F44336;"></span>
-                                            <span class="legend-text-coop">Lỗi</span>
-                                            <span class="legend-count-coop">(0)</span>
-                                        </div>
-                                        <div class="legend-item-coop" data-segment="waiting">
-                                            <span class="legend-dot-coop" style="background: #9E9E9E;"></span>
-                                            <span class="legend-text-coop">Đang chờ được kết nối</span>
-                                            <span class="legend-count-coop">(0)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Content Row -->
-                    <div class="row">
-
-                        <!-- Content Column -->
-                        <div class="col-lg-6 mb-4">
-
-                            <!-- Danh sách chuồng -->
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Danh sách các chuồng</h6>
-                                </div>
-                                <div class="card-body" id="coopListContainer">
-                                    <div class="text-center text-muted py-3">
-                                        <i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div class="col-lg-6 mb-4">
-
-                            <!-- Thiết bị gần đây -->
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Thiết bị gần đây</h6>
-                                </div>
-<div class="card-body" id="recentDevicesContainerIndex">
-                                    <div class="text-center text-muted py-3">
-                                        <i class="fas fa-spinner fa-spin"></i> Đang tải dữ liệu...
-                                    </div>
-                                    <a href="device-list.html" class="btn btn-primary mt-3">Xem tất cả thiết bị &rarr;</a>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-
-                </div>
-                <!-- /.container-fluid -->
-
-            </div>
-            <!-- End of Main Content -->
-
-            <!-- Footer -->
-            <footer class="sticky-footer bg-white">
-                <div class="container my-auto">
-                    <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; Chicken Farm Management 2025</span>
-                    </div>
-                </div>
-            </footer>
-            <!-- End of Footer -->
-
+  <!-- ============================================================ -->
+  <!-- TOP NAVIGATION BAR -->
+  <!-- ============================================================ -->
+  <nav class="nav-bar">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <div class="flex items-center justify-between h-16">
+        <!-- Brand -->
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="w-8 h-8 rounded-lg bg-farm-500 flex items-center justify-center text-white text-sm">
+            <i class="fa-solid fa-seedling"></i>
+          </div>
+          <span class="font-bold text-lg text-farm-600 dark:text-farm-400 hidden sm:block">ChickenFarm</span>
         </div>
-        <!-- End of Content Wrapper -->
 
+        <!-- Tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar" id="tabNav">
+          <div class="nav-tab active" data-tab="overview">
+            <i class="fa-solid fa-house"></i><span>Tổng quan</span>
+          </div>
+          <div class="nav-tab" data-tab="coops">
+            <i class="fa-solid fa-warehouse"></i><span>Quản lý chuồng</span>
+          </div>
+          <div class="nav-tab" data-tab="devices">
+            <i class="fa-solid fa-microchip"></i><span>Thiết bị</span>
+          </div>
+          <div class="nav-tab" data-tab="warehouse">
+            <i class="fa-solid fa-boxes-stacked"></i><span>Quản lý kho</span>
+          </div>
+          <div class="nav-tab" data-tab="history">
+            <i class="fa-solid fa-clock-rotate-left"></i><span>Lịch sử đàn</span>
+          </div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="w-8"></div>
+      </div>
     </div>
-    <!-- End of Page Wrapper -->
+  </nav>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <!-- ============================================================ -->
+  <!-- MAIN CONTENT -->
+  <!-- ============================================================ -->
+  <main class="pt-20 pb-12 px-4 sm:px-6 max-w-7xl mx-auto">
 
-    <!-- Core plugin JavaScript-->
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- ============ TAB 1: OVERVIEW ============ -->
+    <section id="tab-overview" class="tab-content active">
 
-    <!-- Custom scripts for all pages-->
-    <script src="js/sb-admin-2.min.js"></script>
-
-    <!-- Socket.io Client -->
-    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-    
-    <!-- WebSocket Manager -->
-    <script src="js/ws-manager.js"></script>
-    
-    <!-- API Integration -->
-    <script src="js/api.js"></script>
-    <script src="js/donut-device-status.js"></script>
-    <script src="js/status-helpers.js"></script>
-    <script src="js/utils/deviceStatus.js"></script>
-    
-    <script>
-        // Dashboard - Real-time Data with WebSocket + Fallback
-        (function() {
-            'use strict';
-
-            // Kiểm tra đăng nhập
-            if (!isAuthenticated()) {
-                window.location.href = '/login';
-                return;
-            }
-
-            // DOM Elements cache (avoid re-querying DOM)
-            const elements = {
-                totalCoops: document.getElementById('totalCoopsDisplay'),
-                totalDevices: document.getElementById('totalDevicesDisplay'),
-                onlineDevices: document.getElementById('onlineDevicesDisplay'),
-                onlineDevicesProgress: document.querySelector('.col-xl-3:nth-child(3) .progress-bar'),
-                alertsCount: document.getElementById('alertsCountDisplay'),
-                tempValue: document.querySelector('.coop-temp-value'),
-                humidValue: document.querySelector('.coop-humid-value'),
-                donutTotal: document.getElementById('donutTotalDisplay'),
-                coopsList: document.getElementById('coopListContainer'),
-                devicesList: document.getElementById('recentDevicesContainerIndex')
-            };
-
-            // Cache for data comparison (avoid unnecessary re-renders)
-            let lastCoopsData = null;
-            let lastDevicesData = null;
-
-            /**
-             * Update dashboard overview with performance optimization
-             */
-            function updateDashboardOverview(data) {
-                if (!data) return;
-
-                // Batch DOM updates using requestAnimationFrame
-                requestAnimationFrame(() => {
-                    // Update statistics
-                    if (data.total_coops !== undefined && elements.totalCoops) {
-                        elements.totalCoops.textContent = data.total_coops;
-                    }
-                    if (data.total_devices !== undefined && elements.totalDevices) {
-                        elements.totalDevices.textContent = data.total_devices;
-                    }
-                    if (data.online_devices !== undefined && elements.onlineDevices) {
-                        const count = data.online_devices;
-                        const total = data.total_devices || count;
-                        elements.onlineDevices.textContent = count;
-                        
-                        // Update progress bar
-                        if (elements.onlineDevicesProgress) {
-                            const percent = total > 0 ? Math.round((count / total) * 100) : 0;
-                            elements.onlineDevicesProgress.style.width = percent + '%';
-                            elements.onlineDevicesProgress.setAttribute('aria-valuenow', percent);
-                        }
-                    }
-                    if (data.totalAlerts !== undefined && elements.alertsCount) {
-                        elements.alertsCount.textContent = data.totalAlerts;
-
-                        // Tô vàng viền khi có cảnh báo
-                        const alertsCard = elements.alertsCount.closest('.card');
-                        if (alertsCard) {
-                            if (data.totalAlerts > 0) {
-                                alertsCard.style.borderColor = '#ffc107';
-                                alertsCard.style.borderWidth = '3px';
-                                alertsCard.style.borderStyle = 'solid';
-                            } else {
-                                alertsCard.style.borderColor = '';
-                                alertsCard.style.borderWidth = '';
-                                alertsCard.style.borderStyle = '';
-                            }
-                        }
-                    }
-
-                    // Update environment data
-                    if (data.avg_temperature !== undefined && elements.tempValue) {
-                        elements.tempValue.textContent = Math.round(data.avg_temperature) + '°C';
-                    }
-                    if (data.avg_humidity !== undefined && elements.humidValue) {
-                        elements.humidValue.textContent = Math.round(data.avg_humidity) + '%';
-                    }
-
-                    // Update donut chart
-                    if (data.device_status_counts && elements.donutTotal) {
-                        updateDonutChart(data.device_status_counts);
-                    }
-                });
-            }
-
-            /**
-             * Update donut chart with new data
-             */
-            function updateDonutChart(statusCounts) {
-                const segments = document.querySelectorAll('.donut-segment-coop');
-                const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
-                
-                if (total === 0) return;
-
-                const circumference = 2 * Math.PI * 70; // r=70
-                let offset = 0;
-
-                segments.forEach(segment => {
-                    const segmentType = segment.getAttribute('data-segment');
-                    const count = statusCounts[segmentType] || 0;
-                    const dashArray = (count / total) * circumference;
-                    
-                    segment.style.strokeDasharray = `${dashArray} ${circumference}`;
-                    segment.style.strokeDashoffset = -offset;
-                    segment.setAttribute('data-count', count);
-                    segment.setAttribute('data-percent', Math.round((count / total) * 100));
-
-                    offset += dashArray;
-                });
-
-                // Update center total
-                if (elements.donutTotal) {
-                    elements.donutTotal.textContent = total;
-                }
-
-                // Update legend
-                const legendItems = document.querySelectorAll('.legend-item-coop');
-                legendItems.forEach(item => {
-                    const segmentType = item.getAttribute('data-segment');
-                    const count = statusCounts[segmentType] || 0;
-                    const textEl = item.querySelector('.legend-text-coop');
-                    const countEl = item.querySelector('.legend-count-coop');
-                    if (textEl && countEl) {
-                        const descriptions = {
-                            'active': 'Đang hoạt động',
-                            'connecting': 'Đang kết nối',
-                            'error': 'Lỗi',
-                            'waiting': 'Đang chờ được kết nối'
-                        };
-                        textEl.textContent = descriptions[segmentType] || segmentType;
-                        countEl.textContent = `(${count})`;
-                    }
-                });
-            }
-
-            /**
-             * Get status text - giống coop-detail
-             */
-            function getCoopStatusText(status) {
-                const statusMap = {
-                    'online': 'Bình thường',
-                    'active': 'Bình thường',
-                    'normal': 'Bình thường',
-                    'warning': 'Cảnh báo',
-                    'offline': 'Tắt',
-                    'error': 'Lỗi',
-                    'cleaning': 'Đang vệ sinh',
-                    'empty': 'Trống',
-                    'inactive': 'Tắt'
-                };
-                return statusMap[status] || status || 'Không xác định';
-            }
-
-            /**
-             * Update coops list with data comparison
-             * Sử dụng dữ liệu từ bảng coops trong database
-             */
-            function updateCoopsList(coops) {
-                if (!elements.coopsList || !Array.isArray(coops)) return;
-
-                // Deep comparison to avoid unnecessary re-render
-                if (JSON.stringify(coops) === JSON.stringify(lastCoopsData)) {
-                    return;
-                }
-                lastCoopsData = JSON.parse(JSON.stringify(coops));
-
-                requestAnimationFrame(() => {
-                    const coopsHtml = coops.slice(0, 5).map(coop => {
-                        // Mapping status từ database - giống coop-detail
-                        const status = coop.status || 'inactive';
-                        let statusClass;
-                        if (status === 'online' || status === 'active' || status === 'normal') {
-                            statusClass = 'online';
-                        } else if (status === 'warning') {
-                            statusClass = 'warning';
-                        } else {
-                            statusClass = 'error';
-                        }
-
-                        return `
-                            <div class="coop-summary-card ${statusClass}">
-                                <div class="coop-summary-header">
-                                    <span class="coop-summary-name">${coop.name || 'Chuồng ' + coop.id}</span>
-                                    <span class="coop-summary-status ${statusClass}">${getCoopStatusText(status)}</span>
-                                </div>
-                                <div class="coop-summary-info">
-                                    <span><i class="fas fa-feather-alt"></i> ${coop.current_count || 0} gà</span>
-                                    <span><i class="fas fa-ruler"></i> ${coop.area || 0} m²</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    // Add "View all" button
-                    elements.coopsList.innerHTML = coopsHtml + '<a href="/coops" class="btn btn-primary mt-3">Xem tất cả chuồng &rarr;</a>';
-                });
-            }
-
-            /**
-             * Update devices list with data comparison
-             * Giống device-list.html - không có coop_name
-             */
-            function updateDevicesList(devices) {
-                if (!elements.devicesList || !Array.isArray(devices)) return;
-
-                // Deep comparison to avoid unnecessary re-render
-                if (JSON.stringify(devices) === JSON.stringify(lastDevicesData)) {
-                    return;
-                }
-                lastDevicesData = JSON.parse(JSON.stringify(devices));
-
-                requestAnimationFrame(() => {
-                    const devicesHtml = devices.slice(0, 5).map(device => {
-                        const statusInfo = getDeviceStatus(device);
-
-                        return `
-                            <div class="device-recent-card ${statusInfo.statusClass}">
-                                <div class="device-recent-header">
-                                    <span class="device-recent-name">${device.device_name || device.name || 'Thiết bị ' + device.id}</span>
-                                </div>
-                                <div class="device-recent-status">
-                                    <span class="status-dot ${statusInfo.statusClass}"></span>
-                                    <span class="status-text ${statusInfo.statusClass}">${statusInfo.label}</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    // Replace only the device cards, keep the "View all" button
-                    const viewAllBtn = elements.devicesList.querySelector('a');
-                    elements.devicesList.innerHTML = devicesHtml + (viewAllBtn ? viewAllBtn.outerHTML : '');
-                });
-            }
-
-            // Load recent devices from API - giống device-list.html
-            async function loadRecentDevicesForIndex() {
-                if (!elements.devicesList) return;
-
-                try {
-                    // Dùng devicesAPI.getAll() giống device-list.html
-                    const devices = await devicesAPI.getAll();
-
-                    if (Array.isArray(devices) && devices.length > 0) {
-                        const recentDevices = devices.slice(0, 5);
-                        updateDevicesList(recentDevices);
-                    }
-                } catch (error) {
-                    console.error('Error loading recent devices:', error);
-                }
-            }
-
-            /**
-             * Initialize real-time data with WebSocket + Fallback
-             */
-            function initDashboard() {
-                // Try WebSocket first
-                if (window.wsManager && window.wsManager.connected) {
-                    console.log('Using WebSocket for real-time updates');
-
-                    // Subscribe to dashboard overview updates
-                    window.wsManager.subscribe(window.WS_EVENTS.DASHBOARD_OVERVIEW, (data) => {
-                        updateDashboardOverview(data);
-                    });
-
-                    // Subscribe to coop status updates
-                    window.wsManager.subscribe(window.WS_EVENTS.COOP_STATUS, (coops) => {
-                        updateCoopsList(coops);
-                    });
-
-                    // Subscribe to device status updates
-                    window.wsManager.subscribe(window.WS_EVENTS.DEVICE_STATUS, (devices) => {
-                        updateDevicesList(devices);
-                    });
-
-                    // Handle connection status
-                    window.wsManager.subscribe(window.WS_EVENTS.WS_CONNECTED, () => {
-                        showToast('Đã kết nối real-time', 'success');
-                    });
-
-                    window.wsManager.subscribe(window.WS_EVENTS.WS_DISCONNECTED, () => {
-                        showToast('Lỗi kết nối, đang thử lại...', 'warning');
-                    });
-
-                } else {
-                    // Fallback to REST API
-                    console.log('WebSocket not available, using REST API fallback');
-                    loadDashboardFallback();
-
-                    // Refresh data every 30 seconds
-                    setInterval(() => {
-                        loadDashboardFallback();
-                    }, 30000);
-
-                    // Retry WebSocket connection
-                    setTimeout(() => {
-                        if (window.wsManager && !window.wsManager.connected) {
-                            window.wsManager.connect();
-                        }
-                    }, 2000);
-                }
-            }
-
-            /**
-             * Fallback: Load data via REST API
-             */
-            async function loadDashboardFallback() {
-                try {
-                    // Lấy dữ liệu từ các API giống device-list và coop-list
-                    const [devicesData, coopsData] = await Promise.all([
-                        devicesAPI.getAll(),
-                        coopsAPI.getAll()
-                    ]);
-
-                    const data = {
-                        total_coops: coopsData ? coopsData.filter(c => !c.deleted).length : 0,
-                        total_devices: devicesData ? devicesData.filter(d => !d.deleted).length : 0,
-                        online_devices: devicesData ? devicesData.filter(d => d.status === 'online' && !d.deleted).length : 0,
-                        coops: coopsData,
-                        devices: devicesData
-                    };
-
-                    // Tính số cảnh báo từ dữ liệu
-                    let totalAlerts = 0;
-
-                    // 1. Thiết bị mất kết nối
-                    if (devicesData) {
-                        const deviceOffline = devicesData.filter(d =>
-                            d.status === 'offline' && !d.deleted
-                        ).length;
-                        totalAlerts += deviceOffline;
-                    }
-
-                    // 2. Cảnh báo môi trường từ coop-list
-                    if (coopsData) {
-                        for (const coop of coopsData) {
-                            if (coop.deleted) continue;
-
-                            // Kiểm tra nhiệt độ vượt ngưỡng
-                            if (coop.environment) {
-                                const temp = coop.environment.temperature;
-                                if (temp && (temp < coop.temp_min || temp > coop.temp_max)) {
-                                    totalAlerts++;
-                                }
-                                // Kiểm tra độ ẩm vượt ngưỡng
-                                const humid = coop.environment.humidity;
-                                if (humid && (humid < coop.humidity_min || humid > coop.humidity_max)) {
-                                    totalAlerts++;
-                                }
-                                // Kiểm tra thức ăn dưới ngưỡng
-                                const feedLevel = coop.environment.feed_level;
-                                if (feedLevel && feedLevel < coop.feed_threshold) {
-                                    totalAlerts++;
-                                }
-                                // Kiểm tra nước dưới ngưỡng
-                                const waterLevel = coop.environment.water_level;
-                                if (waterLevel && waterLevel < coop.water_threshold) {
-                                    totalAlerts++;
-                                }
-                            }
-                        }
-                    }
-
-                    data.totalAlerts = totalAlerts;
-
-                    // Cập nhật nhiệt độ và độ ẩm trung bình
-                    updateAvgTemperatureHumidity(coopsData);
-
-                    // Cập nhật UI
-                    updateDashboardOverview(data);
-
-                    if (data.coops) {
-                        updateCoopsList(data.coops);
-                    }
-                    if (data.devices) {
-                        updateDevicesList(data.devices);
-                    }
-                } catch (error) {
-                    console.error('Dashboard fallback error:', error);
-                    showToast('Không thể tải dữ liệu', 'error');
-                }
-            }
-
-            /**
-             * Cập nhật nhiệt độ và độ ẩm trung bình các chuồng
-             * @param {array} coopsData - Danh sách chuồng từ API
-             */
-            function updateAvgTemperatureHumidity(coopsData) {
-                const avgTempEl = document.getElementById('avgTemperature');
-                const avgHumidEl = document.getElementById('avgHumidity');
-                
-                if (!avgTempEl || !avgHumidEl) return;
-                
-                if (!coopsData || coopsData.length === 0) {
-                    avgTempEl.textContent = '--°C';
-                    avgHumidEl.textContent = '--%';
-                    return;
-                }
-                
-                // Lọc các chuồng có dữ liệu môi trường (temperature > 0)
-                const coopsWithData = coopsData.filter(c => 
-                    !c.deleted && 
-                    c.environment && 
-                    c.environment.temperature !== null && 
-                    c.environment.temperature > 0
-                );
-                
-                if (coopsWithData.length === 0) {
-                    avgTempEl.textContent = '--°C';
-                    avgHumidEl.textContent = '--%';
-                    return;
-                }
-                
-                // Tính tổng
-                const totalTemp = coopsWithData.reduce((sum, c) => sum + (c.environment?.temperature || 0), 0);
-                const totalHumid = coopsWithData.reduce((sum, c) => sum + (c.environment?.humidity || 0), 0);
-                
-                // Tính trung bình (1 chữ số thập phân)
-                const avgTemp = (totalTemp / coopsWithData.length).toFixed(1);
-                const avgHumid = (totalHumid / coopsWithData.length).toFixed(1);
-                
-                avgTempEl.textContent = avgTemp + '°C';
-                avgHumidEl.textContent = avgHumid + '%';
-            }
-
-            // Initialize when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initDashboard);
-            } else {
-                initDashboard();
-            }
-
-            // Xử lý logout
-            const logoutBtn = document.querySelector('a[href*="logout"]');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    authAPI.logout();
-                });
-            }
-        })();
-    </script>
-
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="/login">Logout</a>
-                </div>
-            </div>
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-stone-800 dark:text-stone-100">Tổng quan trang trại</h1>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
+            <i class="fa-regular fa-calendar mr-1"></i>
+            <span id="currentDate"></span>
+          </p>
         </div>
-    </div>
-
-    <!-- FAB Bottom Navigation -->
-    <nav class="fab-nav">
-        <div class="fab-nav-container">
-            <a class="fab-nav-item" href="/coops" data-index="0">
-                <i class="fas fa-home"></i>
-                <span>Chuồng</span>
-            </a>
-            <a class="fab-nav-item" href="device-list.html" data-index="1">
-                <i class="fas fa-wifi"></i>
-                <span>Thiết bị</span>
-            </a>
-            <div class="fab-home-wrapper">
-                <a class="fab-nav-item fab-home-btn" href="index.html" data-index="2">
-                    <i class="fas fa-home"></i>
-                </a>
-                <span class="fab-home-label">Trang chủ</span>
-            </div>
-            <a class="fab-nav-item" href="camera.html" data-index="3">
-                <i class="fas fa-video"></i>
-                <span>Camera</span>
-            </a>
-            <a class="fab-nav-item" href="other.html" data-index="4">
-                <i class="fas fa-ellipsis-h"></i>
-                <span>Khác</span>
-            </a>
+        <div class="flex items-center gap-2">
+          <div id="loadingSpinner" class="hidden text-farm-500 text-sm"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải...</div>
+          <button onclick="refreshData()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-farm-50 text-farm-600 hover:bg-farm-100 dark:bg-farm-900/30 dark:text-farm-400 dark:hover:bg-farm-900/50 transition">
+            <i class="fa-solid fa-rotate"></i> Làm mới
+          </button>
         </div>
-    </nav>
+      </div>
 
-    <script>
-    (function() {
-        function handleNavClick(e) {
-            var target = e.currentTarget;
-            var items = document.querySelectorAll('.fab-nav-item');
-            items.forEach(function(item) {
-                item.classList.remove('active');
-            });
-            target.classList.add('active');
+      <!-- Error Banner -->
+      <div id="errorBanner" class="error-banner">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="errorMessage">Đã xảy ra lỗi khi tải dữ liệu</span>
+        <button onclick="refreshData()"><i class="fa-solid fa-rotate mr-1"></i>Thử lại</button>
+      </div>
+
+      <!-- ===== Stat Cards Row ===== -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" id="statCards">
+        <!-- Card 1: Total Chickens -->
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Tổng đàn</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="totalChickens">0</span></p>
+              <div class="flex items-center gap-1 mt-1 text-xs font-medium trend-up">
+                <i class="fa-solid fa-arrow-up"></i>
+                <span id="chickenTrend">+5.2%</span>
+                <span class="text-stone-400 dark:text-stone-500 font-normal">so với tháng trước</span>
+              </div>
+            </div>
+            <div class="icon-box" style="background:#d9f0e3;color:#2d6a4f;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="11" cy="13" rx="6" ry="5"/><path d="M5 11c-2 0-3-1-3-2s1-2 3-2"/><circle cx="16" cy="8" r="3"/><path d="M15 5c0-1 1-2 2-2s2 1 2 2"/><path d="M19 8l3 1-3 1z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Average Temperature -->
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Nhiệt độ TB</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="avgTemperature">0</span><span class="text-base font-medium text-stone-400">°C</span></p>
+              <div class="flex items-center gap-1 mt-1 text-xs font-medium trend-up">
+                <i class="fa-solid fa-arrow-up"></i>
+                <span id="tempTrend">+0.3°C</span>
+                <span class="text-stone-400 dark:text-stone-500 font-normal">hôm nay</span>
+              </div>
+            </div>
+            <div class="icon-box" style="background:#fef3c7;color:#d97706;">
+              <i class="fa-solid fa-temperature-half"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Average Humidity -->
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Độ ẩm TB</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="avgHumidity">0</span><span class="text-base font-medium text-stone-400">%</span></p>
+              <div class="flex items-center gap-1 mt-1 text-xs font-medium trend-down">
+                <i class="fa-solid fa-arrow-down"></i>
+                <span id="humidTrend">-2.1%</span>
+                <span class="text-stone-400 dark:text-stone-500 font-normal">hôm nay</span>
+              </div>
+            </div>
+            <div class="icon-box" style="background:#e0f2fe;color:#0284c7;">
+              <i class="fa-solid fa-droplet"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Remaining Feed Stock (inline editable) -->
+        <div class="stat-card" id="feedStockCard">
+          <div class="flex items-start justify-between">
+            <div style="flex:1">
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Thức ăn kho</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1">
+                <span id="feedStock">0</span><span class="text-base font-medium text-stone-400">kg</span>
+              </p>
+              <div class="flex items-center gap-1 mt-1 text-xs font-medium trend-down">
+                <i class="fa-solid fa-arrow-down"></i>
+                <span id="feedTrend">--</span>
+                <span class="text-stone-400 dark:text-stone-500 font-normal">tồn kho</span>
+              </div>
+              <!-- Inline edit area: show breakdown of feed items -->
+              <div id="feedStockDetail" class="mt-2 pt-2 border-t border-stone-100 dark:border-stone-700 hidden">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+            <div class="icon-box" style="background:#fce4ec;color:#e11d48;">
+              <i class="fa-solid fa-wheat-awn"></i>
+            </div>
+          </div>
+          <button onclick="toggleFeedDetail()" id="feedToggleBtn" class="mt-2 text-xs text-farm-500 hover:text-farm-600 dark:text-farm-400 dark:hover:text-farm-300 transition flex items-center gap-1">
+            <i class="fa-solid fa-pen"></i> <span>Chi tiết & chỉnh sửa</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== Quick Navigation ===== -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="quick-nav-card" onclick="switchTab('coops')">
+          <div class="q-icon" style="background:#d9f0e3;color:#2d6a4f;">
+            <i class="fa-solid fa-warehouse"></i>
+          </div>
+          <div>
+            <p class="q-title">Quản lý chuồng</p>
+            <p class="q-desc">Xem và quản lý chuồng nuôi</p>
+          </div>
+        </div>
+        <div class="quick-nav-card" onclick="switchTab('devices')">
+          <div class="q-icon" style="background:#e0f2fe;color:#0284c7;">
+            <i class="fa-solid fa-microchip"></i>
+          </div>
+          <div>
+            <p class="q-title">Thiết bị</p>
+            <p class="q-desc">Giám sát thiết bị IoT</p>
+          </div>
+        </div>
+        <div class="quick-nav-card" onclick="switchTab('warehouse')">
+          <div class="q-icon" style="background:#fef3c7;color:#d97706;">
+            <i class="fa-solid fa-boxes-stacked"></i>
+          </div>
+          <div>
+            <p class="q-title">Quản lý kho</p>
+            <p class="q-desc">Kiểm tra tồn kho vật tư</p>
+          </div>
+        </div>
+        <div class="quick-nav-card" onclick="switchTab('history')">
+          <div class="q-icon" style="background:#fce4ec;color:#e11d48;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+          </div>
+          <div>
+            <p class="q-title">Lịch sử đàn</p>
+            <p class="q-desc">Theo dõi tăng trưởng đàn</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Representative Coops ===== -->
+      <div class="stat-card mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+            <i class="fa-solid fa-warehouse text-farm-500 mr-1.5"></i>Danh sách chuồng
+          </h3>
+          <button onclick="switchTab('coops')" class="text-xs text-farm-500 hover:text-farm-600 dark:text-farm-400 font-medium flex items-center gap-1">
+            Xem tất cả <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+        <div id="overviewCoopList" class="space-y-1.5">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- ===== Charts: Feed & Flock ===== -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+              <i class="fa-solid fa-warehouse text-amber-500 mr-1.5"></i>Tồn kho thức ăn
+            </h3>
+            <span class="text-xs text-stone-400">7 ngày qua</span>
+          </div>
+          <div style="position:relative;height:200px;"><canvas id="feedChart"></canvas></div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+              <i class="fa-solid fa-dove text-farm-500 mr-1.5"></i>Quy mô đàn
+            </h3>
+            <span class="text-xs text-stone-400">7 ngày qua</span>
+          </div>
+          <div style="position:relative;height:200px;"><canvas id="flockChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ===== Charts Row ===== -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <!-- Temperature Chart -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+              <i class="fa-solid fa-chart-line text-farm-500 mr-1.5"></i>Biến động nhiệt độ
+            </h3>
+            <span class="text-xs text-stone-400">24 giờ qua</span>
+          </div>
+          <div style="position:relative;height:200px;">
+            <canvas id="tempChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Humidity Chart -->
+        <div class="stat-card">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+              <i class="fa-solid fa-chart-area text-amber-500 mr-1.5"></i>Biến động độ ẩm
+            </h3>
+            <span class="text-xs text-stone-400">24 giờ qua</span>
+          </div>
+          <div style="position:relative;height:200px;">
+            <canvas id="humidChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Notifications: split ===== -->
+      <div class="stat-card mb-6">
+        <!-- Section A -->
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1.5"></i>Vấn đề hệ thống
+          </h3>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Đang phát triển</span>
+        </div>
+        <div class="flex flex-col items-center justify-center py-6 text-stone-400 dark:text-stone-500">
+          <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 opacity-30"></i>
+          <p class="text-sm">Không có vấn đề nào được ghi nhận</p>
+        </div>
+
+        <hr class="border-stone-100 dark:border-stone-700 my-3">
+
+        <!-- Section B -->
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+            <i class="fa-solid fa-syringe text-farm-500 mr-1.5"></i>Lịch nhắc tiêm phòng
+          </h3>
+        </div>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+            <div>
+              <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng A</p>
+              <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Newcastle</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-stone-500 dark:text-stone-400">02/06/2026</p>
+              <span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Sắp đến</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+            <div>
+              <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng C</p>
+              <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Gumboro</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-stone-500 dark:text-stone-400">28/05/2026</p>
+              <span class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium">Hôm nay</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+            <div>
+              <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng E</p>
+              <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Cúm gia cầm</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-stone-500 dark:text-stone-400">10/06/2026</p>
+              <span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Sắp đến</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ TAB 2: COOP MANAGEMENT ============ -->
+    <section id="tab-coops" class="tab-content">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-stone-800 dark:text-stone-100">
+            <i class="fa-solid fa-warehouse text-farm-500 mr-2"></i>Quản lý chuồng
+          </h1>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">Quản lý thông tin và thiết bị các chuồng nuôi</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none"></i>
+            <input type="text" id="coopSearchInput_mgmt" placeholder="Tìm chuồng..." class="pl-9 pr-8 py-2 w-48 sm:w-56 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none transition">
+            <button id="coopSearchClear_mgmt" class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hidden text-lg leading-none">&times;</button>
+          </div>
+          <button onclick="showAddCoopModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-farm-500 text-white hover:bg-farm-600 transition shadow-sm">
+            <i class="fa-solid fa-plus"></i> Thêm chuồng
+          </button>
+        </div>
+      </div>
+
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
+          <p class="text-xs text-stone-400 dark:text-stone-500">Tổng chuồng</p>
+          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtTotalCoops">0</span></p>
+        </div>
+        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
+          <p class="text-xs text-stone-400 dark:text-stone-500">Tổng đàn</p>
+          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtTotalChickens">0</span></p>
+        </div>
+        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
+          <p class="text-xs text-stone-400 dark:text-stone-500">Nhiệt độ TB</p>
+          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtAvgTemp">--</span><span class="text-sm font-normal text-stone-400">°C</span></p>
+        </div>
+        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
+          <p class="text-xs text-stone-400 dark:text-stone-500">Độ ẩm TB</p>
+          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtAvgHumid">--</span><span class="text-sm font-normal text-stone-400">%</span></p>
+        </div>
+      </div>
+
+      <!-- Coop Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" id="coopManagementGrid">
+        <div class="text-center py-12 text-stone-400 dark:text-stone-500 col-span-full">
+          <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+          <p class="mt-2">Đang tải dữ liệu...</p>
+        </div>
+      </div>
+
+      <!-- Detail Slide-in Panel -->
+      <div id="coopDetailOverlay" class="hidden fixed inset-0 z-40 bg-black/30" onclick="closeCoopDetail()"></div>
+      <div id="coopDetailPanel" class="hidden detail-panel">
+        <!-- Fixed Header -->
+        <div class="sticky top-0 bg-white dark:bg-stone-800 z-10 border-b border-stone-200 dark:border-stone-700">
+          <div class="flex items-center justify-between px-6 pt-4 pb-2">
+            <button onclick="closeCoopDetail()" class="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition">
+              <i class="fa-solid fa-arrow-left"></i> Quay lại
+            </button>
+            <button onclick="closeCoopDetail()" class="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-400 transition">
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+          <div class="px-6 pb-3">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-lg font-bold text-stone-800 dark:text-white" id="detailCoopName"></h2>
+              <span id="detailCoopBadge"></span>
+            </div>
+            <div class="flex items-center gap-4 mt-1 text-sm text-stone-500" id="detailCoopSummary"></div>
+          </div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="flex border-b border-stone-200 dark:border-stone-700 px-6">
+          <button class="coop-tab-btn active" data-coop-tab="overview" onclick="switchCoopTab('overview')">
+            <i class="fa-solid fa-chart-simple mr-1.5"></i>Tổng quan chuồng
+          </button>
+          <button class="coop-tab-btn" data-coop-tab="devices" onclick="switchCoopTab('devices')">
+            <i class="fa-solid fa-microchip mr-1.5"></i>Thiết bị
+          </button>
+          <button class="coop-tab-btn" data-coop-tab="camera" onclick="switchCoopTab('camera')">
+            <i class="fa-solid fa-video mr-1.5"></i>Camera
+          </button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="p-6">
+          <div id="coopTabOverview" class="coop-tab-pane active">
+            <div id="detailCoopContent" class="space-y-4"></div>
+          </div>
+          <div id="coopTabDevices" class="coop-tab-pane">
+            <div id="detailDeviceContent" class="space-y-3">
+              <div class="donut-container-detail" id="deviceDonutContainer" style="display:none;">
+                <div class="donut-chart-detail" id="deviceDonutChart">
+                  <svg viewBox="0 0 200 200" id="deviceDonutSvg">
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#e2e8f0" stroke-width="20" stroke-dasharray="440 440"></circle>
+                    <circle cx="100" cy="100" r="52" fill="white"></circle>
+                  </svg>
+                  <div class="donut-center-detail">
+                    <span class="total" id="deviceDonutTotal">0</span>
+                    <span class="label">thiết bị</span>
+                  </div>
+                </div>
+                <div class="donut-legend-detail" id="deviceDonutLegend"></div>
+                <div class="donut-tooltip-detail" id="deviceDonutTooltip">
+                  <span class="tooltip-name-detail" style="display:block;">--</span>
+                  <span class="tooltip-percent-detail">--%</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-stone-700 dark:text-stone-200">Danh sách thiết bị</h4>
+                <button onclick="showAddDeviceModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-farm-500 text-white hover:bg-farm-600 transition shadow-sm">
+                  <i class="fa-solid fa-plus"></i> Thêm thiết bị
+                </button>
+              </div>
+              <div id="detailDeviceListContainer" class="space-y-2" style="max-height:360px;overflow-y:auto;padding-right:4px;"></div>
+            </div>
+          </div>
+          <div id="coopTabCamera" class="coop-tab-pane">
+            <div id="detailCameraContent"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Coop Modal -->
+      <div id="addCoopModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="fixed inset-0 bg-black/40" onclick="hideAddCoopModal()"></div>
+        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-stone-800 dark:text-white">
+              <i class="fa-solid fa-plus-circle text-farm-500 mr-2"></i>Thêm chuồng mới
+            </h3>
+            <button onclick="hideAddCoopModal()" class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition">
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+          <form id="addCoopForm" onsubmit="saveNewCoop(event)" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tên chuồng</label>
+              <input type="text" id="newCoopName" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="VD: Chuồng E">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Số lượng gà</label>
+              <input type="number" id="newCoopChickens" min="0" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="0">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Sức chứa</label>
+              <input type="number" id="newCoopCapacity" min="0" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Khu vực</label>
+              <input type="text" id="newCoopLocation" class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="VD: Khu C">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Device Modal -->
+      <div id="deleteDeviceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="fixed inset-0 bg-black/40" onclick="hideDeleteDeviceModal()"></div>
+        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-stone-800 dark:text-white">Xác nhận xóa thiết bị</h3>
+              <p class="text-sm text-stone-500 dark:text-stone-400">Thao tác này không thể hoàn tác.</p>
+            </div>
+          </div>
+          <p class="text-sm text-stone-600 dark:text-stone-300 mb-5">
+            Bạn có chắc chắn muốn xóa thiết bị <strong id="deleteDeviceName" class="text-stone-800 dark:text-white"></strong>?
+          </p>
+          <div class="flex gap-3">
+            <button onclick="hideDeleteDeviceModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 transition">Hủy</button>
+            <button onclick="confirmDeleteDevice()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition">Xóa</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Device Modal -->
+      <div id="addDeviceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div class="fixed inset-0 bg-black/40" onclick="hideAddDeviceModal()"></div>
+        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-stone-800 dark:text-white">
+              <i class="fa-solid fa-plus-circle text-farm-500 mr-2"></i>Thêm thiết bị vào chuồng
+            </h3>
+            <button onclick="hideAddDeviceModal()" class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition">
+              <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+          </div>
+          <div class="mb-3">
+            <div class="relative">
+              <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+              <input type="text" id="searchDeviceInput" placeholder="Tìm thiết bị..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
+            </div>
+          </div>
+          <div id="unconnectedDeviceList" class="space-y-2 max-h-56 overflow-y-auto border border-stone-100 dark:border-stone-700 rounded-lg p-3 bg-stone-50/50 dark:bg-stone-700/30 mb-3">
+            <p class="text-sm text-stone-400 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải...</p>
+          </div>
+          <div class="text-xs font-medium text-stone-500 dark:text-stone-400 mb-4" id="selectedCount">Đã chọn: 0 thiết bị</div>
+          <div class="flex gap-3">
+            <button onclick="hideAddDeviceModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 transition">Hủy</button>
+            <button onclick="addSelectedDevices()" id="confirmAddDeviceBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-farm-500 text-white hover:bg-farm-600 transition">Thêm thiết bị</button>
+          </div>
+        </div>
+      </div>
+
+    <!-- ============ TAB 3: EQUIPMENT (Placeholder) ============ -->
+    <section id="tab-devices" class="tab-content">
+      <div class="placeholder-tab">
+        <i class="fa-solid fa-microchip"></i>
+        <h3>Thiết bị</h3>
+        <p class="max-w-md">Quản lý thiết bị IoT, cảm biến, camera và hệ thống tự động hóa trong trang trại.</p>
+      </div>
+    </section>
+
+    <!-- ============ TAB 4: WAREHOUSE (Placeholder) ============ -->
+    <section id="tab-warehouse" class="tab-content">
+      <div class="placeholder-tab">
+        <i class="fa-solid fa-boxes-stacked"></i>
+        <h3>Quản lý kho</h3>
+        <p class="max-w-md">Theo dõi tồn kho thức ăn, thuốc men, vật tư. Dự báo thời điểm cần nhập hàng.</p>
+      </div>
+    </section>
+
+    <!-- ============ TAB 5: FLOCK HISTORY (Placeholder) ============ -->
+    <section id="tab-history" class="tab-content">
+      <div class="placeholder-tab">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <h3>Lịch sử đàn</h3>
+        <p class="max-w-md">Xem lịch sử tăng trưởng, tiêm phòng, sản lượng trứng và các chỉ số sức khỏe theo thời gian.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- THEME TOGGLE (Dark Mode) -->
+  <!-- ============================================================ -->
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Chuyển giao diện">
+    <i class="fa-regular fa-moon" id="themeIcon"></i>
+  </button>
+
+  <!-- ============================================================ -->
+  <!-- JAVASCRIPT -->
+  <!-- ============================================================ -->
+  <script>
+    // ==============================================================
+    // 1. APP STATE
+    // ==============================================================
+    let appState = { dashboard: null, feedItems: [] };
+
+    // ==============================================================
+    // 2. HELPER FUNCTIONS
+    // ==============================================================
+    function formatNumber(num) {
+      if (num === null || num === undefined) return '0';
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+
+    function getStatusColor(status) {
+      switch(status) {
+        case 'active': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+        case 'warning': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+        case 'critical': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+        default: return 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400';
+      }
+    }
+
+    function formatTimeAgo(isoString) {
+      if (!isoString) return '';
+      const now = new Date();
+      const date = new Date(isoString);
+      const diffMs = now - date;
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return 'Vừa xong';
+      if (diffMin < 60) return diffMin + ' phút trước';
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return diffHour + ' giờ trước';
+      return Math.floor(diffHour / 24) + ' ngày trước';
+    }
+
+    // ==============================================================
+    // 3. LOADING / ERROR STATES
+    // ==============================================================
+    function showSkeletons() {
+      document.querySelectorAll('.skeleton').forEach(el => el.style.display = '');
+      document.querySelectorAll('.stat-value').forEach(el => el.style.display = 'none');
+      document.getElementById('loadingSpinner').classList.remove('hidden');
+    }
+
+    function hideSkeletons() {
+      document.querySelectorAll('.skeleton').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.stat-value').forEach(el => el.style.display = '');
+      document.getElementById('loadingSpinner').classList.add('hidden');
+    }
+
+    function showError(msg) {
+      document.getElementById('errorMessage').textContent = msg;
+      document.getElementById('errorBanner').classList.add('show');
+    }
+
+    function hideError() {
+      document.getElementById('errorBanner').classList.remove('show');
+    }
+
+    // ==============================================================
+    // 4. RENDER STAT CARDS (with count-up animation)
+    // ==============================================================
+    function animateValue(el, start, end, duration, suffix) {
+      if (!el) return;
+      const isNumber = typeof end === 'number';
+      const startTime = performance.now();
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = start + (end - start) * eased;
+        if (isNumber) {
+          el.textContent = formatNumber(Math.round(current)) + (suffix || '');
+        } else {
+          el.textContent = Math.round(current * 10) / 10 + (suffix || '');
         }
+        if (progress < 1) requestAnimationFrame(update);
+        else {
+          if (isNumber) el.textContent = formatNumber(end) + (suffix || '');
+          else el.textContent = end + (suffix || '');
+        }
+      }
+      requestAnimationFrame(update);
+    }
 
-        var navItems = document.querySelectorAll('.fab-nav-item');
-        navItems.forEach(function(item) {
-            item.addEventListener('click', handleNavClick);
+    function renderStats(data) {
+      if (!data) return;
+      animateValue(document.getElementById('totalChickens'), 0, data.totalChickens, 1000, '');
+      animateValue(document.getElementById('avgTemperature'), 0, data.avgTemperature, 800, '');
+      animateValue(document.getElementById('avgHumidity'), 0, data.avgHumidity, 800, '');
+      animateValue(document.getElementById('feedStock'), 0, data.remainingFeedStock, 1000, '');
+      document.getElementById('chickenTrend').textContent = data.chickenTrend || '--';
+      document.getElementById('tempTrend').textContent = data.tempTrend || '--';
+      document.getElementById('humidTrend').textContent = data.humidTrend || '--';
+      document.getElementById('feedTrend').textContent = data.feedTrend || '--';
+    }
+
+    // ==============================================================
+    // 5. RENDER ALERTS (safe: null if container missing)
+    // ==============================================================
+    function renderAlerts(alerts) {
+      const container = document.getElementById('alertList');
+      const countEl = document.getElementById('alertCount');
+      if (!container || !countEl) return;
+      countEl.textContent = (alerts ? alerts.length : 0) + ' cảnh báo';
+      if (!alerts || alerts.length === 0) {
+        container.innerHTML = '<div class="text-sm text-stone-400 dark:text-stone-500 py-2 text-center">Không có cảnh báo</div>';
+        return;
+      }
+      container.innerHTML = alerts.map(a => `
+        <div class="alert-item ${a.level || 'info'}">
+          <div class="flex items-start gap-2">
+            <i class="fa-solid ${a.level === 'critical' ? 'fa-circle-exclamation' : a.level === 'warning' ? 'fa-triangle-exclamation' : 'fa-circle-info'} mt-0.5 ${a.level === 'critical' ? 'text-red-500' : a.level === 'warning' ? 'text-amber-500' : 'text-blue-500'}"></i>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-stone-700 dark:text-stone-200">${a.coop || 'Hệ thống'}</p>
+              <p class="text-xs text-stone-500 dark:text-stone-400">${a.message}</p>
+              <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5"><i class="fa-regular fa-clock mr-0.5"></i>${formatTimeAgo(a.time)}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==============================================================
+    // 6. CHARTS (Chart.js)
+    // ==============================================================
+    let tempChartInstance = null;
+    let humidChartInstance = null;
+    let feedChartInstance = null;
+    let flockChartInstance = null;
+
+    function getChartColors() {
+      const isDark = document.documentElement.classList.contains('dark');
+      return {
+        temp: { border: '#52b788', bg: 'rgba(82,183,136,0.15)', fill: 'rgba(82,183,136,0.05)' },
+        humid: { border: '#38bdf8', bg: 'rgba(56,189,248,0.15)', fill: 'rgba(56,189,248,0.05)' },
+        grid: isDark ? '#334155' : '#e2e8f0',
+        text: isDark ? '#64748b' : '#94a3b8',
+        tooltip: isDark ? '#1e293b' : '#ffffff',
+        tooltipText: isDark ? '#f1f5f9' : '#1e293b'
+      };
+    }
+
+    function createCharts(data) {
+      const colors = getChartColors();
+      const timeLabels = (data && data.timeLabels) || [];
+      const tempData = (data && data.temperatureHistory) || [];
+      const humidData = (data && data.humidityHistory) || [];
+
+      const tempEl = document.getElementById('tempChart');
+      const humidEl = document.getElementById('humidChart');
+      if (!tempEl || !humidEl) return;
+
+      // Temperature Chart
+      const tempCtx = tempEl.getContext('2d');
+      if (tempChartInstance) tempChartInstance.destroy();
+      tempChartInstance = new Chart(tempCtx, {
+        type: 'line',
+        data: {
+          labels: timeLabels,
+          datasets: [{
+            label: 'Nhiệt độ (°C)',
+            data: tempData,
+            borderColor: colors.temp.border,
+            backgroundColor: colors.temp.bg,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: colors.tooltip, titleColor: colors.tooltipText, bodyColor: colors.tooltipText, cornerRadius: 8, padding: 10 } },
+          scales: {
+            x: { grid: { color: colors.grid }, ticks: { color: colors.text, maxTicksLimit: 8, font: { size: 10 } } },
+            y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 }, callback: v => v + '°C' }, min: 22, max: 36 }
+          }
+        }
+      });
+
+      // Humidity Chart
+      const humidCtx = humidEl.getContext('2d');
+      if (humidChartInstance) humidChartInstance.destroy();
+      humidChartInstance = new Chart(humidCtx, {
+        type: 'line',
+        data: {
+          labels: timeLabels,
+          datasets: [{
+            label: 'Độ ẩm (%)',
+            data: humidData,
+            borderColor: colors.humid.border,
+            backgroundColor: colors.humid.bg,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            pointHitRadius: 10,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { backgroundColor: colors.tooltip, titleColor: colors.tooltipText, bodyColor: colors.tooltipText, cornerRadius: 8, padding: 10 } },
+          scales: {
+            x: { grid: { color: colors.grid }, ticks: { color: colors.text, maxTicksLimit: 8, font: { size: 10 } } },
+            y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 }, callback: v => v + '%' }, min: 40, max: 85 }
+          }
+        }
+      });
+    }
+
+    // ==============================================================
+    // 6b. OVERVIEW COOP LIST
+    // ==============================================================
+    function renderOverviewCoops() {
+      const container = document.getElementById('overviewCoopList');
+      if (!container) return;
+      const coops = (appState.dashboard && appState.dashboard.coops) || [];
+      const shown = coops.slice(0, 3);
+      if (shown.length === 0) {
+        container.innerHTML = '<p class="text-xs text-stone-400 text-center py-4">Không có dữ liệu chuồng</p>';
+        return;
+      }
+      container.innerHTML = shown.map(c => `
+        <div class="ov-coop-row">
+          <span class="ocr-name">${c.name}</span>
+          <div class="flex items-center gap-3">
+            <span class="ocr-stat"><i class="fa-solid fa-dove"></i> ${c.chickens}</span>
+            <span class="ocr-stat"><i class="fa-solid fa-temperature-half" style="color:#d97706;"></i> ${c.temp}°C</span>
+            <span class="ocr-stat"><i class="fa-solid fa-droplet" style="color:#0284c7;"></i> ${c.humidity}%</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ==============================================================
+    // 6c. OVERVIEW CHARTS (Feed + Flock)
+    // ==============================================================
+    function generateLast7Days() {
+      const labels = [];
+      const now = new Date();
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        labels.push(d.getDate() + '/' + (d.getMonth() + 1));
+      }
+      return labels;
+    }
+
+    function createOverviewCharts() {
+      const colors = getChartColors();
+      const labels = generateLast7Days();
+
+      // Feed stock remaining (line)
+      const feedTotal = (appState.feedItems || []).reduce((s, i) => s + i.quantity_kg, 0) || 3999;
+      const step = Math.round(feedTotal / 7);
+      const feedData = labels.map((_, i) => feedTotal - step * (6 - i) + Math.round(Math.random() * 40 - 20));
+      feedData[6] = feedTotal;
+      const feedEl = document.getElementById('feedChart');
+      if (feedEl) {
+        if (feedChartInstance) feedChartInstance.destroy();
+        feedChartInstance = new Chart(feedEl.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Tồn kho (kg)',
+              data: feedData,
+              borderColor: '#2d6a4f',
+              backgroundColor: 'rgba(45,106,79,0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: '#2d6a4f',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: colors.tooltip, titleColor: colors.tooltipText, bodyColor: colors.tooltipText, cornerRadius: 8, padding: 10 } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: colors.text, font: { size: 10 } } },
+              y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 }, callback: v => v + 'kg' } }
+            }
+          }
         });
-    })();
-    </script>
+      }
 
-    <!-- Donut Chart Interaction -->
-    <script>
-        (function() {
-            var segments = document.querySelectorAll('.donut-segment-coop');
-            var tooltip = document.getElementById('donutTooltipCoop');
-            var legendItems = document.querySelectorAll('.legend-item-coop');
-            
-            segments.forEach(function(segment) {
-                segment.addEventListener('mouseenter', function() {
-                    var name = this.getAttribute('data-name');
-                    var percent = this.getAttribute('data-percent');
-                    var count = this.getAttribute('data-count');
-                    var color = this.getAttribute('stroke');
-                    
-                    tooltip.querySelector('.tooltip-name-coop').textContent = name;
-                    tooltip.querySelector('.tooltip-percent-coop').textContent = percent + '% (' + count + ')';
-                    tooltip.querySelector('.tooltip-percent-coop').style.color = color;
-                    tooltip.classList.add('show');
-                });
-                
-                segment.addEventListener('mousemove', function(e) {
-                    tooltip.style.left = (e.clientX + 15) + 'px';
-                    tooltip.style.top = (e.clientY - 10) + 'px';
-                });
-                
-                segment.addEventListener('mouseleave', function() {
-                    tooltip.classList.remove('show');
-                });
-            });
-            
-            legendItems.forEach(function(item) {
-                item.addEventListener('mouseenter', function() {
-                    var segmentType = this.getAttribute('data-segment');
-                    segments.forEach(function(seg) {
-                        if (seg.getAttribute('data-segment') === segmentType) {
-                            seg.style.strokeWidth = '28';
-                            seg.style.filter = 'brightness(1.15)';
-                        }
-                    });
-                });
-                
-                item.addEventListener('mouseleave', function() {
-                    segments.forEach(function(seg) {
-                        seg.style.strokeWidth = '22';
-                        seg.style.filter = 'none';
-                    });
-                });
-            });
-        })();
+      // Flock size (line)
+      const flockData = [2180, 2195, 2205, 2210, 2218, 2225, 2230];
+      const flockEl = document.getElementById('flockChart');
+      if (flockEl) {
+        if (flockChartInstance) flockChartInstance.destroy();
+        flockChartInstance = new Chart(flockEl.getContext('2d'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Tổng đàn',
+              data: flockData,
+              borderColor: '#0284c7',
+              backgroundColor: 'rgba(2,132,199,0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointBackgroundColor: '#0284c7',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: colors.tooltip, titleColor: colors.tooltipText, bodyColor: colors.tooltipText, cornerRadius: 8, padding: 10 } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: colors.text, font: { size: 10 } } },
+              y: { grid: { color: colors.grid }, ticks: { color: colors.text, font: { size: 10 } }, min: 2150, max: 2250 }
+            }
+          }
+        });
+      }
+    }
 
-        // Load device status donut chart
-        if (typeof loadDeviceStatusDonut === 'function') {
-            loadDeviceStatusDonut('donutChartCoop', 30000);
+    // ==============================================================
+    // 7. FEED STOCK INLINE EDIT
+    // ==============================================================
+    function renderFeedItems() {
+      const container = document.getElementById('feedStockDetail');
+      if (!container) return;
+      if (!appState.feedItems || appState.feedItems.length === 0) {
+        container.innerHTML = '<p class="text-xs text-stone-400">Không có dữ liệu thức ăn</p>';
+        return;
+      }
+      container.innerHTML = appState.feedItems.map(item => `
+        <div class="flex items-center justify-between py-1">
+          <span class="text-xs text-stone-600 dark:text-stone-300 flex-1">${item.item_name}</span>
+          <div class="flex items-center gap-1">
+            <input type="number" id="feedInput-${item.id}" value="${item.quantity_kg}" min="0" step="10"
+              class="w-20 px-1 py-0.5 text-xs text-center border border-stone-200 dark:border-stone-600 rounded
+                     bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 focus:ring-1 focus:ring-farm-500 outline-none"
+              onkeydown="if(event.key==='Enter')saveFeedItem(${item.id})">
+            <span class="text-xs text-stone-400">kg</span>
+            <button onclick="saveFeedItem(${item.id})" title="Lưu"
+              class="p-1 text-farm-500 hover:text-farm-600 dark:text-farm-400 dark:hover:text-farm-300 transition">
+              <i class="fa-solid fa-check"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleFeedDetail() {
+      const detail = document.getElementById('feedStockDetail');
+      const btn = document.getElementById('feedToggleBtn');
+      if (!detail || !btn) return;
+      const isHidden = detail.classList.contains('hidden');
+      detail.classList.toggle('hidden');
+      btn.querySelector('span').textContent = isHidden ? 'Ẩn chi tiết' : 'Chi tiết & chỉnh sửa';
+      if (isHidden) renderFeedItems();
+    }
+
+    async function saveFeedItem(id) {
+      const input = document.getElementById('feedInput-' + id);
+      if (!input) return;
+      const val = parseFloat(input.value);
+      if (isNaN(val) || val < 0) { alert('Vui lòng nhập số hợp lệ'); return; }
+      try {
+        await API.updateFeedItem(id, val);
+        const item = appState.feedItems.find(i => i.id === id);
+        if (item) item.quantity_kg = val;
+        const total = appState.feedItems.reduce((s, i) => s + i.quantity_kg, 0);
+        if (appState.dashboard) appState.dashboard.remainingFeedStock = total;
+        animateValue(document.getElementById('feedStock'), 0, total, 500, '');
+        renderFeedItems();
+      } catch (e) {
+        console.error('saveFeedItem error:', e);
+        alert('Lỗi khi lưu. Vui lòng thử lại.');
+      }
+    }
+
+    // ==============================================================
+    // 8. TAB NAVIGATION
+    // ==============================================================
+    const tabNav = document.getElementById('tabNav');
+    const tabs = document.querySelectorAll('.nav-tab');
+    const contents = {
+      overview: document.getElementById('tab-overview'),
+      coops: document.getElementById('tab-coops'),
+      devices: document.getElementById('tab-devices'),
+      warehouse: document.getElementById('tab-warehouse'),
+      history: document.getElementById('tab-history')
+    };
+
+    function switchTab(tabId) {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
+      Object.entries(contents).forEach(([id, el]) => el.classList.toggle('active', id === tabId));
+
+      // Re-render charts when switching back to overview (fixes sizing)
+      if (tabId === 'overview' && tempChartInstance && humidChartInstance) {
+        setTimeout(() => {
+          tempChartInstance.resize();
+          humidChartInstance.resize();
+          if (feedChartInstance) feedChartInstance.resize();
+          if (flockChartInstance) flockChartInstance.resize();
+        }, 100);
+      }
+
+      // Render coop management data when switching to coops tab
+      if (tabId === 'coops' && window._mgmtCoopData) {
+        renderCoopManagement(window._mgmtCoopData);
+      }
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    // ==============================================================
+    // 9. DARK MODE
+    // ==============================================================
+    function getTheme() {
+      return localStorage.getItem('farm-theme') || 'light';
+    }
+
+    function setTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      localStorage.setItem('farm-theme', theme);
+      updateThemeIcon();
+      // Recreate charts with new colors
+      if (tempChartInstance && appState.dashboard) {
+        createCharts(appState.dashboard);
+        createOverviewCharts();
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'light' : 'dark');
+    }
+
+    function updateThemeIcon() {
+      const icon = document.getElementById('themeIcon');
+      const isDark = document.documentElement.classList.contains('dark');
+      icon.className = isDark ? 'fa-solid fa-sun' : 'fa-regular fa-moon';
+    }
+
+    // Init theme
+    setTheme(getTheme());
+
+    // ==============================================================
+    // 10. DATE DISPLAY
+    // ==============================================================
+    function updateDate() {
+      const now = new Date();
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('currentDate').textContent = now.toLocaleDateString('vi-VN', options);
+    }
+    updateDate();
+
+    // ==============================================================
+    // 11. API SERVICE LAYER
+    // ==============================================================
+    const API = {
+      BASE: '/api',
+
+      async getDashboard() {
+        const res = await fetch(this.BASE + '/dashboard/public');
+        if (!res.ok) throw new Error('Failed to load dashboard data');
+        return await res.json();
+      },
+
+      async getCoops() {
+        const res = await fetch(this.BASE + '/coops/public');
+        if (!res.ok) throw new Error('Failed to load coops');
+        return await res.json();
+      },
+
+      async getFeedItems() {
+        const res = await fetch(this.BASE + '/warehouse/feed');
+        if (!res.ok) throw new Error('Failed to load feed items');
+        return await res.json();
+      },
+
+      async updateFeedItem(id, quantityKg) {
+        const res = await fetch(this.BASE + '/warehouse/feed/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quantity_kg: quantityKg })
+        });
+        if (!res.ok) throw new Error('Failed to update feed item');
+        return await res.json();
+      },
+
+      async getCoopDevices(coopId) {
+        const res = await fetch(this.BASE + '/coops/public/' + coopId + '/devices');
+        if (!res.ok) throw new Error('Failed to load devices');
+        return await res.json();
+      }
+    };
+
+    // ==============================================================
+    // 12. INITIALIZATION
+    // ==============================================================
+    async function refreshData() {
+      hideError();
+      showSkeletons();
+      try {
+        const [dashboard, feedResult] = await Promise.all([
+          API.getDashboard(),
+          API.getFeedItems()
+        ]);
+        appState.dashboard = dashboard;
+        appState.feedItems = feedResult.items || [];
+
+        renderStats(dashboard);
+        renderAlerts(dashboard.alerts);
+        createCharts(dashboard);
+        renderOverviewCoops();
+        createOverviewCharts();
+
+        window._mgmtCoopData = dashboard.coops || [];
+        renderCoopManagement(window._mgmtCoopData);
+
+        hideSkeletons();
+      } catch (e) {
+        console.error('refreshData error:', e);
+        hideSkeletons();
+        showError('Không thể tải dữ liệu. Vui lòng kiểm tra kết nối đến máy chủ.');
+      }
+    }
+
+    // Initial render
+    refreshData();
+
+    // Auto-refresh every 30 seconds
+    setInterval(refreshData, 30000);
+
+    // ==============================================================
+    // 13. RESPONSIVE CHART RESIZE
+    // ==============================================================
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab && activeTab.id === 'tab-overview') {
+          if (tempChartInstance) tempChartInstance.resize();
+          if (humidChartInstance) humidChartInstance.resize();
+          if (feedChartInstance) feedChartInstance.resize();
+          if (flockChartInstance) flockChartInstance.resize();
         }
-    </script>
+      }, 250);
+    });
 
+    // ==============================================================
+    // 14. COOP MANAGEMENT
+    // ==============================================================
+
+    function getDeviceIcon(type) {
+      const icons = { temperature: 'fa-thermometer-half', humidity: 'fa-tint', fan: 'fa-fan', light: 'fa-lightbulb', feeder: 'fa-utensils', camera: 'fa-video' };
+      return icons[type] || 'fa-wifi';
+    }
+
+    function getDeviceStatusLabel(status) {
+      const map = { online: 'Hoạt động', offline: 'Mất kết nối', error: 'Lỗi', connecting: 'Đang kết nối' };
+      return map[status] || status;
+    }
+
+    function getDeviceStatusColor(status) {
+      const map = { online: 'text-emerald-500', offline: 'text-stone-400', error: 'text-red-500', connecting: 'text-amber-500' };
+      return map[status] || 'text-stone-400';
+    }
+
+    function getDeviceStatusBg(status) {
+      const map = { online: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400', offline: 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400', error: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400', connecting: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' };
+      return map[status] || 'bg-stone-100 text-stone-600';
+    }
+
+    function getCoopBadge(coop) {
+      if (coop.alert) return '<span class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Cảnh báo</span>';
+      if (coop.status === 'active') return '<span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium"><i class="fa-solid fa-check-circle mr-1"></i>Hoạt động</span>';
+      return '<span class="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400 font-medium">Không hoạt động</span>';
+    }
+
+    function renderCoopManagement(coops) {
+      window._mgmtCoopData = coops;
+      if (!document.getElementById('tab-coops').classList.contains('active')) return;
+
+      const container = document.getElementById('coopManagementGrid');
+      const totalCoops = coops.length;
+      const totalChickens = coops.reduce((s, c) => s + c.chickens, 0);
+      const avgTemp = totalCoops > 0 ? (coops.reduce((s, c) => s + c.temp, 0) / totalCoops).toFixed(1) : '--';
+      const avgHumid = totalCoops > 0 ? (coops.reduce((s, c) => s + c.humidity, 0) / totalCoops).toFixed(1) : '--';
+
+      document.getElementById('mgmtTotalCoops').textContent = totalCoops;
+      document.getElementById('mgmtTotalChickens').textContent = formatNumber(totalChickens);
+      document.getElementById('mgmtAvgTemp').textContent = avgTemp;
+      document.getElementById('mgmtAvgHumid').textContent = avgHumid;
+
+      const searchTerm = (document.getElementById('coopSearchInput_mgmt').value || '').toLowerCase().trim();
+      const filtered = searchTerm ? coops.filter(c => c.name.toLowerCase().includes(searchTerm)) : coops;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center py-12 text-stone-400 dark:text-stone-500 col-span-full"><i class="fa-solid fa-warehouse text-4xl mb-3 opacity-30"></i><p>Không tìm thấy chuồng phù hợp</p></div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(coop => {
+        const capPct = Math.round((coop.chickens / coop.capacity) * 100);
+        const barColor = capPct > 95 ? 'bg-red-500' : capPct > 80 ? 'bg-amber-500' : 'bg-emerald-500';
+        const onlineDevices = coop.onlineDeviceCount || (coop.devices ? coop.devices.filter(d => d.status === 'online').length : 0);
+        const totalDevices = coop.deviceCount || (coop.devices ? coop.devices.length : 0);
+
+        return `
+          <div class="coop-mgmt-card" onclick="showCoopDetail(${coop.id})">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h4 class="font-semibold text-stone-800 dark:text-white truncate">${coop.name}</h4>
+                  ${getCoopBadge(coop)}
+                </div>
+                <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1"></i>${coop.location}</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-y-2 gap-x-3 mb-3 text-sm">
+              <div>
+                <span class="text-stone-400 dark:text-stone-500 text-xs">Đàn</span>
+                <p class="font-semibold text-stone-700 dark:text-stone-200">${formatNumber(coop.chickens)} <span class="text-stone-400 font-normal text-xs">/ ${formatNumber(coop.capacity)}</span></p>
+              </div>
+              <div>
+                <span class="text-stone-400 dark:text-stone-500 text-xs">Nhiệt độ</span>
+                <p class="font-semibold text-stone-700 dark:text-stone-200">${coop.temp}°C</p>
+              </div>
+              <div>
+                <span class="text-stone-400 dark:text-stone-500 text-xs">Độ ẩm</span>
+                <p class="font-semibold text-stone-700 dark:text-stone-200">${coop.humidity}%</p>
+              </div>
+              <div>
+                <span class="text-stone-400 dark:text-stone-500 text-xs">Thiết bị</span>
+                <p class="font-semibold text-stone-700 dark:text-stone-200">${onlineDevices}/${totalDevices} <span class="text-stone-400 font-normal text-xs">online</span></p>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-stone-400 dark:text-stone-500">Sức chứa</span>
+                <span class="text-stone-500 dark:text-stone-400 font-medium">${capPct}%</span>
+              </div>
+              <div class="mgmt-mini-bar"><div class="mgmt-mini-bar-fill ${barColor}" style="width:0%"></div></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div class="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                <i class="fa-solid fa-utensils text-amber-500"></i>
+                <span>Thức ăn:</span>
+                <span class="font-medium text-stone-700 dark:text-stone-200">${coop.feedLevel}%</span>
+              </div>
+              <div class="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                <i class="fa-solid fa-droplet text-sky-500"></i>
+                <span>Nước:</span>
+                <span class="font-medium text-stone-700 dark:text-stone-200">${coop.waterLevel}%</span>
+              </div>
+            </div>
+
+            <div class="flex gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-stone-700">
+              <button onclick="event.stopPropagation();showCoopDetail(${coop.id})" class="flex-1 text-xs py-1.5 rounded-lg bg-farm-50 text-farm-600 hover:bg-farm-100 dark:bg-farm-900/20 dark:text-farm-400 dark:hover:bg-farm-900/40 transition font-medium"><i class="fa-solid fa-eye mr-1"></i>Xem chi tiết</button>
+              <button onclick="event.stopPropagation();deleteCoop(${coop.id},'${coop.name}')" class="text-xs py-1.5 px-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition font-medium"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Animate progress bars
+      setTimeout(() => {
+        container.querySelectorAll('.coop-mgmt-card').forEach((card, i) => {
+          const coop = filtered[i];
+          if (!coop) return;
+          const pct = Math.round((coop.chickens / coop.capacity) * 100);
+          const bar = card.querySelector('.mgmt-mini-bar-fill');
+          if (bar) bar.style.width = pct + '%';
+        });
+      }, 200);
+    }
+
+    // ===== Detail Panel =====
+    function showCoopDetail(coopId) {
+      const coop = window._mgmtCoopData.find(c => c.id === coopId);
+      if (!coop) return;
+      window._currentCoopId = coopId;
+      window._cachedDevices = null;
+
+      document.getElementById('detailCoopName').textContent = coop.name + ' - ' + coop.location;
+      document.getElementById('detailCoopBadge').innerHTML = getCoopBadge(coop);
+      document.getElementById('detailCoopSummary').innerHTML = `
+        <span><i class="fa-solid fa-dove text-farm-500 mr-1"></i>${formatNumber(coop.chickens)}/${formatNumber(coop.capacity)}</span>
+        <span><i class="fa-solid fa-temperature-half text-amber-500 mr-1"></i>${coop.temp}°C</span>
+        <span><i class="fa-solid fa-droplet text-sky-500 mr-1"></i>${coop.humidity}%</span>
+      `;
+
+      const content = document.getElementById('detailCoopContent');
+      const capPct = Math.round((coop.chickens / coop.capacity) * 100);
+      const barColor = capPct > 95 ? 'bg-red-500' : capPct > 80 ? 'bg-amber-500' : 'bg-emerald-500';
+
+      content.innerHTML = `
+        <div class="flex items-center justify-between">${getCoopBadge(coop)}</div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
+            <p class="text-xs text-stone-400 dark:text-stone-500">Đàn</p>
+            <p class="text-xl font-bold text-stone-800 dark:text-white">${formatNumber(coop.chickens)}</p>
+            <p class="text-xs text-stone-400">/ ${formatNumber(coop.capacity)} con</p>
+          </div>
+          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
+            <p class="text-xs text-stone-400 dark:text-stone-500">Sức chứa</p>
+            <p class="text-xl font-bold text-stone-800 dark:text-white">${capPct}%</p>
+            <div class="h-1.5 bg-stone-200 dark:bg-stone-600 rounded-full mt-1 overflow-hidden">
+              <div class="h-full rounded-full ${barColor}" style="width:${capPct}%"></div>
+            </div>
+          </div>
+          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
+            <p class="text-xs text-stone-400 dark:text-stone-500"><i class="fa-solid fa-temperature-half text-red-500 mr-1"></i>Nhiệt độ</p>
+            <p class="text-xl font-bold text-stone-800 dark:text-white">${coop.temp}<span class="text-sm font-normal text-stone-400">°C</span></p>
+          </div>
+          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
+            <p class="text-xs text-stone-400 dark:text-stone-500"><i class="fa-solid fa-droplet text-sky-500 mr-1"></i>Độ ẩm</p>
+            <p class="text-xl font-bold text-stone-800 dark:text-white">${coop.humidity}<span class="text-sm font-normal text-stone-400">%</span></p>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-semibold text-stone-700 dark:text-stone-200 mb-2"><i class="fa-solid fa-utensils mr-1"></i>Thức ăn & Nước uống</h4>
+          <div class="space-y-2">
+            <div>
+              <div class="flex justify-between text-xs mb-0.5">
+                <span class="text-stone-500 dark:text-stone-400">Thức ăn</span>
+                <span class="text-stone-700 dark:text-stone-200 font-medium">${coop.feedLevel}%</span>
+              </div>
+              <div class="h-2 bg-stone-100 dark:bg-stone-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full ${coop.feedLevel < 40 ? 'bg-red-500' : coop.feedLevel < 60 ? 'bg-amber-500' : 'bg-emerald-500'}" style="width:${coop.feedLevel}%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-0.5">
+                <span class="text-stone-500 dark:text-stone-400">Nước uống</span>
+                <span class="text-stone-700 dark:text-stone-200 font-medium">${coop.waterLevel}%</span>
+              </div>
+              <div class="h-2 bg-stone-100 dark:bg-stone-700 rounded-full overflow-hidden">
+                <div class="h-full rounded-full ${coop.waterLevel < 40 ? 'bg-red-500' : coop.waterLevel < 60 ? 'bg-amber-500' : 'bg-sky-500'}" style="width:${coop.waterLevel}%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-semibold text-stone-700 dark:text-stone-200 mb-2"><i class="fa-solid fa-microchip mr-1"></i>Thiết bị <span id="detailDeviceCount">0</span></h4>
+          <div class="space-y-2" id="detailDeviceList">
+            <p class="text-sm text-stone-400" id="deviceLoadingMsg"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải...</p>
+          </div>
+        </div>
+
+        <button onclick="closeCoopDetail()" class="w-full py-2 rounded-lg text-sm font-medium bg-farm-50 text-farm-600 hover:bg-farm-100 dark:bg-farm-900/20 dark:text-farm-400 dark:hover:bg-farm-900/40 transition">Đóng</button>
+      `;
+
+      document.getElementById('coopDetailOverlay').classList.remove('hidden');
+      document.getElementById('coopDetailPanel').classList.remove('hidden');
+
+      switchCoopTab('overview');
+
+      // Fetch devices on demand
+      API.getCoopDevices(coopId).then(devices => {
+        window._cachedDevices = devices;
+        const listEl = document.getElementById('detailDeviceList');
+        const countEl = document.getElementById('detailDeviceCount');
+        if (!listEl) return;
+        if (countEl) countEl.textContent = devices.length;
+        if (!devices || devices.length === 0) {
+          listEl.innerHTML = '<p class="text-sm text-stone-400">Không có thiết bị</p>';
+          return;
+        }
+        listEl.innerHTML = devices.map(d => `
+          <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-700/50">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid ${getDeviceIcon(d.type)} text-farm-500 w-4 text-center"></i>
+              <span class="text-sm text-stone-700 dark:text-stone-200">${d.name}</span>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full ${getDeviceStatusBg(d.status)}">${getDeviceStatusLabel(d.status)}</span>
+          </div>
+        `).join('');
+      }).catch(e => {
+        console.error('Failed to load devices:', e);
+        const listEl = document.getElementById('detailDeviceList');
+        if (listEl) listEl.innerHTML = '<p class="text-sm text-red-500">Không thể tải thiết bị</p>';
+      });
+    }
+
+    function closeCoopDetail() {
+      document.getElementById('coopDetailOverlay').classList.add('hidden');
+      document.getElementById('coopDetailPanel').classList.add('hidden');
+    }
+
+    // ==============================================================
+    // 15. COOP TAB SWITCHING
+    // ==============================================================
+    function switchCoopTab(tabId) {
+      document.querySelectorAll('.coop-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.coopTab === tabId));
+      const paneMap = { overview: 'coopTabOverview', devices: 'coopTabDevices', camera: 'coopTabCamera' };
+      Object.values(paneMap).forEach(id => document.getElementById(id).classList.toggle('active', id === paneMap[tabId]));
+      if (tabId === 'devices' && window._currentCoopId) renderCoopDevices(window._currentCoopId);
+      if (tabId === 'camera' && window._currentCoopId) renderCoopCamera(window._currentCoopId);
+    }
+
+    function getDetailDeviceStatus(status, isActive) {
+      const ia = (isActive === true || isActive === 1);
+      if (!ia) return { class: 'waiting', label: 'Đang chờ' };
+      if (status === 'online' || status === 'connected') return { class: 'active', label: 'Đang hoạt động' };
+      if (status === 'connecting' || status === 'pending') return { class: 'connecting', label: 'Đang kết nối' };
+      return { class: 'error', label: 'Lỗi' };
+    }
+
+    // ==============================================================
+    // 15a. DEVICE TAB: RENDER
+    // ==============================================================
+    function renderCoopDevices(coopId) {
+      const container = document.getElementById('detailDeviceListContainer');
+      const donutContainer = document.getElementById('deviceDonutContainer');
+      if (!container) return;
+
+      container.innerHTML = '<p class="text-sm text-stone-400 text-center py-8"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải thiết bị...</p>';
+
+      const render = (devices) => {
+        renderDeviceDonut(devices);
+        if (!devices || devices.length === 0) {
+          container.innerHTML = '<div class="text-center py-8 text-stone-400"><i class="fa-solid fa-microchip text-3xl mb-2 opacity-30"></i><p class="text-sm">Chuồng này chưa có thiết bị</p></div>';
+          return;
+        }
+        container.innerHTML = devices.map(d => {
+          const s = getDetailDeviceStatus(d.status, d.is_active);
+          return `
+            <div class="device-card-detail status-${s.class}">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <span class="status-dot-detail ${s.class}"></span>
+                  <span class="text-sm font-medium text-stone-700 dark:text-stone-200">${d.name || 'Thiết bị ' + d.id}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
+                  <span><i class="fa-solid fa-battery-full mr-1"></i>${d.battery || 100}%</span>
+                  <span><i class="fa-solid ${getDeviceIcon(d.type)} mr-1"></i>${s.label}</span>
+                  <span class="text-stone-400">${d.type || 'unknown'}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  ${d.is_active === false || d.status === 'online' ? `
+                    <button class="device-toggle-btn ${d.is_active ? 'on' : 'off'}" data-device-status="${d.status}" onclick="toggleDevice(${d.id}, this)">${d.is_active ? 'Tắt' : 'Bật'}</button>
+                  ` : ''}
+                  <button class="device-delete-btn" onclick="showDeleteConfirm(${d.id}, '${(d.name || 'Thiết bị ' + d.id).replace(/'/g, "\\'")}')"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      if (window._cachedDevices) {
+        render(window._cachedDevices);
+        return;
+      }
+      API.getCoopDevices(coopId).then(devices => {
+        window._cachedDevices = devices;
+        render(devices);
+      }).catch(() => {
+        container.innerHTML = '<p class="text-sm text-red-500 text-center py-8"><i class="fa-solid fa-circle-exclamation mr-1"></i>Không thể tải thiết bị</p>';
+        if (donutContainer) donutContainer.style.display = 'none';
+      });
+    }
+
+    // ==============================================================
+    // 15b. DEVICE TAB: DONUT CHART
+    // ==============================================================
+    function renderDeviceDonut(devices) {
+      const container = document.getElementById('deviceDonutContainer');
+      const svg = document.getElementById('deviceDonutSvg');
+      const totalEl = document.getElementById('deviceDonutTotal');
+      const legend = document.getElementById('deviceDonutLegend');
+      if (!container || !svg || !totalEl || !legend) return;
+      if (!devices || devices.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+      container.style.display = 'flex';
+      totalEl.textContent = devices.length;
+
+      const stats = {
+        active: devices.filter(d => (d.is_active === true || d.is_active === 1) && (d.status === 'online' || d.status === 'connected')).length,
+        connecting: devices.filter(d => (d.is_active === true || d.is_active === 1) && (d.status === 'connecting' || d.status === 'pending')).length,
+        error: devices.filter(d => (d.is_active === true || d.is_active === 1) && d.status !== 'online' && d.status !== 'connected' && d.status !== 'connecting' && d.status !== 'pending').length,
+        waiting: devices.filter(d => d.is_active === false || d.is_active === 0).length
+      };
+
+      const total = devices.length;
+      const circumference = 2 * Math.PI * 70;
+      let offset = 0;
+      const defs = [
+        { key: 'active', color: '#22c55e', label: 'Đang hoạt động' },
+        { key: 'connecting', color: '#f59e0b', label: 'Đang kết nối' },
+        { key: 'error', color: '#ef4444', label: 'Lỗi' },
+        { key: 'waiting', color: '#9ca3af', label: 'Đang chờ' }
+      ];
+
+      let svgC = '', legC = '';
+      defs.forEach(def => {
+        if (stats[def.key] > 0) {
+          const dash = (stats[def.key] / total) * circumference;
+          svgC += `<circle class="donut-segment-detail" cx="100" cy="100" r="70" fill="none" stroke="${def.color}" stroke-width="20" stroke-dasharray="${dash} ${circumference}" stroke-dashoffset="${-offset}" data-segment="${def.key}" data-name="${def.label}" data-count="${stats[def.key]}" data-percent="${Math.round((stats[def.key]/total)*100)}"></circle>`;
+          legC += `<div class="donut-legend-item-detail" data-segment="${def.key}"><span class="donut-legend-dot-detail" style="background:${def.color};"></span><span>${def.label} (${stats[def.key]})</span></div>`;
+          offset += dash;
+        }
+      });
+      svg.innerHTML = svgC + '<circle cx="100" cy="100" r="52" fill="white"></circle>';
+      legend.innerHTML = legC || '<span class="text-xs text-stone-400">Không có dữ liệu</span>';
+
+      const tooltip = document.getElementById('deviceDonutTooltip');
+      svg.querySelectorAll('.donut-segment-detail').forEach(seg => {
+        seg.addEventListener('mouseenter', function(e) {
+          tooltip.querySelector('.tooltip-name-detail').textContent = this.getAttribute('data-name');
+          tooltip.querySelector('.tooltip-percent-detail').textContent = this.getAttribute('data-percent') + '% (' + this.getAttribute('data-count') + ')';
+          tooltip.querySelector('.tooltip-percent-detail').style.color = this.getAttribute('stroke');
+          tooltip.classList.add('show');
+          const r = this.getBoundingClientRect();
+          tooltip.style.left = (r.left + r.width / 2 - 50) + 'px';
+          tooltip.style.top = (r.top - 50) + 'px';
+        });
+        seg.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+      });
+      document.querySelectorAll('#deviceDonutLegend .donut-legend-item-detail').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+          const segType = this.getAttribute('data-segment');
+          svg.querySelectorAll('.donut-segment-detail').forEach(seg => { if (seg.getAttribute('data-segment') === segType) { seg.style.strokeWidth = '26'; seg.style.filter = 'brightness(1.15)'; } });
+        });
+        item.addEventListener('mouseleave', function() {
+          svg.querySelectorAll('.donut-segment-detail').forEach(seg => { seg.style.strokeWidth = '20'; seg.style.filter = 'none'; });
+        });
+      });
+    }
+
+    // ==============================================================
+    // 15c. DEVICE TAB: TOGGLE
+    // ==============================================================
+    async function toggleDevice(deviceId, btn) {
+      const dStatus = btn ? btn.getAttribute('data-device-status') : '';
+      if (dStatus === 'connecting' || dStatus === 'pending') {
+        showToastNotification('Thiết bị đang kết nối, vui lòng thử lại sau', 'warning');
+        return;
+      }
+      if (dStatus === 'offline') {
+        showToastNotification('Thiết bị mất kết nối, vui lòng kiểm tra lại', 'error');
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = '...';
+      try {
+        const res = await fetch('/api/devices/public/' + deviceId + '/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        if (res.ok) {
+          window._cachedDevices = null;
+          renderCoopDevices(window._currentCoopId);
+          API.getCoopDevices(window._currentCoopId).then(devices => {
+            window._cachedDevices = devices;
+            const listEl = document.getElementById('detailDeviceList');
+            const countEl = document.getElementById('detailDeviceCount');
+            if (listEl && countEl) {
+              countEl.textContent = devices.length;
+              listEl.innerHTML = devices.map(d => `
+                <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-700/50">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid ${getDeviceIcon(d.type)} text-farm-500 w-4 text-center"></i>
+                    <span class="text-sm text-stone-700 dark:text-stone-200">${d.name}</span>
+                  </div>
+                  <span class="text-xs px-2 py-0.5 rounded-full ${getDeviceStatusBg(d.status)}">${getDeviceStatusLabel(d.status)}</span>
+                </div>
+              `).join('');
+            }
+          });
+        } else {
+          showToastNotification('Không thể thay đổi trạng thái thiết bị', 'error');
+          btn.disabled = false;
+        }
+      } catch (e) {
+        console.error('Toggle error:', e);
+        showToastNotification('Lỗi kết nối đến máy chủ', 'error');
+        btn.disabled = false;
+      }
+    }
+
+    // ==============================================================
+    // 15d. DEVICE TAB: DELETE
+    // ==============================================================
+    let _pendingDeleteDeviceId = null;
+
+    function showDeleteConfirm(deviceId, deviceName) {
+      _pendingDeleteDeviceId = deviceId;
+      document.getElementById('deleteDeviceName').textContent = deviceName;
+      document.getElementById('deleteDeviceModal').classList.remove('hidden');
+    }
+
+    function hideDeleteDeviceModal() {
+      document.getElementById('deleteDeviceModal').classList.add('hidden');
+      _pendingDeleteDeviceId = null;
+    }
+
+    async function confirmDeleteDevice() {
+      if (!_pendingDeleteDeviceId) return;
+      const id = _pendingDeleteDeviceId;
+      hideDeleteDeviceModal();
+      try {
+        const res = await fetch('/api/coops/public/' + window._currentCoopId + '/devices/' + id, { method: 'DELETE' });
+        if (res.ok || res.status === 204) {
+          window._cachedDevices = null;
+          renderCoopDevices(window._currentCoopId);
+          showToastNotification('Đã xóa thiết bị thành công', 'success');
+        } else {
+          showToastNotification('Không thể xóa thiết bị', 'error');
+        }
+      } catch (e) {
+        console.error('Delete error:', e);
+        showToastNotification('Lỗi kết nối đến máy chủ', 'error');
+      }
+    }
+
+    // ==============================================================
+    // 15e. DEVICE TAB: ADD
+    // ==============================================================
+    function showAddDeviceModal() {
+      document.getElementById('addDeviceModal').classList.remove('hidden');
+      document.getElementById('selectedCount').textContent = 'Đã chọn: 0 thiết bị';
+      document.getElementById('searchDeviceInput').value = '';
+      document.getElementById('unconnectedDeviceList').innerHTML = '<p class="text-sm text-stone-400 text-center py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải...</p>';
+      fetch('/api/devices/public/unconnected/available').then(r => r.json()).then(data => {
+        window._unconnectedDevices = data.value || data || [];
+        renderUnconnectedDevices(window._unconnectedDevices);
+      }).catch(() => {
+        document.getElementById('unconnectedDeviceList').innerHTML = '<p class="text-sm text-red-500 text-center py-4">Không thể tải danh sách thiết bị</p>';
+      });
+    }
+
+    function hideAddDeviceModal() {
+      document.getElementById('addDeviceModal').classList.add('hidden');
+    }
+
+    function renderUnconnectedDevices(devices) {
+      const container = document.getElementById('unconnectedDeviceList');
+      if (!container) return;
+      if (!devices || devices.length === 0) {
+        container.innerHTML = '<p class="text-sm text-stone-400 text-center py-4">Không có thiết bị nào đang chờ kết nối</p>';
+        return;
+      }
+      container.innerHTML = devices.map(d => `
+        <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700/50 cursor-pointer transition">
+          <input type="checkbox" class="unconnected-device-checkbox w-4 h-4 rounded border-stone-300 text-farm-500 focus:ring-farm-500" data-device-id="${d.id}" onchange="updateSelectedCount()">
+          <div>
+            <p class="text-sm font-medium text-stone-700 dark:text-stone-200">${d.name || 'Thiết bị ' + d.id}</p>
+            <p class="text-xs text-stone-400">${d.type || 'unknown'} · ${d.mac_address || ''}</p>
+          </div>
+        </label>
+      `).join('');
+    }
+
+    function updateSelectedCount() {
+      const el = document.getElementById('selectedCount');
+      if (el) el.textContent = 'Đã chọn: ' + document.querySelectorAll('.unconnected-device-checkbox:checked').length + ' thiết bị';
+    }
+
+    async function addSelectedDevices() {
+      const ids = Array.from(document.querySelectorAll('.unconnected-device-checkbox:checked')).map(cb => parseInt(cb.dataset.deviceId));
+      if (ids.length === 0) { showToastNotification('Vui lòng chọn ít nhất một thiết bị', 'warning'); return; }
+      let success = 0, fail = 0;
+      for (const deviceId of ids) {
+        try {
+          const res = await fetch('/api/devices/public/attach-to-coop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ device_id: deviceId, coop_id: window._currentCoopId }) });
+          if (res.ok) success++; else fail++;
+        } catch (e) { fail++; }
+      }
+      hideAddDeviceModal();
+      showToastNotification(fail === 0 ? 'Đã thêm ' + success + ' thiết bị thành công!' : 'Đã thêm ' + success + ' thiết bị. ' + fail + ' thất bại.', fail === 0 ? 'success' : 'warning');
+      window._cachedDevices = null;
+      renderCoopDevices(window._currentCoopId);
+    }
+
+    // Search filter for unconnected devices
+    document.addEventListener('input', function(e) {
+      if (e.target.id === 'searchDeviceInput') {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('#unconnectedDeviceList label').forEach(lbl => {
+          lbl.style.display = lbl.textContent.toLowerCase().includes(term) ? 'flex' : 'none';
+        });
+      }
+    });
+
+    // ==============================================================
+    // 15f. CAMERA TAB
+    // ==============================================================
+    function renderCoopCamera(coopId) {
+      const container = document.getElementById('detailCameraContent');
+      if (!container) return;
+      container.innerHTML = '<p class="text-sm text-stone-400 text-center py-8"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang tải camera...</p>';
+
+      const render = (devices) => {
+        const cameras = (devices || []).filter(d => d.type === 'camera');
+        if (cameras.length === 0) {
+          container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 text-stone-400 dark:text-stone-500">
+              <div class="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-700/50 flex items-center justify-center mb-4">
+                <i class="fa-solid fa-video text-3xl opacity-40"></i>
+              </div>
+              <p class="text-sm">Chuồng này chưa có camera</p>
+              <span class="text-xs px-3 py-1 rounded-full bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400 mt-3 font-medium">Chưa được trang bị</span>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-semibold text-stone-700 dark:text-stone-200">
+              <i class="fa-solid fa-video text-farm-500 mr-1.5"></i>Camera (${cameras.length})
+            </h4>
+            <button onclick="renderCoopCamera(window._currentCoopId)" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-stone-100 text-stone-600 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-400 dark:hover:bg-stone-600 transition">
+              <i class="fa-solid fa-rotate"></i> Làm mới
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            ${cameras.map(cam => {
+              const online = cam.status === 'online' || cam.status === 'connected';
+              const connecting = cam.status === 'connecting' || cam.status === 'pending';
+              const sClass = online ? 'status-online' : (connecting ? 'status-connecting' : 'status-offline');
+              const sText = online ? 'Trực tiếp' : (connecting ? 'Đang kết nối...' : 'Mất tín hiệu');
+              return `
+                <div class="camera-card-detail ${sClass}">
+                  <div class="camera-card-placeholder">
+                    <i class="fa-solid ${online ? 'fa-video' : 'fa-video-slash'}"></i>
+                    <span>${sText}</span>
+                  </div>
+                  <div class="camera-card-footer">
+                    <span class="name">${cam.name}</span>
+                    ${online ? '<span class="live-badge"><span class="dot"></span>LIVE</span>' : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      };
+
+      if (window._cachedDevices) {
+        render(window._cachedDevices);
+        return;
+      }
+      API.getCoopDevices(coopId).then(devices => {
+        window._cachedDevices = devices;
+        render(devices);
+      }).catch(() => {
+        container.innerHTML = '<p class="text-sm text-red-500 text-center py-8"><i class="fa-solid fa-circle-exclamation mr-1"></i>Không thể tải dữ liệu camera</p>';
+      });
+    }
+
+    // ==============================================================
+    // 15g. TOAST NOTIFICATION
+    // ==============================================================
+    function showToastNotification(message, type) {
+      const toast = document.createElement('div');
+      toast.textContent = message;
+      toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 20px;border-radius:8px;color:white;font-size:14px;font-weight:500;z-index:99999;animation:fadeIn 0.2s ease;background:' + ({ success: '#22c55e', error: '#ef4444', warning: '#f59e0b', info: '#3b82f6' }[type] || '#3b82f6');
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===== Search =====
+    document.getElementById('coopSearchInput_mgmt').addEventListener('input', function() {
+      document.getElementById('coopSearchClear_mgmt').classList.toggle('hidden', this.value.length === 0);
+      if (window._mgmtCoopData) renderCoopManagement(window._mgmtCoopData);
+    });
+
+    document.getElementById('coopSearchClear_mgmt').addEventListener('click', function() {
+      document.getElementById('coopSearchInput_mgmt').value = '';
+      this.classList.add('hidden');
+      if (window._mgmtCoopData) renderCoopManagement(window._mgmtCoopData);
+    });
+
+    // ===== Modal =====
+    function showAddCoopModal() {
+      document.getElementById('addCoopModal').classList.remove('hidden');
+      document.getElementById('newCoopName').focus();
+    }
+
+    function hideAddCoopModal() {
+      document.getElementById('addCoopModal').classList.add('hidden');
+      document.getElementById('addCoopForm').reset();
+    }
+
+    function saveNewCoop(event) {
+      event.preventDefault();
+      const name = document.getElementById('newCoopName').value.trim();
+      const chickens = parseInt(document.getElementById('newCoopChickens').value) || 0;
+      const capacity = parseInt(document.getElementById('newCoopCapacity').value) || 0;
+      const location = document.getElementById('newCoopLocation').value.trim() || 'Khu mới';
+
+      if (!name) { alert('Vui lòng nhập tên chuồng'); return; }
+      if (chickens > capacity) { alert('Số lượng gà không được vượt quá sức chứa'); return; }
+
+      const existingIds = (window._mgmtCoopData || []).map(c => c.id);
+      const newId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : Date.now();
+      const newCoop = {
+        id: newId, name, location, chickens, capacity,
+        temp: (28 + Math.random() * 7).toFixed(1),
+        humidity: Math.round(60 + Math.random() * 20),
+        feedLevel: Math.round(50 + Math.random() * 50),
+        waterLevel: Math.round(50 + Math.random() * 50),
+        status: 'active', alert: false
+      };
+
+      if (!window._mgmtCoopData) window._mgmtCoopData = [];
+      window._mgmtCoopData.unshift(newCoop);
+      hideAddCoopModal();
+      renderCoopManagement(window._mgmtCoopData);
+    }
+
+    function deleteCoop(id, name) {
+      if (!confirm('Bạn có chắc muốn xóa ' + name + '? Thao tác này chỉ ảnh hưởng trên giao diện.')) return;
+      if (!window._mgmtCoopData) return;
+      window._mgmtCoopData = window._mgmtCoopData.filter(c => c.id !== id);
+      renderCoopManagement(window._mgmtCoopData);
+    }
+
+    console.log('🐔 ChickenFarm Dashboard initialized');
+    console.log('ℹ️  Connected to backend API at ' + API.BASE);
+  </script>
 </body>
-
 </html>
