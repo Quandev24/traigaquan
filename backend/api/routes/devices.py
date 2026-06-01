@@ -215,6 +215,43 @@ def toggle_public_device(device_id):
     }), 200
 
 
+@devices_bp.route('/public/<int:device_id>', methods=['DELETE'])
+def delete_public_device(device_id):
+    """
+    Xóa thiết bị (Không cần auth - cho demo).
+    
+    Xóa thiết bị sẽ đồng thời xóa các liên kết trong CoopDevice.
+    
+    Args:
+        device_id (int): ID của thiết bị
+        
+    Returns:
+        200: Thông báo thành công
+        404: Không tìm thấy thiết bị
+    """
+    device = db.session.get(Device, device_id)
+    if not device:
+        return jsonify({'error': 'Device not found'}), 404
+    
+    # Lấy danh sách chuồng trước khi xóa
+    coop_devices = CoopDevice.query.filter_by(device_id=device_id).all()
+    coop_ids = [cd.coop_id for cd in coop_devices]
+    
+    # Xóa các liên kết với chuồng trước
+    CoopDevice.query.filter_by(device_id=device_id).delete()
+    # Xóa thiết bị
+    db.session.delete(device)
+    db.session.commit()
+    
+    # Broadcast update
+    for coop_id in coop_ids:
+        broadcast_coop_update(coop_id)
+    broadcast_device_update(device_id)
+    broadcast_dashboard_update()
+    
+    return jsonify({'message': 'Device deleted'}), 200
+
+
 @devices_bp.route('/public/add-to-coop', methods=['POST'])
 def add_device_to_coop():
     """

@@ -260,8 +260,8 @@ def get_stream_url(device_id):
     if not device:
         return jsonify({'error': 'Camera not found'}), 404
     
-    # Mô phỏng stream URL (thay bằng actual camera stream URL)
-    stream_url = f'rtsp://camera-{device_id}.local:8554/stream'
+    # Lấy đường dẫn video từ video_path.txt
+    stream_url = read_video_path() or ''
     
     return jsonify({
         'device_id': device_id,
@@ -406,6 +406,13 @@ def get_video_paths():
     return jsonify({'video_paths': paths}), 200
 
 
+@camera_bp.route('/video-paths-public', methods=['GET'])
+def get_video_paths_public():
+    """Public endpoint — đọc video paths từ file, không cần JWT."""
+    paths = read_video_paths()
+    return jsonify({'video_paths': paths}), 200
+
+
 @camera_bp.route('/video-path', methods=['PUT'])
 @jwt_required()
 def update_video_path():
@@ -520,6 +527,9 @@ def serve_video():
         response = Response(generate_full(), mimetype=mime, status=200)
         response.headers['Content-Length'] = file_size
         response.headers['Accept-Ranges'] = 'bytes'
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
         return response
 
     # Parse Range header: "bytes=start-end"
@@ -554,6 +564,9 @@ def serve_video():
     response.headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
     response.headers['Content-Length'] = content_length
     response.headers['Accept-Ranges'] = 'bytes'
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
     return response
 
 

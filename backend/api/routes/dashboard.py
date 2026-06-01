@@ -13,12 +13,12 @@ Dữ liệu được tổng hợp từ nhiều bảng: Coop, Device, Environment
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy import func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC, date
 import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from models import Coop, Device, CoopDevice, Environment, Alert, WarehouseInventory, db
+from models import Coop, Device, CoopDevice, Environment, Alert, WarehouseInventory, FeedConsumption, db
 
 # Tạo Blueprint cho routes dashboard
 # URL: /api/dashboard
@@ -43,7 +43,7 @@ def get_public_dashboard():
     Returns:
         200: Dashboard data object
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # --- Thống kê cơ bản ---
     coops = Coop.query.filter_by(deleted=False).all()
@@ -118,11 +118,29 @@ def get_public_dashboard():
     temp_trend = f'+{temp_diff}°C' if temp_diff >= 0 else f'{temp_diff}°C'
     humid_trend = f'+{humid_diff}%' if humid_diff >= 0 else f'{humid_diff}%'
 
-    # Chicken trend (so sánh với tổng current_count trung bình 7 ngày trước - approximated)
-    chicken_trend = '+3.2%'  # Simplified — could compute from historical flocks
+    # Chicken trend (ước lượng từ FeedConsumption: so sánh 7 ngày gần vs 7 ngày trước)
+    today = date.today()
+    last_7_start = today - timedelta(days=7)
+    prev_7_start = today - timedelta(days=14)
+    
+    last_7_consumption = db.session.query(func.sum(FeedConsumption.quantity_kg)).filter(
+        FeedConsumption.recorded_date >= last_7_start
+    ).scalar() or 0
+    
+    prev_7_consumption = db.session.query(func.sum(FeedConsumption.quantity_kg)).filter(
+        FeedConsumption.recorded_date >= prev_7_start,
+        FeedConsumption.recorded_date < last_7_start
+    ).scalar() or 0
+    
+    if prev_7_consumption > 0:
+        chicken_change = ((last_7_consumption - prev_7_consumption) / prev_7_consumption) * 100
+        chicken_trend = f'+{chicken_change:.1f}%' if chicken_change >= 0 else f'{chicken_change:.1f}%'
+    else:
+        chicken_trend = '+0.0%'
 
     # --- Dữ liệu cảnh báo ---
     alerts_list = Alert.query.filter_by(deleted=False, is_resolved=False).order_by(Alert.created_at.desc()).limit(10).all()
+    alert_coop_ids = set(a.coop_id for a in alerts_list)
     alerts_data = []
     for a in alerts_list:
         coop_name = Coop.query.filter_by(id=a.coop_id).first().name if a.coop_id else 'Hệ thống'
@@ -157,10 +175,29 @@ def get_public_dashboard():
             'feedLevel': round(env.feed_level, 1) if env else 0,
             'waterLevel': round(env.water_level, 1) if env else 0,
             'status': coop.status,
-            'alert': bool(alerts_list),
+            'alert': coop.id in alert_coop_ids,
             'deviceCount': device_total,
             'onlineDeviceCount': device_online
         })
+
+    # Feed trend (từ FeedConsumption: so sánh lượng tiêu thụ 14 ngày gần vs 14 ngày trước)
+    last_14_start = today - timedelta(days=14)
+    prev_14_start = today - timedelta(days=28)
+    
+    last_14_consumption = db.session.query(func.sum(FeedConsumption.quantity_kg)).filter(
+        FeedConsumption.recorded_date >= last_14_start
+    ).scalar() or 0
+    
+    prev_14_consumption = db.session.query(func.sum(FeedConsumption.quantity_kg)).filter(
+        FeedConsumption.recorded_date >= prev_14_start,
+        FeedConsumption.recorded_date < last_14_start
+    ).scalar() or 0
+    
+    if prev_14_consumption > 0:
+        feed_change = ((last_14_consumption - prev_14_consumption) / prev_14_consumption) * 100
+        feed_trend = f'+{feed_change:.1f}%' if feed_change >= 0 else f'{feed_change:.1f}%'
+    else:
+        feed_trend = '+0.0%'
 
     return jsonify({
         'totalChickens': total_chickens,
@@ -171,7 +208,7 @@ def get_public_dashboard():
         'chickenTrend': chicken_trend,
         'tempTrend': temp_trend,
         'humidTrend': humid_trend,
-        'feedTrend': '-8.0%',
+        'feedTrend': feed_trend,
         'temperatureHistory': temp_history,
         'humidityHistory': humid_history,
         'timeLabels': time_labels,
@@ -273,8 +310,9 @@ def get_dashboard():
         'avg_temperature': round(avg_temp, 1),
         'avg_humidity': round(avg_humid, 1),
         'coops': coop_stats,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now(UTC).isoformat()
     }), 200
+
 
 
 @dashboard_bp.route('/stats', methods=['GET'])

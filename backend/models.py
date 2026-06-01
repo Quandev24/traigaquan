@@ -529,3 +529,28 @@ class VideoRecording(db.Model):
 
     def __repr__(self):
         return f'<VideoRecording {self.name} ({self.source_type})>'
+
+
+class WarehouseInventory(db.Model):
+    __tablename__ = 'warehouse_inventory'
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_name = db.Column(db.String(100), nullable=False)
+    item_type = db.Column(db.String(50), default='feed')
+    quantity_kg = db.Column(db.Float, default=0)
+    unit = db.Column(db.String(20), default='kg')
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'item_name': self.item_name,
+            'item_type': self.item_type,
+            'quantity_kg': self.quantity_kg,
+            'unit': self.unit,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+    def __repr__(self):
+        return f'<WarehouseInventory {self.item_name}>'
