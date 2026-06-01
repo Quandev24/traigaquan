@@ -247,7 +247,8 @@ class Device(db.Model):
             'battery': self.battery,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'coop_id': self.coops[0].id if self.coops else None
+            'coop_id': self.coops[0].id if self.coops else None,
+            'coop_name': self.coops[0].name if self.coops else None
         }
     
     def __repr__(self):
@@ -554,3 +555,31 @@ class WarehouseInventory(db.Model):
 
     def __repr__(self):
         return f'<WarehouseInventory {self.item_name}>'
+
+
+class FeedConsumption(db.Model):
+    __tablename__ = 'feed_consumption'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    feed_item_id = db.Column(db.Integer, db.ForeignKey('warehouse_inventory.id'), nullable=False)
+    feed_item_category = db.Column(db.String(20), nullable=True)
+    quantity_kg = db.Column(db.Float, nullable=False)
+    recorded_date = db.Column(db.Date, nullable=False)
+    deleted = db.Column(db.Boolean, default=False)
+
+    feed_item = db.relationship('WarehouseInventory', backref='consumptions', lazy='joined')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'feed_item_id': self.feed_item_id,
+            'feed_item_name': self.feed_item.item_name if self.feed_item else None,
+            'feed_item_category': self.feed_item_category or (self.feed_item.item_type if self.feed_item else None),
+            'quantity_kg': self.quantity_kg,
+            'recorded_date': self.recorded_date.isoformat() if self.recorded_date else None,
+        }
+
+    def __repr__(self):
+        return f'<FeedConsumption coop={self.coop_id} item={self.feed_item_id}>'

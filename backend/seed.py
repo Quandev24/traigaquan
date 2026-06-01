@@ -15,7 +15,7 @@ Dữ liệu được tạo:
 import sys
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 # Thêm thư mục hiện tại vào path để import được config và models
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +25,7 @@ from flask import Flask
 from config import config
 
 # Import database models và db instance
-from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, WarehouseInventory
+from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, WarehouseInventory, FeedConsumption
 
 
 # =============================================================================
@@ -325,44 +325,99 @@ def seed_coop_devices(coops, coop_devices_map):
 
 def seed_environments(coops):
     """
-    Tạo dữ liệu môi trường cho 24 giờ qua.
+    Tạo dữ liệu môi trường cho 48 giờ qua.
     
-    Mỗi chuồng tạo 20 bản ghi cách nhau khoảng 1.2 giờ.
+    Mỗi chuồng tạo 48 bản ghi (1 bản ghi/giờ).
     Dữ liệu bao gồm:
-    - Nhiệt độ: 22-28°C (biến đổi tự nhiên trong ngày)
-    - Độ ẩm: 55-75%
-    - Mức thức ăn: 30-90%
-    - Mức nước: 40-95%
+    - Nhiệt độ: 26-35°C (dao động ngày-đêm, thấp nhất 2-4h sáng, cao nhất 14-16h)
+    - Độ ẩm: 55-85% (cao hơn vào đêm/sáng, thấp hơn vào trưa chiều)
+    - Mức thức ăn: 15-95% (giảm dần từ sáng đến tối, tăng sau giờ ăn)
+    - Mức nước: 30-95%
     
-    Giá trị được random với một chút biến đổi ngẫu nhiên để mô phỏng
-    dữ liệu cảm biến thực tế.
+    Mỗi chuồng có profile riêng để tạo sự khác biệt:
+    - Chuồng A: nền nhiệt trung bình, ẩm độ trung bình
+    - Chuồng B: nền nhiệt mát hơn 1°C, ẩm hơn 3%
+    - Chuồng C: nền nhiệt trung bình, khô hơn 5%
+    - Chuồng D: nền nhiệt nóng hơn 2°C (gần ngưỡng max)
+    - Chuồng E: mát nhất, ẩm nhất (góc khuất)
     """
-    print("  Đang tạo dữ liệu môi trường (24 bản ghi/ chuồng)...")
+    print("  Đang tạo dữ liệu môi trường (48 bản ghi/ chuồng, pattern ngày-đêm)...")
     
-    # Thời gian hiện tại
     now = datetime.utcnow()
     
+    # Profile nhiệt/ẩm cho từng chuồng (dựa trên tên)
+    coop_profiles = {
+        'Chuồng A': {'temp_base': 31.0, 'temp_offset': 0, 'humid_base': 70, 'humid_offset': 0},
+        'Chuồng B': {'temp_base': 31.0, 'temp_offset': -1.0, 'humid_base': 70, 'humid_offset': 3},
+        'Chuồng C': {'temp_base': 31.0, 'temp_offset': 0.5, 'humid_base': 70, 'humid_offset': -5},
+        'Chuồng D': {'temp_base': 31.0, 'temp_offset': 2.0, 'humid_base': 70, 'humid_offset': 2},
+        'Chuồng E': {'temp_base': 31.0, 'temp_offset': -1.5, 'humid_base': 70, 'humid_offset': 5},
+    }
+    
+    feed_schedule_hours = [6, 12, 18]  # Giờ cho ăn: 6h, 12h, 18h
+    
     for coop in coops:
-        # Tạo 24 bản ghi cho mỗi chuồng (theo giờ trong 24h qua)
-        for i in range(24):
-            # Thời gian ghi nhận: i=0 là 23 giờ trước, i=23 là bây giờ
-            hours_ago = 23 - i
+        profile = coop_profiles.get(coop.name, coop_profiles['Chuồng A'])
+        
+        # Tạo 48 bản ghi (47h trước đến hiện tại)
+        for i in range(48):
+            hours_ago = 47 - i
             recorded_at = now - timedelta(hours=hours_ago)
+            hour_of_day = recorded_at.hour
             
-            # Nhiệt độ: 28-35°C (biến đổi nhẹ theo giờ)
-            base_temp = 31.5
-            hour_variation = (i / 24) * 4 - 2  # -2 đến +2 dao động trong ngày
-            temperature = base_temp + hour_variation + random.uniform(-1.0, 1.0)
-            temperature = max(28.0, min(35.0, temperature))
+            # --- Nhiệt độ: pattern ngày-đêm (sine wave) ---
+            # Cao nhất lúc 14h (hour=14), thấp nhất lúc 3h (hour=3)
+            hour_angle = (hour_of_day - 14) * (2 * 3.14159 / 24)
+            daily_variation = 4.0 * (1 - abs(hour_of_day - 14) / 14) if 0 <= hour_of_day <= 14 else 4.0 * (1 - abs(hour_of_day - 24 - 14) / 14)
+            daily_variation = max(0, min(4, daily_variation))
             
-            # Độ ẩm: 60-80%
-            humidity = random.uniform(60.0, 80.0)
+            temperature = (profile['temp_base']
+                          + profile['temp_offset']
+                          + daily_variation * 0.8  # Swing ±3.2°C từ base
+                          + random.uniform(-0.5, 0.5))
+            temperature = max(24.0, min(38.0, temperature))
             
-            # Feed level: 30-90%
-            feed_level = random.uniform(30.0, 90.0)
+            # --- Độ ẩm: cao vào đêm/sáng, thấp vào trưa/chiều ---
+            humid_hour_factor = (hour_of_day - 14) / 14 if hour_of_day <= 14 else (24 - hour_of_day) / 10
+            humid_variation = 15.0 * humid_hour_factor  # ±15% swing
+            humidity = (profile['humid_base']
+                       + profile['humid_offset']
+                       + humid_variation
+                       + random.uniform(-3.0, 3.0))
+            humidity = max(50.0, min(95.0, humidity))
             
-            # Water level: 40-95%
-            water_level = random.uniform(40.0, 95.0)
+            # --- Feed level: giảm dần từ sáng, tăng mạnh sau giờ ăn ---
+            # Giả sử cho ăn lúc 6h, 12h, 18h → feed_level tăng lên ~90% rồi giảm dần
+            hours_since_last_feed = min(
+                [(hour_of_day - fh) % 24 for fh in feed_schedule_hours],
+                key=lambda x: x if x >= 0 else 24 + x
+            )
+            # Tìm giờ cho ăn gần nhất
+            last_feed_hour = None
+            min_dist = 24
+            for fh in feed_schedule_hours:
+                dist = (hour_of_day - fh) % 24
+                if dist < min_dist:
+                    min_dist = dist
+                    last_feed_hour = fh
+            
+            decay_hours = (hour_of_day - last_feed_hour) % 24
+            if decay_hours <= 2:
+                # Vừa mới cho ăn: feed level cao 75-95%
+                feed_level = random.uniform(75.0, 95.0)
+            elif decay_hours <= 6:
+                # 2-6h sau khi cho ăn: giảm dần 40-80%
+                feed_level = random.uniform(40.0, 80.0)
+            else:
+                # Trước giờ ăn tiếp theo: thấp 15-50%
+                feed_level = random.uniform(15.0, 50.0)
+            
+            # --- Water level: ổn định hơn, giảm chậm ---
+            water_level = 95.0 - (hour_of_day / 24) * 40 + random.uniform(-5.0, 5.0)
+            # Reset cao hơn khi gần giờ cấp nước (giả sử 8h và 16h)
+            if 8 <= hour_of_day <= 10 or 16 <= hour_of_day <= 18:
+                water_level = random.uniform(70.0, 95.0)
+            water_level = max(30.0, min(98.0, water_level))
             
             env = Environment(
                 coop_id=coop.id,
@@ -374,7 +429,7 @@ def seed_environments(coops):
             )
             db.session.add(env)
         
-        print(f"    [OK] {coop.name}: 20 bản ghi môi trường")
+        print(f"    [OK] {coop.name}: 48 bản ghi môi trường")
     
     db.session.commit()
 
@@ -558,19 +613,22 @@ def seed_unconnected_devices():
 
 def seed_warehouse():
     """
-    Tạo dữ liệu kho thức ăn mẫu.
-    
-    Gồm 2-3 loại thức ăn với số lượng 500-3000 kg.
+    Tạo dữ liệu kho thức ăn và thuốc mẫu.
     """
-    print("  Đang tạo dữ liệu kho thức ăn...")
+    print("  Đang tạo dữ liệu kho...")
     
-    feed_items = [
-        {'item_name': 'Cám tổng hợp', 'quantity_kg': 2500},
-        {'item_name': 'Cám viên',     'quantity_kg': 1800},
-        {'item_name': 'Cám gà con',   'quantity_kg': 1200},
+    items = [
+        {'item_name': 'Cám tổng hợp', 'item_type': 'feed', 'quantity_kg': 2500},
+        {'item_name': 'Cám viên',     'item_type': 'feed', 'quantity_kg': 1800},
+        {'item_name': 'Cám gà con',   'item_type': 'feed', 'quantity_kg': 1200},
+        {'item_name': 'Thuốc kháng sinh Enrofloxacin', 'item_type': 'medicine', 'quantity_kg': 50},
+        {'item_name': 'Vaccine Newcastle',              'item_type': 'medicine', 'quantity_kg': 20},
+        {'item_name': 'Thuốc sát trùng',               'item_type': 'medicine', 'quantity_kg': 100},
+        {'item_name': 'Vitamin C dạng bột',            'item_type': 'medicine', 'quantity_kg': 30},
+        {'item_name': 'Men tiêu hóa',                  'item_type': 'medicine', 'quantity_kg': 40},
     ]
     
-    for item in feed_items:
+    for item in items:
         existing = WarehouseInventory.query.filter_by(item_name=item['item_name']).first()
         if existing:
             print(f"    [Bỏ qua] {item['item_name']} đã tồn tại")
@@ -578,14 +636,56 @@ def seed_warehouse():
         
         inv = WarehouseInventory(
             item_name=item['item_name'],
-            item_type='feed',
+            item_type=item['item_type'],
             quantity_kg=item['quantity_kg'],
             unit='kg'
         )
         db.session.add(inv)
-        print(f"    [OK] {item['item_name']}: {item['quantity_kg']} kg")
+        print(f"    [OK] {item['item_name']}: {item['quantity_kg']} kg ({item['item_type']})")
     
     db.session.commit()
+
+
+# =============================================================================
+# SEED DỮ LIỆU TIÊU THỤ (FeedConsumption)
+# =============================================================================
+
+def seed_feed_consumption(coops):
+    """
+    Tạo dữ liệu tiêu thụ thức ăn và thuốc trong 30 ngày qua.
+    Mỗi ngày mỗi chuồng có 3-5 bản ghi tiêu thụ ngẫu nhiên.
+    """
+    from datetime import date, timedelta
+    print("  Đang tạo dữ liệu tiêu thụ (30 ngày)...")
+
+    feed_items = WarehouseInventory.query.filter_by(deleted=False).all()
+    if not feed_items:
+        print("    [Bỏ qua] Không có mặt hàng nào trong kho")
+        return
+
+    today = date.today()
+    records = []
+    for coop in coops:
+        for day_offset in range(30):
+            d = today - timedelta(days=29 - day_offset)
+            # Xu hướng tăng dần: ngày càng về sau, gà càng lớn, ăn càng nhiều
+            growth_factor = 0.5 + (day_offset / 29) * 1.0  # 0.5x → 1.5x
+            num_records = random.randint(3, 5)
+            for _ in range(num_records):
+                item = random.choice(feed_items)
+                # Lượng ăn tăng dần theo ngày
+                base_qty = random.uniform(8.0, 25.0)
+                qty = round(base_qty * growth_factor, 1)
+                records.append(FeedConsumption(
+                    coop_id=coop.id,
+                    feed_item_id=item.id,
+                    feed_item_category=item.item_type,
+                    quantity_kg=qty,
+                    recorded_date=d,
+                ))
+    db.session.add_all(records)
+    db.session.commit()
+    print(f"    [OK] Đã tạo {len(records)} bản ghi tiêu thụ")
 
 
 # =============================================================================
@@ -621,15 +721,26 @@ def seed_alerts(coops):
     ]
     
     # Tạo 3 cảnh báo ngẫu nhiên cho mỗi chuồng
+    now = datetime.utcnow()
     for coop in coops:
-        for _ in range(3):
+        for i in range(3):
             template = random.choice(alert_templates)
+            # Alert không resolved: gần đây hơn (1-24h trước)
+            # Alert đã resolved: xa hơn (12-48h trước)
+            resolved = random.choice([True, False])
+            if resolved:
+                hours_ago = random.uniform(12, 48)
+            else:
+                hours_ago = random.uniform(1, 24)
+            created_at = now - timedelta(hours=hours_ago)
+            
             alert = Alert(
                 coop_id=coop.id,
                 type=template['type'],
                 level=template['level'],
                 message=f"{coop.name}: {template['message']}",
-                is_resolved=random.choice([True, False])  # Ngẫu nhiên đã xử lý hoặc chưa
+                is_resolved=resolved,
+                created_at=created_at
             )
             db.session.add(alert)
     
@@ -657,6 +768,9 @@ def reset_database():
     print("\n[1] Đang xóa dữ liệu cũ...")
     
     # Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoài
+    print("    Xóa FeedConsumption...")
+    FeedConsumption.query.delete()
+
     print("    Xóa VideoRecording...")
     VideoRecording.query.delete()
 
@@ -750,6 +864,10 @@ def run_seed():
         print("\n[7.3] Seed Warehouse...")
         seed_warehouse()
         
+        # Bước 7.4: Seed FeedConsumption
+        print("\n[7.4] Seed FeedConsumption...")
+        seed_feed_consumption(coops)
+        
         # Bước 8: Seed Alerts
         print("\n[8] Seed Alerts...")
         seed_alerts(coops)
@@ -766,6 +884,7 @@ def run_seed():
         print(f"  FeedSchedules: {FeedSchedule.query.count()}")
         print(f"  VideoRecordings: {VideoRecording.query.count()}")
         print(f"  WarehouseInventory: {WarehouseInventory.query.count()}")
+        print(f"  FeedConsumption: {FeedConsumption.query.count()}")
         print(f"  Alerts:       {Alert.query.count()}")
         print("=" * 60)
         
@@ -775,7 +894,7 @@ def run_seed():
         print("  Password: admin123")
 
 
-# =============================================================================
+# ============================================================================= 
 # CHẠY SCRIPT
 # =============================================================================
 
