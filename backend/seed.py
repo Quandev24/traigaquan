@@ -7,15 +7,16 @@ Chạy độc lập với: python seed.py
 Dữ liệu được tạo:
 - 1 tài khoản admin
 - 5 chuồng gà (A, B, C, D, E)
-- 15 thiết bị IoT (3 thiết bị/ chuồng)
-- 100 bản ghi dữ liệu môi trường (20/ chuồng)
-- 15 lịch cho ăn (3/ chuồng)
+- 40 thiết bị IoT (8 thiết bị/chuồng: nhiệt, ẩm, quạt, đèn, feeder, water, 2 camera)
+- 600 bản ghi dữ liệu môi trường (120/chuồng - 4 tháng)
+- 15 lịch cho ăn (3/chuồng)
+- 7 thiết bị chưa kết nối
 """
 
 import sys
 import os
 import random
-from datetime import datetime, timedelta, UTC
+from datetime import datetime, timedelta
 
 # Thêm thư mục hiện tại vào path để import được config và models
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +26,7 @@ from flask import Flask
 from config import config
 
 # Import database models và db instance
-from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, WarehouseInventory, FeedConsumption
+from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, UnconnectedDevice
 
 
 # =============================================================================
@@ -114,10 +115,10 @@ def seed_coops():
     # Danh sách thông tin chuồng (tên, số gà hiện tại, vị trí)
     coop_data = [
         {'name': 'Chuồng A', 'current_count': 480, 'location': 'Tầng 1 - Khu A', 'has_camera': 1},
-        {'name': 'Chuồng B', 'current_count': 450, 'location': 'Tầng 1 - Khu B', 'has_camera': 0},
+        {'name': 'Chuồng B', 'current_count': 450, 'location': 'Tầng 1 - Khu B', 'has_camera': 1},
         {'name': 'Chuồng C', 'current_count': 420, 'location': 'Tầng 2 - Khu A', 'has_camera': 1},
         {'name': 'Chuồng D', 'current_count': 500, 'location': 'Tầng 2 - Khu B', 'has_camera': 1},
-        {'name': 'Chuồng E', 'current_count': 380, 'location': 'Tầng 3 - Khu A', 'has_camera': 0},
+        {'name': 'Chuồng E', 'current_count': 380, 'location': 'Tầng 3 - Khu A', 'has_camera': 1},
     ]
     
     coops = []
@@ -182,109 +183,105 @@ def seed_coops():
 def seed_devices(coops):
     """
     Tạo thiết bị IoT cho mỗi chuồng.
-    
-    Mỗi chuồng được gán:
-    - 01 Cảm biến nhiệt độ (type: temperature)
-    - 01 Cảm biến độ ẩm (type: humidity)
-    - 01 Thiết bị điều khiển (type: fan hoặc light)
-    - 01 Camera (type: camera) - chỉ cho chuồng có has_camera=1
+
+    Mỗi chuồng được gán 8 thiết bị:
+    - 01 Cảm biến nhiệt độ (type: temperature) — online
+    - 01 Cảm biến độ ẩm (type: humidity) — online
+    - 01 Quạt thông gió (type: fan) — online (trừ chuồng D: offline)
+    - 01 Đèn LED (type: light) — online
+    - 01 Máy cho ăn (type: feeder) — online (trừ chuồng C: connecting)
+    - 01 Máy uống (type: water) — online
+    - 02 Camera (type: camera) — online
     """
     print("  Đang tạo thiết bị IoT...")
-    
-    statuses = ['online', 'offline', 'connecting']
-    control_types = ['fan', 'light']
-    
-    # Dictionary lưu danh sách thiết bị theo coop_id
+
+    # Định nghĩa thiết bị cho từng chuồng (theo coop_id)
+    # Mỗi tuple: (type, tên, status)
+    device_defs = {
+        'A': [
+            ('temperature', 'Cảm biến nhiệt A',    'online'),
+            ('humidity',    'Cảm biến ẩm A',       'online'),
+            ('fan',         'Quạt thông gió A',     'online'),
+            ('light',       'Đèn LED A',            'online'),
+            ('feeder',      'Máy cho ăn A',         'online'),
+            ('water',       'Máy uống A',           'online'),
+            ('camera',      'Camera 1 - Chuồng A',  'online'),
+            ('camera',      'Camera 2 - Chuồng A',  'online'),
+        ],
+        'B': [
+            ('temperature', 'Cảm biến nhiệt B',    'online'),
+            ('humidity',    'Cảm biến ẩm B',       'online'),
+            ('fan',         'Quạt thông gió B',     'online'),
+            ('light',       'Đèn LED B',            'online'),
+            ('feeder',      'Máy cho ăn B',         'online'),
+            ('water',       'Máy uống B',           'online'),
+            ('camera',      'Camera 1 - Chuồng B',  'online'),
+            ('camera',      'Camera 2 - Chuồng B',  'online'),
+        ],
+        'C': [
+            ('temperature', 'Cảm biến nhiệt C',    'online'),
+            ('humidity',    'Cảm biến ẩm C',       'online'),
+            ('fan',         'Quạt thông gió C',     'online'),
+            ('light',       'Đèn LED C',            'online'),
+            ('feeder',      'Máy cho ăn C',         'connecting'),  # Đang chờ kết nối
+            ('water',       'Máy uống C',           'online'),
+            ('camera',      'Camera 1 - Chuồng C',  'online'),
+            ('camera',      'Camera 2 - Chuồng C',  'online'),
+        ],
+        'D': [
+            ('temperature', 'Cảm biến nhiệt D',    'online'),
+            ('humidity',    'Cảm biến ẩm D',       'online'),
+            ('fan',         'Quạt thông gió D',     'offline'),     # Lỗi không kết nối được
+            ('light',       'Đèn LED D',            'online'),
+            ('feeder',      'Máy cho ăn D',         'online'),
+            ('water',       'Máy uống D',           'online'),
+            ('camera',      'Camera 1 - Chuồng D',  'online'),
+            ('camera',      'Camera 2 - Chuồng D',  'online'),
+        ],
+        'E': [
+            ('temperature', 'Cảm biến nhiệt E',    'online'),
+            ('humidity',    'Cảm biến ẩm E',       'online'),
+            ('fan',         'Quạt thông gió E',     'online'),
+            ('light',       'Đèn LED E',            'online'),
+            ('feeder',      'Máy cho ăn E',         'online'),
+            ('water',       'Máy uống E',           'online'),
+            ('camera',      'Camera 1 - Chuồng E',  'online'),
+            ('camera',      'Camera 2 - Chuồng E',  'online'),
+        ],
+    }
+
     coop_devices_map = {}
-    device_index = 1
-    all_cameras = []
+    mac_index = 1
 
     for coop in coops:
+        letter = coop.name[-1]
+        devices_for_coop = device_defs.get(letter, [])
         coop_devices_map[coop.id] = []
-        
-        # 1. Cảm biến nhiệt độ
-        temp_device = Device(
-            name=f'Cảm biến nhiệt {coop.name[-1]}',
-            type='temperature',
-            mac_address=f'AA:BB:CC:DD:EE:{str(device_index).zfill(2)}',
-            status=random.choice(statuses),
-            is_active=True,
-            battery=random.randint(60, 100)
-        )
-        db.session.add(temp_device)
-        coop_devices_map[coop.id].append(temp_device)
-        device_index += 1
-        
-        # 2. Cảm biến độ ẩm
-        humid_device = Device(
-            name=f'Cảm biến ẩm {coop.name[-1]}',
-            type='humidity',
-            mac_address=f'AA:BB:CC:DD:EE:{str(device_index).zfill(2)}',
-            status=random.choice(statuses),
-            is_active=True,
-            battery=random.randint(60, 100)
-        )
-        db.session.add(humid_device)
-        coop_devices_map[coop.id].append(humid_device)
-        device_index += 1
-        
-        # 3. Thiết bị điều khiển
-        control_type = random.choice(control_types)
-        control_name = 'Quạt thông gió' if control_type == 'fan' else 'Đèn LED'
-        control_device = Device(
-            name=f'{control_name} {coop.name[-1]}',
-            type=control_type,
-            mac_address=f'AA:BB:CC:DD:EE:{str(device_index).zfill(2)}',
-            status=random.choice(statuses),
-            is_active=True,
-            battery=random.randint(60, 100)
-        )
-        db.session.add(control_device)
-        coop_devices_map[coop.id].append(control_device)
-        device_index += 1
 
-        # 4. Camera (chỉ cho chuồng có has_camera=1)
-        if coop.has_camera:
-            # Camera 1
-            camera_1 = Device(
-                name=f'Camera 1 - {coop.name}',
-                type='camera',
-                mac_address=f'CC:AA:BB:DD:EE:{str(device_index).zfill(2)}',
-                status='online',
-                is_active=True,
-                battery=100
-            )
-            db.session.add(camera_1)
-            coop_devices_map[coop.id].append(camera_1)
-            all_cameras.append(camera_1)
-            device_index += 1
+        for dtype, dname, dstatus in devices_for_coop:
+            mac = f'AA:BB:CC:DD:EE:{str(mac_index).zfill(2)}'
+            is_active = (dstatus != 'pending')
+            battery = 100 if dtype == 'camera' else random.randint(60, 100)
 
-            # Camera 2
-            camera_2 = Device(
-                name=f'Camera 2 - {coop.name}',
-                type='camera',
-                mac_address=f'CC:AA:BB:DD:EE:{str(device_index).zfill(2)}',
-                status='online',
-                is_active=True,
-                battery=100
+            device = Device(
+                name=dname,
+                type=dtype,
+                mac_address=mac,
+                status=dstatus,
+                is_active=is_active,
+                battery=battery
             )
-            db.session.add(camera_2)
-            coop_devices_map[coop.id].append(camera_2)
-            all_cameras.append(camera_2)
-            device_index += 1
-        
-        count = len(coop_devices_map[coop.id])
-        print(f"    [OK] {coop.name}: {count} thiết bị đã tạo")
-    
-    # Điều chỉnh status camera: 1 offline, 1 connecting, còn lại online
-    if all_cameras:
-        random.shuffle(all_cameras)
-        all_cameras[0].status = 'offline'
-        if len(all_cameras) > 1:
-            all_cameras[1].status = 'connecting'
-        for cam in all_cameras[2:]:
-            cam.status = 'online'
-    
+            db.session.add(device)
+            coop_devices_map[coop.id].append(device)
+            mac_index += 1
+
+        # Đảm bảo device lỗi (offline) vẫn có is_active=True
+        for dev in coop_devices_map[coop.id]:
+            if dev.status == 'offline':
+                dev.is_active = True
+
+        print(f"    [OK] {coop.name}: {len(devices_for_coop)} thiết bị")
+
     db.session.commit()
     return coop_devices_map
 
@@ -325,111 +322,48 @@ def seed_coop_devices(coops, coop_devices_map):
 
 def seed_environments(coops):
     """
-    Tạo dữ liệu môi trường cho 48 giờ qua.
+    Tạo dữ liệu môi trường trong 4 tháng (120 ngày).
     
-    Mỗi chuồng tạo 48 bản ghi (1 bản ghi/giờ).
+    Mỗi chuồng tạo 120 bản ghi (1 bản ghi/ngày) trong 4 tháng qua.
     Dữ liệu bao gồm:
-    - Nhiệt độ: 26-35°C (dao động ngày-đêm, thấp nhất 2-4h sáng, cao nhất 14-16h)
-    - Độ ẩm: 55-85% (cao hơn vào đêm/sáng, thấp hơn vào trưa chiều)
-    - Mức thức ăn: 15-95% (giảm dần từ sáng đến tối, tăng sau giờ ăn)
+    - Nhiệt độ: 22-28°C với xu hướng theo mùa
+    - Độ ẩm: 50-80% với biến đổi ngẫu nhiên
+    - Mức thức ăn: 30-95%
     - Mức nước: 30-95%
-    
-    Mỗi chuồng có profile riêng để tạo sự khác biệt:
-    - Chuồng A: nền nhiệt trung bình, ẩm độ trung bình
-    - Chuồng B: nền nhiệt mát hơn 1°C, ẩm hơn 3%
-    - Chuồng C: nền nhiệt trung bình, khô hơn 5%
-    - Chuồng D: nền nhiệt nóng hơn 2°C (gần ngưỡng max)
-    - Chuồng E: mát nhất, ẩm nhất (góc khuất)
     """
-    print("  Đang tạo dữ liệu môi trường (48 bản ghi/ chuồng, pattern ngày-đêm)...")
+    print("  Đang tạo dữ liệu môi trường (120 bản ghi/chuồng - 4 tháng)...")
     
     now = datetime.utcnow()
     
-    # Profile nhiệt/ẩm cho từng chuồng (dựa trên tên)
-    coop_profiles = {
-        'Chuồng A': {'temp_base': 31.0, 'temp_offset': 0, 'humid_base': 70, 'humid_offset': 0},
-        'Chuồng B': {'temp_base': 31.0, 'temp_offset': -1.0, 'humid_base': 70, 'humid_offset': 3},
-        'Chuồng C': {'temp_base': 31.0, 'temp_offset': 0.5, 'humid_base': 70, 'humid_offset': -5},
-        'Chuồng D': {'temp_base': 31.0, 'temp_offset': 2.0, 'humid_base': 70, 'humid_offset': 2},
-        'Chuồng E': {'temp_base': 31.0, 'temp_offset': -1.5, 'humid_base': 70, 'humid_offset': 5},
-    }
-    
-    feed_schedule_hours = [6, 12, 18]  # Giờ cho ăn: 6h, 12h, 18h
-    
     for coop in coops:
-        profile = coop_profiles.get(coop.name, coop_profiles['Chuồng A'])
-        
-        # Tạo 48 bản ghi (47h trước đến hiện tại)
-        for i in range(48):
-            hours_ago = 47 - i
-            recorded_at = now - timedelta(hours=hours_ago)
-            hour_of_day = recorded_at.hour
+        for day_offset in range(120):
+            recorded_at = now - timedelta(days=119 - day_offset)
             
-            # --- Nhiệt độ: pattern ngày-đêm (sine wave) ---
-            # Cao nhất lúc 14h (hour=14), thấp nhất lúc 3h (hour=3)
-            hour_angle = (hour_of_day - 14) * (2 * 3.14159 / 24)
-            daily_variation = 4.0 * (1 - abs(hour_of_day - 14) / 14) if 0 <= hour_of_day <= 14 else 4.0 * (1 - abs(hour_of_day - 24 - 14) / 14)
-            daily_variation = max(0, min(4, daily_variation))
+            # Nhiệt độ dao động theo ngày: mát hơn vào "mùa trước" (120 ngày trước)
+            # Giả lập xu hướng nhiệt độ tăng dần từ 22°C lên 28°C trong 4 tháng
+            base_temp = 22.0 + (day_offset / 120) * 6.0  # 22→28°C
+            temperature = round(base_temp + random.uniform(-2.0, 2.0), 1)
             
-            temperature = (profile['temp_base']
-                          + profile['temp_offset']
-                          + daily_variation * 0.8  # Swing ±3.2°C từ base
-                          + random.uniform(-0.5, 0.5))
-            temperature = max(24.0, min(38.0, temperature))
+            # Độ ẩm: 65% ±15%, ngẫu nhiên nhưng ổn định
+            humidity = round(random.uniform(50.0, 80.0), 1)
             
-            # --- Độ ẩm: cao vào đêm/sáng, thấp vào trưa/chiều ---
-            humid_hour_factor = (hour_of_day - 14) / 14 if hour_of_day <= 14 else (24 - hour_of_day) / 10
-            humid_variation = 15.0 * humid_hour_factor  # ±15% swing
-            humidity = (profile['humid_base']
-                       + profile['humid_offset']
-                       + humid_variation
-                       + random.uniform(-3.0, 3.0))
-            humidity = max(50.0, min(95.0, humidity))
+            # Mức thức ăn: dao động từ 30-95% (giả lập việc bổ sung định kỳ)
+            feed_level = round(random.uniform(30.0, 95.0), 1)
             
-            # --- Feed level: giảm dần từ sáng, tăng mạnh sau giờ ăn ---
-            # Giả sử cho ăn lúc 6h, 12h, 18h → feed_level tăng lên ~90% rồi giảm dần
-            hours_since_last_feed = min(
-                [(hour_of_day - fh) % 24 for fh in feed_schedule_hours],
-                key=lambda x: x if x >= 0 else 24 + x
-            )
-            # Tìm giờ cho ăn gần nhất
-            last_feed_hour = None
-            min_dist = 24
-            for fh in feed_schedule_hours:
-                dist = (hour_of_day - fh) % 24
-                if dist < min_dist:
-                    min_dist = dist
-                    last_feed_hour = fh
-            
-            decay_hours = (hour_of_day - last_feed_hour) % 24
-            if decay_hours <= 2:
-                # Vừa mới cho ăn: feed level cao 75-95%
-                feed_level = random.uniform(75.0, 95.0)
-            elif decay_hours <= 6:
-                # 2-6h sau khi cho ăn: giảm dần 40-80%
-                feed_level = random.uniform(40.0, 80.0)
-            else:
-                # Trước giờ ăn tiếp theo: thấp 15-50%
-                feed_level = random.uniform(15.0, 50.0)
-            
-            # --- Water level: ổn định hơn, giảm chậm ---
-            water_level = 95.0 - (hour_of_day / 24) * 40 + random.uniform(-5.0, 5.0)
-            # Reset cao hơn khi gần giờ cấp nước (giả sử 8h và 16h)
-            if 8 <= hour_of_day <= 10 or 16 <= hour_of_day <= 18:
-                water_level = random.uniform(70.0, 95.0)
-            water_level = max(30.0, min(98.0, water_level))
+            # Mức nước: dao động từ 30-95%
+            water_level = round(random.uniform(30.0, 95.0), 1)
             
             env = Environment(
                 coop_id=coop.id,
-                temperature=round(temperature, 1),
-                humidity=round(humidity, 1),
-                feed_level=round(feed_level, 1),
-                water_level=round(water_level, 1),
+                temperature=temperature,
+                humidity=humidity,
+                feed_level=feed_level,
+                water_level=water_level,
                 recorded_at=recorded_at
             )
             db.session.add(env)
         
-        print(f"    [OK] {coop.name}: 48 bản ghi môi trường")
+        print(f"    [OK] {coop.name}: 120 bản ghi môi trường")
     
     db.session.commit()
 
@@ -562,8 +496,6 @@ def seed_unconnected_devices():
     """
     print("  Đang tạo thiết bị chưa kết nối...")
     
-    from models import Device, UnconnectedDevice
-    
     # Xóa dữ liệu cũ
     UnconnectedDevice.query.delete()
     Device.query.filter(Device.status == 'pending').delete()
@@ -608,87 +540,6 @@ def seed_unconnected_devices():
 
 
 # =============================================================================
-# SEED DỮ LIỆU KHO
-# =============================================================================
-
-def seed_warehouse():
-    """
-    Tạo dữ liệu kho thức ăn và thuốc mẫu.
-    """
-    print("  Đang tạo dữ liệu kho...")
-    
-    items = [
-        {'item_name': 'Cám tổng hợp', 'item_type': 'feed', 'quantity_kg': 2500},
-        {'item_name': 'Cám viên',     'item_type': 'feed', 'quantity_kg': 1800},
-        {'item_name': 'Cám gà con',   'item_type': 'feed', 'quantity_kg': 1200},
-        {'item_name': 'Thuốc kháng sinh Enrofloxacin', 'item_type': 'medicine', 'quantity_kg': 50},
-        {'item_name': 'Vaccine Newcastle',              'item_type': 'medicine', 'quantity_kg': 20},
-        {'item_name': 'Thuốc sát trùng',               'item_type': 'medicine', 'quantity_kg': 100},
-        {'item_name': 'Vitamin C dạng bột',            'item_type': 'medicine', 'quantity_kg': 30},
-        {'item_name': 'Men tiêu hóa',                  'item_type': 'medicine', 'quantity_kg': 40},
-    ]
-    
-    for item in items:
-        existing = WarehouseInventory.query.filter_by(item_name=item['item_name']).first()
-        if existing:
-            print(f"    [Bỏ qua] {item['item_name']} đã tồn tại")
-            continue
-        
-        inv = WarehouseInventory(
-            item_name=item['item_name'],
-            item_type=item['item_type'],
-            quantity_kg=item['quantity_kg'],
-            unit='kg'
-        )
-        db.session.add(inv)
-        print(f"    [OK] {item['item_name']}: {item['quantity_kg']} kg ({item['item_type']})")
-    
-    db.session.commit()
-
-
-# =============================================================================
-# SEED DỮ LIỆU TIÊU THỤ (FeedConsumption)
-# =============================================================================
-
-def seed_feed_consumption(coops):
-    """
-    Tạo dữ liệu tiêu thụ thức ăn và thuốc trong 30 ngày qua.
-    Mỗi ngày mỗi chuồng có 3-5 bản ghi tiêu thụ ngẫu nhiên.
-    """
-    from datetime import date, timedelta
-    print("  Đang tạo dữ liệu tiêu thụ (30 ngày)...")
-
-    feed_items = WarehouseInventory.query.filter_by(deleted=False).all()
-    if not feed_items:
-        print("    [Bỏ qua] Không có mặt hàng nào trong kho")
-        return
-
-    today = date.today()
-    records = []
-    for coop in coops:
-        for day_offset in range(30):
-            d = today - timedelta(days=29 - day_offset)
-            # Xu hướng tăng dần: ngày càng về sau, gà càng lớn, ăn càng nhiều
-            growth_factor = 0.5 + (day_offset / 29) * 1.0  # 0.5x → 1.5x
-            num_records = random.randint(3, 5)
-            for _ in range(num_records):
-                item = random.choice(feed_items)
-                # Lượng ăn tăng dần theo ngày
-                base_qty = random.uniform(8.0, 25.0)
-                qty = round(base_qty * growth_factor, 1)
-                records.append(FeedConsumption(
-                    coop_id=coop.id,
-                    feed_item_id=item.id,
-                    feed_item_category=item.item_type,
-                    quantity_kg=qty,
-                    recorded_date=d,
-                ))
-    db.session.add_all(records)
-    db.session.commit()
-    print(f"    [OK] Đã tạo {len(records)} bản ghi tiêu thụ")
-
-
-# =============================================================================
 # SEED CẢNH BÁO MẪU
 # =============================================================================
 
@@ -721,26 +572,15 @@ def seed_alerts(coops):
     ]
     
     # Tạo 3 cảnh báo ngẫu nhiên cho mỗi chuồng
-    now = datetime.utcnow()
     for coop in coops:
-        for i in range(3):
+        for _ in range(3):
             template = random.choice(alert_templates)
-            # Alert không resolved: gần đây hơn (1-24h trước)
-            # Alert đã resolved: xa hơn (12-48h trước)
-            resolved = random.choice([True, False])
-            if resolved:
-                hours_ago = random.uniform(12, 48)
-            else:
-                hours_ago = random.uniform(1, 24)
-            created_at = now - timedelta(hours=hours_ago)
-            
             alert = Alert(
                 coop_id=coop.id,
                 type=template['type'],
                 level=template['level'],
                 message=f"{coop.name}: {template['message']}",
-                is_resolved=resolved,
-                created_at=created_at
+                is_resolved=random.choice([True, False])  # Ngẫu nhiên đã xử lý hoặc chưa
             )
             db.session.add(alert)
     
@@ -768,14 +608,8 @@ def reset_database():
     print("\n[1] Đang xóa dữ liệu cũ...")
     
     # Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoài
-    print("    Xóa FeedConsumption...")
-    FeedConsumption.query.delete()
-
     print("    Xóa VideoRecording...")
     VideoRecording.query.delete()
-
-    print("    Xóa WarehouseInventory...")
-    WarehouseInventory.query.delete()
 
     print("    Xóa Alert...")
     Alert.query.delete()
@@ -788,6 +622,9 @@ def reset_database():
     
     print("    Xóa CoopDevice...")
     CoopDevice.query.delete()
+
+    print("    Xóa UnconnectedDevice...")
+    UnconnectedDevice.query.delete()
     
     print("    Xóa Device...")
     Device.query.delete()
@@ -852,21 +689,13 @@ def run_seed():
         print("\n[7] Seed FeedSchedules...")
         seed_feed_schedules(coops)
 
-        # Bước 7.1: Seed Video Recordings
-        print("\n[7.1] Seed Video Recordings...")
+        # Bước 7: Seed Video Recordings
+        print("\n[6.1] Seed Video Recordings...")
         seed_video_recordings(coops, devices)
 
-        # Bước 7.2: Seed Unconnected Devices
-        print("\n[7.2] Seed Unconnected Devices...")
+        # Bước 7.1: Seed Unconnected Devices
+        print("\n[7.1] Seed Unconnected Devices...")
         seed_unconnected_devices()
-
-        # Bước 7.3: Seed Warehouse
-        print("\n[7.3] Seed Warehouse...")
-        seed_warehouse()
-        
-        # Bước 7.4: Seed FeedConsumption
-        print("\n[7.4] Seed FeedConsumption...")
-        seed_feed_consumption(coops)
         
         # Bước 8: Seed Alerts
         print("\n[8] Seed Alerts...")
@@ -883,8 +712,6 @@ def run_seed():
         print(f"  Environments: {Environment.query.count()}")
         print(f"  FeedSchedules: {FeedSchedule.query.count()}")
         print(f"  VideoRecordings: {VideoRecording.query.count()}")
-        print(f"  WarehouseInventory: {WarehouseInventory.query.count()}")
-        print(f"  FeedConsumption: {FeedConsumption.query.count()}")
         print(f"  Alerts:       {Alert.query.count()}")
         print("=" * 60)
         
@@ -894,7 +721,7 @@ def run_seed():
         print("  Password: admin123")
 
 
-# ============================================================================= 
+# =============================================================================
 # CHẠY SCRIPT
 # =============================================================================
 

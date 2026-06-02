@@ -72,7 +72,6 @@ camera_bp = Blueprint('camera', __name__)
 
 
 @camera_bp.route('', methods=['GET'])
-@jwt_required()
 def get_cameras():
     """
     Lấy danh sách tất cả camera.
@@ -114,7 +113,6 @@ def get_cameras():
 
 
 @camera_bp.route('/<int:device_id>', methods=['GET'])
-@jwt_required()
 def get_camera(device_id):
     """
     Lấy thông tin chi tiết một camera.
@@ -158,7 +156,6 @@ def get_camera(device_id):
 
 
 @camera_bp.route('/coop/<int:coop_id>', methods=['GET'])
-@jwt_required()
 def get_camera_by_coop(coop_id):
     """
     Lấy danh sách camera của một chuồng cụ thể.
@@ -260,8 +257,8 @@ def get_stream_url(device_id):
     if not device:
         return jsonify({'error': 'Camera not found'}), 404
     
-    # Lấy đường dẫn video từ video_path.txt
-    stream_url = read_video_path() or ''
+    # Mô phỏng stream URL (thay bằng actual camera stream URL)
+    stream_url = f'rtsp://camera-{device_id}.local:8554/stream'
     
     return jsonify({
         'device_id': device_id,
@@ -391,7 +388,6 @@ def delete_recording(device_id, recording_id):
 
 
 @camera_bp.route('/video-path', methods=['GET'])
-@jwt_required()
 def get_video_path():
     """Đọc đường dẫn video đầu tiên từ file text video_path.txt."""
     path = read_video_path()
@@ -399,16 +395,8 @@ def get_video_path():
 
 
 @camera_bp.route('/video-paths', methods=['GET'])
-@jwt_required()
 def get_video_paths():
     """Đọc tất cả đường dẫn video từ file text video_path.txt (mỗi dòng một path)."""
-    paths = read_video_paths()
-    return jsonify({'video_paths': paths}), 200
-
-
-@camera_bp.route('/video-paths-public', methods=['GET'])
-def get_video_paths_public():
-    """Public endpoint — đọc video paths từ file, không cần JWT."""
     paths = read_video_paths()
     return jsonify({'video_paths': paths}), 200
 
@@ -527,9 +515,6 @@ def serve_video():
         response = Response(generate_full(), mimetype=mime, status=200)
         response.headers['Content-Length'] = file_size
         response.headers['Accept-Ranges'] = 'bytes'
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
         return response
 
     # Parse Range header: "bytes=start-end"
@@ -564,14 +549,10 @@ def serve_video():
     response.headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
     response.headers['Content-Length'] = content_length
     response.headers['Accept-Ranges'] = 'bytes'
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
     return response
 
 
 @camera_bp.route('/coop-detail/<int:coop_id>', methods=['GET'])
-@jwt_required()
 def get_coop_camera_detail(coop_id):
     coop = db.session.get(Coop, coop_id)
     if not coop or coop.deleted:

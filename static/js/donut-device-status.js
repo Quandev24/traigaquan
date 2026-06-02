@@ -82,12 +82,8 @@
         const container = document.getElementById(elementId);
         if (!container) return;
 
-        let legendItems = container.querySelectorAll('.legend-item-coop');
-        if (!legendItems || legendItems.length === 0) {
-          const cardBody = container.closest('.card-body');
-          if (cardBody) legendItems = cardBody.querySelectorAll('.legend-item-coop');
-        }
-        if (!legendItems || legendItems.length === 0) return;
+        const legendItems = container.closest('.card-body')?.querySelectorAll('.legend-item-coop');
+        if (!legendItems) return;
 
         legendItems.forEach(item => {
             const segmentType = item.getAttribute('data-segment');

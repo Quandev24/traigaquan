@@ -1064,7 +1064,6 @@
                 'fan': 'fan',
                 'light': 'lightbulb',
                 'feeder': 'drumstick-bite',
-                'water': 'water',
                 'camera': 'video'
             };
             return icons[type] || 'microchip';
@@ -1077,7 +1076,6 @@
                 'fan': 'Quạt thông gió',
                 'light': 'Đèn LED',
                 'feeder': 'Hệ thống cho ăn',
-                'water': 'Thiết bị đo nước',
                 'camera': 'Camera'
             };
             return labels[type] || type;
@@ -1101,8 +1099,6 @@
                     updateEnvironment(data.environment);
                     updateDevices(data.devices);
                     updateCameraStatus(data.devices);
-                    // Luôn refresh video player để bắt thay đổi từ video_path.txt
-                    await playVideoFromFile();
                 } else {
                     renderCoopDetail(data);
                 }
@@ -1349,10 +1345,6 @@
                 const resp = await fetch('/api/camera/video-paths', {
                     headers: { 'Authorization': 'Bearer ' + getAuthToken() }
                 });
-                if (!resp.ok) {
-                    console.warn('playVideoFromFile: HTTP', resp.status);
-                    return;
-                }
                 const data = await resp.json();
                 const paths = data && data.video_paths;
                 if (!paths || paths.length === 0) return;
@@ -1367,7 +1359,7 @@
                 const placeholder = document.getElementById('videoPlaceholder');
                 const status = document.getElementById('mainViewportStatus');
 
-                const videoUrl = '/api/camera/serve-video?path=' + encodeURIComponent(path) + '&t=' + Date.now();
+                const videoUrl = '/api/camera/serve-video?path=' + encodeURIComponent(path);
                 player.style.display = 'block';
                 placeholder.style.display = 'none';
                 player.src = videoUrl;

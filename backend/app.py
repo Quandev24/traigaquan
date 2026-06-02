@@ -137,27 +137,6 @@ def create_app(config_name='development'):
                 except Exception as e:
                     db.session.rollback()
                     print(f"Migration skipped (column may exist): {e}")
-
-        # Auto-migrate: add missing columns to warehouse_inventory
-        if 'warehouse_inventory' in inspector.get_table_names():
-            existing_cols = {col['name'] for col in inspector.get_columns('warehouse_inventory')}
-            wh_migrations = []
-            if 'min_threshold_kg' not in existing_cols:
-                wh_migrations.append('ALTER TABLE warehouse_inventory ADD COLUMN min_threshold_kg FLOAT DEFAULT 0')
-            if 'category' not in existing_cols:
-                wh_migrations.append('ALTER TABLE warehouse_inventory ADD COLUMN category VARCHAR(20) DEFAULT "Cả hai"')
-            if 'expiry_date' not in existing_cols:
-                wh_migrations.append('ALTER TABLE warehouse_inventory ADD COLUMN expiry_date DATE')
-            if 'supplier' not in existing_cols:
-                wh_migrations.append('ALTER TABLE warehouse_inventory ADD COLUMN supplier VARCHAR(200)')
-            for migration_sql in wh_migrations:
-                try:
-                    db.session.execute(text(migration_sql))
-                    db.session.commit()
-                    print(f"Migration applied: {migration_sql}")
-                except Exception as e:
-                    db.session.rollback()
-                    print(f"Migration skipped (column may exist): {e}")
     
     # ============================================================
     # 6. API HEALTH CHECK ROUTE
