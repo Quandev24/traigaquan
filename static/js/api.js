@@ -830,6 +830,24 @@
             }
         },
 
+        getFeedConsumptionByCoops: async function(period) {
+            try {
+                return await window.apiFetch('/warehouse/consumption/feed/by-coop?period=' + (period || 'day'));
+            } catch (e) {
+                console.warn('getFeedConsumptionByCoops not available:', e);
+                return { daily: [] };
+            }
+        },
+
+        getFeedConsumptionOverview: async function() {
+            try {
+                return await window.apiFetch('/warehouse/consumption/feed/overview');
+            } catch (e) {
+                console.warn('getFeedConsumptionOverview not available:', e);
+                return { per_coop: {}, total: 0 };
+            }
+        },
+
         getVideoPaths: async function() {
             return await window.apiFetch('/camera/video-paths');
         }

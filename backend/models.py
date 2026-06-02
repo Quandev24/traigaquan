@@ -539,6 +539,7 @@ class WarehouseInventory(db.Model):
     item_name = db.Column(db.String(100), nullable=False)
     item_type = db.Column(db.String(50), default='feed')
     quantity_kg = db.Column(db.Float, default=0)
+    min_threshold_kg = db.Column(db.Float, default=0)
     unit = db.Column(db.String(20), default='kg')
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     deleted = db.Column(db.Boolean, default=False)
@@ -549,9 +550,29 @@ class WarehouseInventory(db.Model):
             'item_name': self.item_name,
             'item_type': self.item_type,
             'quantity_kg': self.quantity_kg,
+            'min_threshold_kg': self.min_threshold_kg,
             'unit': self.unit,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
     def __repr__(self):
         return f'<WarehouseInventory {self.item_name}>'
+
+
+class FeedConsumption(db.Model):
+    __tablename__ = 'feed_consumption'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    recorded_date = db.Column(db.Date, nullable=False)
+    quantity_kg = db.Column(db.Float, nullable=False, default=0)
+    __table_args__ = (db.UniqueConstraint('coop_id', 'recorded_date'),)
+    coop = db.relationship('Coop', backref=db.backref('feed_consumptions', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'recorded_date': self.recorded_date.isoformat(),
+            'quantity_kg': self.quantity_kg,
+        }

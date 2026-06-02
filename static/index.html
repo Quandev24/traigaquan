@@ -473,6 +473,51 @@
       50% { opacity: 0.5; transform: scale(0.8); }
     }
 
+    /* ===== Sick Chicken Detection ===== */
+    .sick-chicken-box {
+      margin-top: 0.75rem;
+      border-radius: 0.75rem; overflow: hidden;
+      background: #1e293b; border: 1px solid #334155;
+    }
+    .sick-chicken-box.status-warning { border-color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.15); }
+    .sick-chicken-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(0,0,0,0.3);
+      font-size: 0.8125rem; font-weight: 600; color: #e2e8f0;
+    }
+    .sick-chicken-header i { color: #f43f5e; font-size: 1rem; }
+    .sick-chicken-badge {
+      margin-left: auto;
+      font-size: 0.625rem; font-weight: 700;
+      padding: 0.125rem 0.5rem; border-radius: 999px;
+      background: rgba(100,116,139,0.3); color: #94a3b8;
+    }
+    .sick-chicken-body {
+      padding: 1rem 0.75rem;
+    }
+    .sick-chicken-empty {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0.5rem;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.8125rem;
+    }
+    .sick-chicken-empty i { font-size: 1.5rem; color: #22c55e; opacity: 0.7; }
+    .sick-chicken-count {
+      display: flex; align-items: center; gap: 0.75rem;
+    }
+    .sick-chicken-count .count {
+      display: flex; align-items: center; gap: 0.375rem;
+      font-size: 1.25rem; font-weight: 700; color: #ef4444;
+    }
+    .sick-chicken-count .count i { font-size: 1.25rem; }
+    .sick-chicken-count .desc { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+    .sick-chicken-count .alert-badge {
+      font-size: 0.625rem; font-weight: 700;
+      padding: 0.125rem 0.5rem; border-radius: 999px;
+      background: rgba(239,68,68,0.2); color: #ef4444;
+    }
+
     /* ===== Modal ===== */
     .mgmt-modal-overlay {
       position: fixed; inset: 0; z-index: 50;
@@ -708,6 +753,42 @@
       75% { transform: translateX(2px); }
     }
     .wh-shake { animation: wh-shake 0.3s ease-in-out; }
+
+    /* ===== Horizontal Stacked Bar (Warehouse Distribution) ===== */
+    #whStackedBarContainer {
+      padding: 0.75rem 0;
+    }
+    .wh-stacked-bar {
+      display: flex; height: 32px; border-radius: 8px; overflow: hidden;
+      background: rgba(0,0,0,0.06);
+    }
+    html.dark .wh-stacked-bar { background: rgba(255,255,255,0.08); }
+    .wh-bar-segment { height: 100%; transition: width 0.6s ease; min-width: 4px; }
+    .wh-bar-segment:first-child { border-radius: 8px 0 0 8px; }
+    .wh-bar-segment:last-child { border-radius: 0 8px 8px 0; }
+    .wh-bar-empty {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; color: #94a3b8;
+    }
+    .wh-bar-legend {
+      margin-top: 1rem;
+      display: flex; flex-direction: column; gap: 0.25rem;
+    }
+    .wh-bar-legend-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.375rem 0.5rem; border-radius: 6px;
+      font-size: 0.8125rem; cursor: default;
+    }
+    .wh-bar-legend-item:hover { background: rgba(0,0,0,0.03); }
+    html.dark .wh-bar-legend-item:hover { background: rgba(255,255,255,0.05); }
+    .wh-bar-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .wh-bar-name { flex: 1; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    html.dark .wh-bar-name { color: #e2e8f0; }
+    .wh-bar-pct { font-weight: 600; color: #64748b; min-width: 3rem; text-align: right; }
+    .wh-bar-kg { font-weight: 500; color: #94a3b8; min-width: 4.5rem; text-align: right; }
+    html.dark .wh-bar-pct { color: #94a3b8; }
+    html.dark .wh-bar-kg { color: #64748b; }
 
     /* ===== Devices ===== */
     .dev-card {
@@ -1344,8 +1425,8 @@
             <input type="text" id="devSearchInput" placeholder="Tìm thiết bị..." oninput="filterDevices()" class="w-36 sm:w-48 pl-9 pr-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
           </div>
           <select id="devTypeFilter" onchange="filterDevices()" class="px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
-            <option value="all">Tất cả loại</option>
-            <option value="temperature">Cảm biến nhiệt</option>
+        <option value="all">Tất cả loại</option>
+        <option value="temperature" selected>Cảm biến nhiệt</option>
             <option value="humidity">Cảm biến độ ẩm</option>
             <option value="fan">Quạt thông gió</option>
             <option value="light">Đèn LED</option>
@@ -1503,16 +1584,21 @@
               <i class="fa-solid fa-chart-pie text-farm-500 mr-1.5"></i>Phân bố theo loại
             </h3>
           </div>
-          <div style="position:relative;height:220px;"><canvas id="whDonutChart"></canvas></div>
-          <div id="whDonutChips" class="wh-coop-chip-container mt-2 hidden"></div>
+      <div id="whStackedBarContainer">
+        <div class="wh-stacked-bar" id="whStackedBar"></div>
+        <div class="wh-bar-legend" id="whBarLegend"></div>
+      </div>
         </div>
         <div class="stat-card">
           <div class="flex items-center justify-between mb-3">
             <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
-              <i class="fa-solid fa-chart-line text-amber-500 mr-1.5"></i><span id="whTrendTitle">Tiêu thụ theo ngày</span>
+              <i class="fa-solid fa-chart-line text-amber-500 mr-1.5"></i><span id="whTrendTitle">Tiêu thụ thức ăn theo chuồng</span>
             </h3>
           </div>
-          <div style="position:relative;height:220px;"><canvas id="whTrendChart"></canvas></div>
+          <div style="position:relative;height:220px;">
+            <canvas id="whTrendChart"></canvas>
+            <div id="whTrendMessage" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.875rem;"></div>
+          </div>
           <div id="whTrendChips" class="wh-coop-chip-container mt-2 hidden"></div>
         </div>
       </div>
@@ -1737,7 +1823,7 @@
             backgroundColor: colors.temp.bg,
             fill: true,
             tension: 0.4,
-            pointRadius: 0,
+            pointRadius: 1,
             pointHitRadius: 10,
             borderWidth: 2
           }]
@@ -1767,7 +1853,7 @@
             backgroundColor: colors.humid.bg,
             fill: true,
             tension: 0.4,
-            pointRadius: 0,
+            pointRadius: 1,
             pointHitRadius: 10,
             borderWidth: 2
           }]
@@ -2077,7 +2163,6 @@
       // Resize warehouse charts
       if (tabId === 'warehouse') {
         setTimeout(() => {
-          if (whDonutChartInstance) whDonutChartInstance.resize();
           if (whTrendChartInstance) whTrendChartInstance.resize();
         }, 100);
       }
@@ -2111,7 +2196,7 @@
         createCharts(appState.dashboard);
         createOverviewCharts();
       }
-      if (whDonutChartInstance || whTrendChartInstance) {
+      if (whTrendChartInstance) {
         renderWhCharts();
       }
     }
@@ -2162,6 +2247,8 @@
         getConsumptionOverview: function(t,p) { return _fetch('/warehouse/consumption/overview?type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {per_coop:{},total_by_type:{}}; }); },
         getConsumption: function(id,t,p) { return _fetch('/warehouse/consumption?coop_id='+(id||'')+'&type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {daily:[],records:[],total_records:0}; }); },
         getConsumptionByCoop: function(id,t,p) { return _fetch('/warehouse/consumption/coop/'+id+'?type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {daily:[],records:[],total_records:0}; }); },
+        getFeedConsumptionByCoops: function(p) { return _fetch('/warehouse/consumption/feed/by-coop?period='+(p||'day')).catch(function(){ return {daily:[]}; }); },
+        getFeedConsumptionOverview: function() { return _fetch('/warehouse/consumption/feed/overview').catch(function(){ return {per_coop:{},total:0}; }); },
         updateFeedItem: function(id,q) { return _fetch('/warehouse/feed/'+id, {method:'PUT',body:JSON.stringify({quantity_kg:q})}); },
         attachToCoop:   function(did,cid) { return _fetch('/devices/public/attach-to-coop',{method:'POST',body:JSON.stringify({device_id:did,coop_id:cid})}); },
         removeDeviceFromCoop: function(id) { return _fetch('/devices/public/remove-from-coop/'+id,{method:'DELETE'}); },
@@ -2239,7 +2326,6 @@
             if (flockChartInstance) flockChartInstance.resize();
           }
           if (activeTab.id === 'tab-warehouse') {
-            if (whDonutChartInstance) whDonutChartInstance.resize();
             if (whTrendChartInstance) whTrendChartInstance.resize();
           }
         }
@@ -2867,6 +2953,21 @@
               `;
             }).join('')}
           </div>
+
+          <!-- Sick Chicken Detection Box -->
+          <div class="sick-chicken-box">
+            <div class="sick-chicken-header">
+              <i class="fa-solid fa-notes-medical"></i>
+              <span>Phát hiện gà bệnh (AI)</span>
+              <span class="sick-chicken-badge">Chưa phát triển</span>
+            </div>
+            <div class="sick-chicken-body">
+              <div class="sick-chicken-empty">
+                <i class="fa-solid fa-shield-check"></i>
+                <span>Không phát hiện gà bệnh</span>
+              </div>
+            </div>
+          </div>
         `;
 
         // Attach onerror handlers to video elements for fallback
@@ -2957,6 +3058,8 @@
       coops: [],
       consumption: { daily: [], records: [], total_records: 0 },
       overview: { per_coop: {}, total_by_type: {} },
+      feedConsumption: { daily: [] },
+      feedOverview: { per_coop: {}, total: 0 },
       selectedType: 'all',
       selectedPeriod: 'day',
       coopSelection: new Set(),
@@ -2977,6 +3080,13 @@
 
         const consumptionRes = await API.getConsumption(null, whState.selectedType, whState.selectedPeriod);
         whState.consumption = consumptionRes;
+
+        const [feedConsumptionRes, feedOverviewRes] = await Promise.all([
+          API.getFeedConsumptionByCoops(whState.selectedPeriod),
+          API.getFeedConsumptionOverview()
+        ]);
+        whState.feedConsumption = feedConsumptionRes;
+        whState.feedOverview = feedOverviewRes;
 
         renderWhStats();
         updateWhTrendTitle();
@@ -3004,143 +3114,144 @@
       animateValue(document.getElementById('whMedicineKg'), 0, Math.round(medicineKg), 800, '');
     }
 
+    function renderWhStackedBar(items) {
+      const bar = document.getElementById('whStackedBar');
+      const legend = document.getElementById('whBarLegend');
+      if (!bar) return;
+
+      const total = items.reduce(function(s, i) { return s + (i.quantity_kg || 0); }, 0);
+      const bgColors = ['#52b788','#38bdf8','#f59e0b','#e11d48','#8b5cf6','#14b8a6','#f97316','#06b6d4','#84cc16','#ec4899'];
+
+      if (total === 0 || items.length === 0) {
+        bar.innerHTML = '<div class="wh-bar-empty">Không có dữ liệu</div>';
+        if (legend) legend.innerHTML = '';
+        return;
+      }
+
+      bar.innerHTML = items.map(function(item, i) {
+        return '<div class="wh-bar-segment" style="width:' + ((item.quantity_kg / total) * 100).toFixed(1) + '%;background:' + bgColors[i % bgColors.length] + ';" title="' + item.item_name + ': ' + formatNumber(item.quantity_kg) + ' kg"></div>';
+      }).join('');
+
+      if (legend) {
+        legend.innerHTML = items.map(function(item, i) {
+          var pct = ((item.quantity_kg / total) * 100).toFixed(1);
+          return '<div class="wh-bar-legend-item"><span class="wh-bar-dot" style="background:' + bgColors[i % bgColors.length] + ';"></span><span class="wh-bar-name">' + item.item_name + '</span><span class="wh-bar-pct">' + pct + '%</span><span class="wh-bar-kg">' + formatNumber(item.quantity_kg) + ' kg</span></div>';
+        }).join('');
+      }
+    }
+
     function renderWhCharts() {
       const colors = getChartColors();
       const isDark = document.documentElement.classList.contains('dark');
 
-      // Donut chart
-      const items = whState.items;
-      const donutEl = document.getElementById('whDonutChart');
-      if (donutEl) {
-        const labels = items.map(i => i.item_name);
-        const data = items.map(i => i.quantity_kg || 0);
-        const bgColors = ['#52b788','#38bdf8','#f59e0b','#e11d48','#8b5cf6','#14b8a6','#f97316','#06b6d4','#84cc16','#ec4899'];
+      // Horizontal stacked bar (replaces donut chart)
+      renderWhStackedBar(whState.items);
 
-        if (whDonutChartInstance) whDonutChartInstance.destroy();
-        const ctx = donutEl.getContext('2d');
-        whDonutChartInstance = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: labels,
-            datasets: [{
-              data: data,
-              backgroundColor: bgColors.slice(0, labels.length),
-              borderWidth: 0,
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '60%',
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  color: isDark ? '#cbd5e1' : '#64748b',
-                  font: { size: 10 },
-                  padding: 12,
-                  boxWidth: 10,
-                  usePointStyle: true,
-                }
-              },
-              tooltip: {
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                titleColor: isDark ? '#f1f5f9' : '#1e293b',
-                bodyColor: isDark ? '#cbd5e1' : '#475569',
-                cornerRadius: 8,
-                padding: 10,
-                callbacks: {
-                  label: function(ctx) {
-                    const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
-                    const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
-                    return ctx.label + ': ' + formatNumber(ctx.parsed) + ' kg (' + pct + '%)';
-                  }
-                }
-              }
-            }
-          }
-        });
-      }
-
-      // Trend chart (line)
-      const trendEl = document.getElementById('whTrendChart');
+      // Trend chart — per-coop feed consumption (for 'feed' type)
+      var trendEl = document.getElementById('whTrendChart');
+      var trendMsg = document.getElementById('whTrendMessage');
       if (trendEl) {
-        const daily = whState.consumption.daily || [];
-        const labels = daily.map(d => d.date);
-        const foodData = daily.filter(d => d.category === 'feed').map(d => d.total_kg);
-        const medData = daily.filter(d => d.category === 'medicine').map(d => d.total_kg);
+        var showChart = (whState.selectedType === 'feed');
+        var daily = whState.feedConsumption.daily || [];
+        var coops = whState.coops || [];
 
-        if (whTrendChartInstance) whTrendChartInstance.destroy();
-        const ctx2 = trendEl.getContext('2d');
-        whTrendChartInstance = new Chart(ctx2, {
-          type: 'line',
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: 'Thức ăn (kg)',
-                data: foodData,
-                borderColor: '#52b788',
-                backgroundColor: 'rgba(82,183,136,0.10)',
-                borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                pointBackgroundColor: '#52b788',
-                tension: 0.4,
-                fill: true,
-              },
-              {
-                label: 'Thuốc (kg)',
-                data: medData,
-                borderColor: '#e11d48',
-                backgroundColor: 'rgba(225,29,72,0.10)',
-                borderWidth: 2,
-                pointRadius: 3,
-                pointHoverRadius: 5,
-                pointBackgroundColor: '#e11d48',
-                tension: 0.4,
-                fill: true,
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-              intersect: false,
-              mode: 'index',
-            },
-            plugins: {
-              legend: {
-                position: 'bottom',
-                labels: {
-                  color: isDark ? '#cbd5e1' : '#64748b',
-                  font: { size: 10 },
-                  boxWidth: 10,
-                  usePointStyle: true,
+        if (!showChart) {
+          if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
+          trendEl.style.display = 'none';
+          if (trendMsg) {
+            trendMsg.style.display = 'flex';
+            trendMsg.textContent = 'Chỉ hiển thị cho thức ăn';
+          }
+        } else {
+          trendEl.style.display = 'block';
+          if (trendMsg) trendMsg.style.display = 'none';
+
+          if (daily.length === 0 || coops.length === 0) {
+            if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
+            if (trendMsg) {
+              trendMsg.style.display = 'flex';
+              trendMsg.textContent = 'Không có dữ liệu tiêu thụ';
+            }
+            return;
+          }
+
+          var labels = daily.map(function(d) { return d.date; });
+          var coopColors = ['#52b788','#38bdf8','#f59e0b','#e11d48','#8b5cf6','#14b8a6','#f97316','#06b6d4','#84cc16','#ec4899'];
+          var activeCoopIds = whState.coopSelection;
+          var showAll = (activeCoopIds.size === 0);
+          var datasets = [];
+          coops.forEach(function(coop, idx) {
+            if (!showAll && !activeCoopIds.has(coop.id)) return;
+            var values = daily.map(function(d) {
+              var c = d.coops || {};
+              return c[String(coop.id)] || 0;
+            });
+            var hasData = values.some(function(v) { return v > 0; });
+            if (!hasData) return;
+            datasets.push({
+              label: coop.name || 'Chuồng ' + coop.id,
+              data: values,
+              borderColor: coopColors[idx % coopColors.length],
+              backgroundColor: coopColors[idx % coopColors.length].replace(')', ',0.10)').replace('rgb', 'rgba'),
+              borderWidth: 2,
+              pointRadius: 2,
+              pointHoverRadius: 4,
+              pointBackgroundColor: coopColors[idx % coopColors.length],
+              tension: 0.3,
+              fill: false,
+            });
+          });
+
+          if (datasets.length === 0) {
+            if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
+            if (trendMsg) {
+              trendMsg.style.display = 'flex';
+              trendMsg.textContent = 'Không có dữ liệu tiêu thụ';
+            }
+            return;
+          }
+
+          if (whTrendChartInstance) whTrendChartInstance.destroy();
+          var ctx2 = trendEl.getContext('2d');
+          whTrendChartInstance = new Chart(ctx2, {
+            type: 'line',
+            data: { labels: labels, datasets: datasets },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { intersect: false, mode: 'index' },
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    color: isDark ? '#cbd5e1' : '#64748b',
+                    font: { size: 10 },
+                    boxWidth: 10,
+                    usePointStyle: true,
+                  }
+                },
+                tooltip: {
+                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                  titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                  bodyColor: isDark ? '#cbd5e1' : '#475569',
+                  cornerRadius: 8,
+                  padding: 10,
                 }
               },
-              tooltip: {
-                backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                titleColor: isDark ? '#f1f5f9' : '#1e293b',
-                bodyColor: isDark ? '#cbd5e1' : '#475569',
-                cornerRadius: 8,
-                padding: 10,
-              }
-            },
-            scales: {
-              x: {
-                grid: { display: false },
-                ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 }, maxTicksLimit: 10 }
-              },
-              y: {
-                grid: { color: isDark ? '#334155' : '#e2e8f0' },
-                ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 } },
-                beginAtZero: true
+              scales: {
+                x: {
+                  grid: { display: false },
+                  ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 }, maxTicksLimit: 10 }
+                },
+                y: {
+                  grid: { color: isDark ? '#334155' : '#e2e8f0' },
+                  ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 } },
+                  beginAtZero: true
+                }
               }
             }
-          }
-        });
+          });
+        }
       }
     }
 
@@ -3194,46 +3305,39 @@
     }
 
     function updateWhTrendTitle() {
-      var map = { day: 'ngày', week: 'tuần', month: 'tháng', year: 'năm' };
       var el = document.getElementById('whTrendTitle');
-      if (el) el.textContent = 'Tiêu thụ theo ' + (map[whState.selectedPeriod] || 'ngày');
+      if (whState.selectedType === 'feed') {
+        var map = { day: 'ngày', week: 'tuần', month: 'tháng', year: 'năm' };
+        if (el) el.textContent = 'Tiêu thụ thức ăn theo chuồng (' + (map[whState.selectedPeriod] || 'ngày') + ')';
+      } else {
+        if (el) el.textContent = 'Tiêu thụ thức ăn theo chuồng';
+      }
     }
 
     function loadWhCoopChips() {
-      const chipsContainerDonut = document.getElementById('whDonutChips');
       const chipsContainerTrend = document.getElementById('whTrendChips');
-
-      if (!chipsContainerDonut && !chipsContainerTrend) return;
+      if (!chipsContainerTrend) return;
 
       const coops = whState.coops || [];
       if (coops.length === 0) {
-        if (chipsContainerDonut) chipsContainerDonut.classList.add('hidden');
-        if (chipsContainerTrend) chipsContainerTrend.classList.add('hidden');
+        chipsContainerTrend.classList.add('hidden');
         return;
       }
 
       const selection = whState.coopSelection;
+      chipsContainerTrend.classList.remove('hidden');
+      let html = coops.map(c => {
+        const active = selection.has(c.id) ? ' wh-chip-active' : '';
+        return `<span class="wh-coop-chip${active}" data-coop-id="${c.id}" onclick="toggleWhChip(${c.id}, this)">
+          ${c.name || 'Chuồng ' + c.id}
+        </span>`;
+      }).join('');
 
-      function renderChips(container) {
-        if (!container) return;
-        container.classList.remove('hidden');
-
-        let html = coops.map(c => {
-          const active = selection.has(c.id) ? ' wh-chip-active' : '';
-          return `<span class="wh-coop-chip${active}" data-coop-id="${c.id}" onclick="toggleWhChip(${c.id}, this)">
-            ${c.name || 'Chuồng ' + c.id}
-          </span>`;
-        }).join('');
-
-        if (coops.length > 4) {
-          html += `<button class="wh-ovf-btn" onclick="showWhOvfPanel()" title="Thêm chuồng"><i class="fa-solid fa-ellipsis-h"></i></button>`;
-        }
-
-        container.innerHTML = html;
+      if (coops.length > 4) {
+        html += `<button class="wh-ovf-btn" onclick="showWhOvfPanel()" title="Thêm chuồng"><i class="fa-solid fa-ellipsis-h"></i></button>`;
       }
 
-      renderChips(chipsContainerDonut);
-      renderChips(chipsContainerTrend);
+      chipsContainerTrend.innerHTML = html;
     }
 
     function toggleWhChip(coopId, el) {
@@ -3289,6 +3393,14 @@
           merged.daily = Object.values(dailyMap);
           whState.consumption = merged;
         }
+
+        // Refresh feed consumption data
+        const [feedConsumptionRes, feedOverviewRes] = await Promise.all([
+          API.getFeedConsumptionByCoops(whState.selectedPeriod),
+          API.getFeedConsumptionOverview()
+        ]);
+        whState.feedConsumption = feedConsumptionRes;
+        whState.feedOverview = feedOverviewRes;
 
         updateWhTrendTitle();
         renderWhCharts();

@@ -19,7 +19,7 @@ import os
 import random
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from models import Coop, Device, CoopDevice, Environment, Alert, db
+from models import Coop, Device, CoopDevice, Environment, Alert, WarehouseInventory, db
 
 # Tạo Blueprint cho routes dashboard
 # URL: /api/dashboard
@@ -123,8 +123,9 @@ def get_public_dashboard():
                 temp_history.append(e.temperature)
                 humid_history.append(e.humidity)
 
-    # Tổng tồn kho feed (fake vì chưa có model WarehouseInventory)
-    remaining_feed = 3999
+    # Tổng tồn kho feed từ WarehouseInventory
+    warehouse_items = WarehouseInventory.query.filter_by(deleted=False, item_type='feed').all()
+    remaining_feed = sum(item.quantity_kg for item in warehouse_items) if warehouse_items else 0
 
     return jsonify({
         'totalChickens': int(total_chickens),
