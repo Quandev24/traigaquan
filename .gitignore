@@ -8200,3 +8200,7 @@ __marimo__/
 /backend/Camera_AI/Report/val_batch1_pred.jpg
 /backend/Camera_AI/Report/val_batch2_labels.jpg
 /backend/Camera_AI/Data/Test_data/Videos/video_test.mp4
+/backend/chicken_farm.db.BASE
+/backend/chicken_farm.db.LOCAL
+/backend/chicken_farm.db.LOCAL1
+/backend/chicken_farm.db.REMOTE
