@@ -12838,3 +12838,16 @@ __marimo__/
 /backend/Camera_AI/Preprocess_data/train/labels/Pen6_2021-07-17_10-40-56_nondiseased_jpg.rf.332f12cb7d6013fb4642ef041403b80d.txt
 /backend/Camera_AI/Preprocess_data/train/labels/Pen6_2021-07-17_10-41-56_nondiseased_jpg.rf.6b0ee65fe18a697a3db522cadcda73c3.txt
 /backend/Camera_AI/Preprocess_data/train/labels/Pen6_2021-07-17_10-42-56_nondiseased_jpg.rf.87d4523e9422c5ae4f77431fdbf8fc48.txt
+/backend/Camera_AI/Preprocess_data/train/labels.cache
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/weights/best.pt
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/weights/last.pt
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/args.yaml
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/labels.jpg
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/results.csv
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/train_batch0.jpg
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/train_batch1.jpg
+/backend/Camera_AI/runs/detect/runs/my_project/yolo_model-2/train_batch2.jpg
+/backend/Camera_AI/Read_data.ipynb
+/backend/Camera_AI/Train_model.py
+/backend/Camera_AI/yolo26n.pt
+/backend/Camera_AI/yolov8s.pt
