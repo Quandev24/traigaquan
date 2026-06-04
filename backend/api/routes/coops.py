@@ -20,12 +20,6 @@ import os
 # Thêm đường dẫn parent vào sys.path để có thể import models
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from models import db, Coop, CoopDevice, Device, Environment
-from websocket import (
-    broadcast_device_update, 
-    broadcast_coop_update, 
-    broadcast_dashboard_update,
-    broadcast_coop_deleted
-)
 
 # Tạo Blueprint cho routes liên quan đến chuồng
 # URL: /api/coops

@@ -3,7 +3,7 @@ Flask Application Entry Point
 
 Sử dụng mô hình Application Factory (create_app).
 Hỗ trợ cấu hình đa môi trường (Development/Production/Testing).
-Tích hợp WebSocket với SocketIO cho real-time updates.
+Hỗ trợ cấu hình đa môi trường (Development/Production/Testing).
 """
 
 # ============================================================
@@ -23,9 +23,6 @@ from models import db
 # Import pages blueprint cho frontend routing
 from api.routes.pages import pages_bp
 
-# Import WebSocket handler
-from websocket import socketio
-
 # Load biến môi trường từ .env file (nếu có)
 load_dotenv()
 
@@ -43,7 +40,7 @@ def create_app(config_name='development'):
                      Mặc định là 'development'
     
     Returns:
-        Flask application instance và SocketIO instance
+        Flask application instance
     """
     
     # --- Khởi tạo Flask app ---
@@ -62,10 +59,6 @@ def create_app(config_name='development'):
     # --- Cấu hình từ config.py ---
     # config[config_name] sẽ lấy class Config tương ứng
     app.config.from_object(config[config_name])
-    
-    # --- Khởi tạo SocketIO với app ---
-    # Kết nối SocketIO với Flask app cho real-time communication
-    socketio.init_app(app)
     
     # ============================================================
     # 3. KHỞI TẠO CÁC EXTENSIONS
@@ -179,34 +172,16 @@ def create_app(config_name='development'):
 
 
 # ============================================================
-# 8. MAIN - Chạy ứng dụng với WebSocket support
+# 8. MAIN - Chạy ứng dụng
 # ============================================================
 
 if __name__ == '__main__':
-    """
-    Chạy Flask + SocketIO application khi file được execute trực tiếp.
-    
-    Thiết lập:
-        - Host: 0.0.0.0 (cho phép truy cập từ mạng LAN)
-        - Port: 5000 (port mặc định của Flask)
-        - Debug: True (hiển thị lỗi chi tiết trong development)
-        - Sử dụng SocketIO thay vì Flask run() thông thường
-    """
-    
-    # Lấy config từ biến môi trường, mặc định là 'development'
     config_name = os.environ.get('FLASK_ENV', 'development')
-    
-    print(f"Starting Flask + SocketIO app with config: {config_name}")
-    print(f"WebSocket endpoint: ws://0.0.0.0:5000/socket.io/")
-    
-    # Tạo app
+    print(f"Starting Flask app with config: {config_name}")
     app = create_app(config_name)
-    
-    # Chạy server với SocketIO (hỗ trợ WebSocket)
-    socketio.run(
-        app,
-        host='0.0.0.0',  # Listen on all interfaces
-        port=5000,        # Default Flask port
-        debug=True,        # Enable debug mode
-        use_reloader=True  # Auto-reload on code changes
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True,
+        use_reloader=True
     )

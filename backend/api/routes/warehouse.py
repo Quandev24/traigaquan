@@ -12,7 +12,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from models import db, Coop, WarehouseInventory, FeedConsumption
+from models import db, Coop, WarehouseInventory, FeedConsumption, MedicineConsumption
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -78,6 +78,166 @@ def get_feed_consumption_overview():
     for coop in coops:
         s = db.session.query(db.func.coalesce(db.func.sum(FeedConsumption.quantity_kg), 0))\
             .filter(FeedConsumption.coop_id == coop.id).scalar()
+        per_coop[str(coop.id)] = s
+        total += s
+    return jsonify({'per_coop': per_coop, 'total': total}), 200
+
+
+@warehouse_bp.route('/consumption/overview', methods=['GET'])
+def get_consumption_overview():
+    """Lấy tổng quan tiêu thụ theo loại và thời gian."""
+    type_filter = request.args.get('type', 'all')
+    per_coop = {}
+    total_by_type = {}
+
+    if type_filter in ('all', 'feed'):
+        coops = Coop.query.all()
+        for coop in coops:
+            s = db.session.query(db.func.coalesce(db.func.sum(FeedConsumption.quantity_kg), 0))\
+                .filter(FeedConsumption.coop_id == coop.id).scalar()
+            per_coop[str(coop.id)] = s
+        total_by_type['feed'] = sum(per_coop.values())
+    if type_filter in ('all', 'medicine'):
+        med_per_coop = {}
+        for coop in Coop.query.all():
+            s = db.session.query(db.func.coalesce(db.func.sum(MedicineConsumption.quantity_kg), 0))\
+                .filter(MedicineConsumption.coop_id == coop.id).scalar()
+            med_per_coop[str(coop.id)] = s
+        total_by_type['medicine'] = sum(med_per_coop.values())
+        if type_filter == 'medicine':
+            per_coop = med_per_coop
+
+    per_coop['total'] = sum(per_coop.values())
+    return jsonify({'per_coop': per_coop, 'total_by_type': total_by_type}), 200
+
+
+@warehouse_bp.route('/consumption', methods=['GET'])
+def get_consumption():
+    """Lấy dữ liệu tiêu thụ theo chuồng, loại và thời gian."""
+    coop_id = request.args.get('coop_id', type=int)
+    type_filter = request.args.get('type', 'all')
+    period = request.args.get('period', 'day')
+
+    records = []
+    if type_filter in ('all', 'feed'):
+        query = FeedConsumption.query
+        if coop_id:
+            query = query.filter(FeedConsumption.coop_id == coop_id)
+        query = query.order_by(FeedConsumption.recorded_date)
+        for r in query.all():
+            d = r.recorded_date
+            if period == 'week':
+                d = d - timedelta(days=d.weekday())
+            elif period == 'month':
+                d = d.replace(day=1)
+            elif period == 'year':
+                d = d.replace(month=1, day=1)
+
+            records.append({
+                'id': r.id,
+                'coop_id': r.coop_id,
+                'recorded_date': d.isoformat(),
+                'quantity_kg': r.quantity_kg,
+                'feed_item_category': 'feed',
+            })
+
+    daily_map = {}
+    for rec in records:
+        key = rec['recorded_date']
+        if key not in daily_map:
+            daily_map[key] = {'date': key, 'coops': {}}
+        coop_key = str(rec['coop_id'])
+        daily_map[key]['coops'][coop_key] = daily_map[key]['coops'].get(coop_key, 0) + rec['quantity_kg']
+
+    daily = sorted(daily_map.values(), key=lambda x: x['date'])
+    return jsonify({
+        'daily': daily,
+        'records': records,
+        'total_records': len(records)
+    }), 200
+
+
+@warehouse_bp.route('/consumption/coop/<int:coop_id>', methods=['GET'])
+def get_consumption_by_coop(coop_id):
+    """Lấy dữ liệu tiêu thụ cho một chuồng cụ thể."""
+    type_filter = request.args.get('type', 'all')
+    period = request.args.get('period', 'day')
+
+    records = []
+    if type_filter in ('all', 'feed'):
+        query = FeedConsumption.query.filter(FeedConsumption.coop_id == coop_id)
+        query = query.order_by(FeedConsumption.recorded_date)
+        for r in query.all():
+            d = r.recorded_date
+            if period == 'week':
+                d = d - timedelta(days=d.weekday())
+            elif period == 'month':
+                d = d.replace(day=1)
+            elif period == 'year':
+                d = d.replace(month=1, day=1)
+
+            records.append({
+                'id': r.id,
+                'coop_id': r.coop_id,
+                'recorded_date': d.isoformat(),
+                'quantity_kg': r.quantity_kg,
+                'feed_item_category': 'feed',
+            })
+
+    daily_map = {}
+    for rec in records:
+        key = rec['recorded_date']
+        if key not in daily_map:
+            daily_map[key] = {'date': key, 'coops': {}}
+        coop_key = str(rec['coop_id'])
+        daily_map[key]['coops'][coop_key] = daily_map[key]['coops'].get(coop_key, 0) + rec['quantity_kg']
+
+    daily = sorted(daily_map.values(), key=lambda x: x['date'])
+    return jsonify({
+        'daily': daily,
+        'records': records,
+        'total_records': len(records)
+    }), 200
+
+
+@warehouse_bp.route('/consumption/medicine/by-coop', methods=['GET'])
+def get_medicine_consumption_by_coop():
+    """Lấy dữ liệu tiêu thụ thuốc theo chuồng, gộp theo thời gian."""
+    period = request.args.get('period', 'day')
+
+    query = MedicineConsumption.query.order_by(MedicineConsumption.recorded_date)
+
+    records = query.all()
+
+    daily_map = {}
+    for r in records:
+        d = r.recorded_date
+        if period == 'week':
+            d = d - timedelta(days=d.weekday())
+        elif period == 'month':
+            d = d.replace(day=1)
+        elif period == 'year':
+            d = d.replace(month=1, day=1)
+
+        key = d.isoformat()
+        if key not in daily_map:
+            daily_map[key] = {}
+        daily_map[key][str(r.coop_id)] = (daily_map[key].get(str(r.coop_id), 0)) + r.quantity_kg
+
+    daily = [{'date': k, 'coops': v} for k, v in sorted(daily_map.items())]
+
+    return jsonify({'daily': daily}), 200
+
+
+@warehouse_bp.route('/consumption/medicine/overview', methods=['GET'])
+def get_medicine_consumption_overview():
+    """Lấy tổng quan tiêu thụ thuốc: mỗi chuồng tiêu thụ bao nhiêu kg."""
+    coops = Coop.query.all()
+    per_coop = {}
+    total = 0.0
+    for coop in coops:
+        s = db.session.query(db.func.coalesce(db.func.sum(MedicineConsumption.quantity_kg), 0))\
+            .filter(MedicineConsumption.coop_id == coop.id).scalar()
         per_coop[str(coop.id)] = s
         total += s
     return jsonify({'per_coop': per_coop, 'total': total}), 200

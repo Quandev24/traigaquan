@@ -10,7 +10,7 @@ Module này cung cấp các endpoint cho việc:
 Dữ liệu được tổng hợp từ nhiều bảng: Coop, Device, Environment, Alert
 """
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
 from sqlalchemy import func
 from datetime import datetime, timedelta

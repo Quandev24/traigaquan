@@ -459,9 +459,6 @@ def auto_load_from_file():
     db.session.add(recording)
     db.session.commit()
 
-    from websocket import broadcast_dashboard_update
-    broadcast_dashboard_update()
-
     return jsonify(recording.to_dict()), 201
 
 

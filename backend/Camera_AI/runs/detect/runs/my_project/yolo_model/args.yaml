@@ -1,12 +1,12 @@
 task: detect
 mode: train
-model: yolo11n.pt
-data: Data/final_dataset/data.yaml
+model: yolov8s.pt
+data: Preprocess_data/data.yaml
 epochs: 100
 time: null
 patience: 100
 batch: 16
-imgsz: 540
+imgsz: null
 save: true
 save_period: -1
 cache: false
@@ -107,4 +107,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: D:\Projects\AutoChicken Manage_project\runs\detect\runs\my_project\yolo_model
+save_dir: D:\Share_Projects\AutomatedChickenFarmManagement\backend\Camera_AI\runs\detect\runs\my_project\yolo_model
