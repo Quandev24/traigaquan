@@ -26,7 +26,7 @@ from flask import Flask
 from config import config
 
 # Import database models và db instance
-from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, UnconnectedDevice, WarehouseInventory, FeedConsumption
+from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, UnconnectedDevice, WarehouseInventory, FeedConsumption, MedicineConsumption
 
 
 # =============================================================================
@@ -630,6 +630,27 @@ def seed_feed_consumption(coops):
 	print("    [OK] Dữ liệu tiêu thụ thức ăn đã sẵn sàng")
 
 
+def seed_medicine_consumption(coops):
+	"""
+	Tạo dữ liệu tiêu thụ thuốc mẫu cho 90 ngày gần nhất.
+	Mỗi chuồng tiêu thụ 3-12 kg/ngày với biến động ngẫu nhiên.
+	"""
+	print("  Đang tạo dữ liệu tiêu thụ thuốc...")
+	today = datetime.now().date()
+	for coop in coops:
+		for i in range(90):
+			d = today - timedelta(days=i)
+			existing = MedicineConsumption.query.filter_by(coop_id=coop.id, recorded_date=d).first()
+			if existing:
+				continue
+			kg = round(random.uniform(3, 12), 1)
+			mc = MedicineConsumption(coop_id=coop.id, recorded_date=d, quantity_kg=kg)
+			db.session.add(mc)
+		print(f"    [OK] {coop.name}: 90 ngày dữ liệu")
+	db.session.commit()
+	print("    [OK] Dữ liệu tiêu thụ thuốc đã sẵn sàng")
+
+
 # =============================================================================
 # SEED CẢNH BÁO MẪU
 # =============================================================================
@@ -802,6 +823,10 @@ def run_seed():
 		print("\n[7.3] Seed FeedConsumption...")
 		seed_feed_consumption(coops)
 
+		# Bước 7.4: Seed MedicineConsumption
+		print("\n[7.4] Seed MedicineConsumption...")
+		seed_medicine_consumption(coops)
+
 		# Bước 8: Seed Alerts
 		print("\n[8] Seed Alerts...")
 		seed_alerts(coops)
@@ -819,6 +844,7 @@ def run_seed():
 		print(f"  VideoRecordings: {VideoRecording.query.count()}")
 		print(f"  WarehouseInventory: {WarehouseInventory.query.count()}")
 		print(f"  FeedConsumption: {FeedConsumption.query.count()}")
+		print(f"  MedicineConsumption: {MedicineConsumption.query.count()}")
 		print(f"  Alerts:       {Alert.query.count()}")
 		print("=" * 60)
 		

@@ -673,80 +673,6 @@
     .wh-period-btn:hover:not(.active) { color: #334155; }
     html.dark .wh-period-btn:hover:not(.active) { color: #cbd5e1; }
 
-    .wh-coop-chip-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.375rem;
-    }
-    .wh-coop-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.2rem 0.6rem;
-      border-radius: 9999px;
-      font-size: 0.65rem;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1.5px solid #e2e8f0;
-      background: transparent;
-      color: #64748b;
-      transition: all 0.15s;
-      user-select: none;
-    }
-    html.dark .wh-coop-chip { border-color: #475569; color: #94a3b8; }
-    .wh-coop-chip:hover { border-color: #52b788; color: #2d6a4f; }
-    html.dark .wh-coop-chip:hover { border-color: #52b788; color: #52b788; }
-    .wh-coop-chip.wh-chip-active {
-      background: #52b788;
-      border-color: #52b788;
-      color: #ffffff;
-    }
-    html.dark .wh-coop-chip.wh-chip-active {
-      background: #52b788;
-      border-color: #52b788;
-      color: #ffffff;
-    }
-    .wh-coop-chip .wh-chip-count {
-      font-size: 0.6rem;
-      opacity: 0.7;
-    }
-    .wh-ovf-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 1.6rem;
-      height: 1.6rem;
-      border-radius: 9999px;
-      border: 1.5px solid #e2e8f0;
-      background: transparent;
-      color: #94a3b8;
-      cursor: pointer;
-      font-size: 0.7rem;
-      transition: all 0.15s;
-    }
-    html.dark .wh-ovf-btn { border-color: #475569; }
-    .wh-ovf-btn:hover { border-color: #52b788; color: #52b788; }
-    .wh-ovf-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      transition: background 0.15s;
-      font-size: 0.8rem;
-    }
-    .wh-ovf-item:hover { background: #f1f5f9; }
-    html.dark .wh-ovf-item:hover { background: #1e293b; }
-    .wh-ovf-item input[type="checkbox"] {
-      accent-color: #52b788;
-      width: 1rem;
-      height: 1rem;
-    }
-    .wh-ovf-item .wh-ovf-label { flex: 1; color: #334155; }
-    html.dark .wh-ovf-item .wh-ovf-label { color: #e2e8f0; }
-    .wh-ovf-item .wh-ovf-count { font-size: 0.7rem; color: #94a3b8; }
-
     @keyframes wh-shake {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-2px); }
@@ -789,6 +715,66 @@
     .wh-bar-kg { font-weight: 500; color: #94a3b8; min-width: 4.5rem; text-align: right; }
     html.dark .wh-bar-pct { color: #94a3b8; }
     html.dark .wh-bar-kg { color: #64748b; }
+
+    /* ===== Warehouse Comparison Chart ===== */
+    .wh-comp-multiselect { position: relative; width: 100%; }
+    .wh-comp-ms-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      width: 100%; padding: 0.4rem 0.75rem;
+      border-radius: 9999px; font-size: 0.8rem; font-weight: 500;
+      border: 1.5px solid #e2e8f0; cursor: pointer;
+      background: transparent; color: #64748b;
+      transition: all 0.15s;
+    }
+    .wh-comp-ms-btn:hover { border-color: #cbd5e1; }
+    html.dark .wh-comp-ms-btn { border-color: #334155; color: #94a3b8; }
+    html.dark .wh-comp-ms-btn:hover { border-color: #475569; }
+    .wh-comp-ms-arrow { margin-left: auto; transition: transform 0.2s; }
+    .wh-comp-ms-btn.open .wh-comp-ms-arrow { transform: rotate(180deg); }
+    .wh-comp-ms-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0;
+      z-index: 50; margin-top: 4px;
+      min-width: 200px; max-height: 220px; overflow-y: auto;
+      background: #ffffff; border: 1px solid #e2e8f0;
+      border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      padding: 0.375rem;
+    }
+    html.dark .wh-comp-ms-dropdown {
+      background: #1e293b; border-color: #334155;
+    }
+    .wh-comp-ms-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.5rem; border-radius: 8px;
+      font-size: 0.8125rem; cursor: pointer;
+      transition: background 0.1s; user-select: none;
+    }
+    .wh-comp-ms-item:hover { background: rgba(0,0,0,0.04); }
+    html.dark .wh-comp-ms-item:hover { background: rgba(255,255,255,0.06); }
+    .wh-comp-ms-item input[type="checkbox"] { display: none; }
+    .wh-comp-ms-check {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1.5px solid #cbd5e1; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .wh-comp-ms-item.checked .wh-comp-ms-check {
+      background: var(--ms-color); border-color: var(--ms-color);
+    }
+    .wh-comp-ms-item.checked .wh-comp-ms-check::after {
+      content: '\2713'; color: #fff; font-size: 11px; font-weight: 700;
+    }
+    .wh-comp-ms-color {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .wh-comp-ms-item .wh-comp-ms-color { opacity: 0.4; }
+    .wh-comp-ms-item.checked .wh-comp-ms-color { opacity: 1; }
+    .wh-comp-ms-name { flex: 1; color: #1e293b; }
+    html.dark .wh-comp-ms-name { color: #e2e8f0; }
+    .wh-comp-ms-select-all {
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 0.25rem; padding-bottom: 0.375rem;
+    }
+    html.dark .wh-comp-ms-select-all { border-color: #334155; }
 
     /* ===== Devices ===== */
     .dev-card {
@@ -1590,16 +1576,36 @@
       </div>
         </div>
         <div class="stat-card">
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
             <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
-              <i class="fa-solid fa-chart-line text-amber-500 mr-1.5"></i><span id="whTrendTitle">Tiêu thụ thức ăn theo chuồng</span>
+              <i class="fa-solid fa-chart-simple text-farm-500 mr-1.5"></i>So sánh tiêu thụ theo chuồng
             </h3>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="wh-toggle-group" id="whCompTypeGroup">
+                <button class="wh-toggle-btn active" data-comp-type="feed" onclick="switchWhCompType('feed')">Thức ăn</button>
+                <button class="wh-toggle-btn" data-comp-type="medicine" onclick="switchWhCompType('medicine')">Thuốc</button>
+              </div>
+              <div class="wh-period-group" id="whCompPeriodGroup">
+                <button class="wh-period-btn active" data-comp-period="day" onclick="switchWhCompPeriod('day')">Ngày</button>
+                <button class="wh-period-btn" data-comp-period="week" onclick="switchWhCompPeriod('week')">Tuần</button>
+                <button class="wh-period-btn" data-comp-period="month" onclick="switchWhCompPeriod('month')">Tháng</button>
+                <button class="wh-period-btn" data-comp-period="year" onclick="switchWhCompPeriod('year')">Năm</button>
+              </div>
+            </div>
           </div>
-          <div style="position:relative;height:220px;">
-            <canvas id="whTrendChart"></canvas>
-            <div id="whTrendMessage" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.875rem;"></div>
+          <div class="wh-comp-multiselect mb-3" id="whCompCoopSelector">
+            <button class="wh-comp-ms-btn" onclick="toggleWhCompDropdown()" type="button">
+              <i class="fa-solid fa-layer-group text-farm-500"></i>
+              <span id="whCompSelectLabel">Tất cả chuồng</span>
+              <i class="fa-solid fa-chevron-down wh-comp-ms-arrow"></i>
+            </button>
+            <div class="wh-comp-ms-dropdown hidden" id="whCompDropdown"></div>
           </div>
-          <div id="whTrendChips" class="wh-coop-chip-container mt-2 hidden"></div>
+          <div style="position:relative;height:260px;">
+            <canvas id="whCompChart"></canvas>
+            <div id="whCompMessage" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:0.875rem;"></div>
+          </div>
+          <div id="whCompLegend" class="flex flex-wrap justify-center mt-2"></div>
         </div>
       </div>
 
@@ -1619,19 +1625,6 @@
         </div>
       </div>
 
-      <!-- Overflow Panel for coop chips -->
-      <div id="whOvfPanel" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-        <div class="fixed inset-0 bg-black/40" onclick="hideWhOvfPanel()"></div>
-        <div class="relative bg-white dark:bg-stone-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-lg mx-0 sm:mx-4 max-h-[60vh] flex flex-col z-10">
-          <div class="flex items-center justify-between px-5 pt-4 pb-2 border-b border-stone-200 dark:border-stone-700">
-            <h4 class="font-semibold text-stone-800 dark:text-white text-sm">Chọn chuồng</h4>
-            <button onclick="hideWhOvfPanel()" class="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-400 transition">
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
-          </div>
-          <div class="overflow-y-auto p-4 space-y-1" id="whOvfList"></div>
-        </div>
-      </div>
     </section>
 
     <!-- ============ TAB 5: FLOCK HISTORY (Placeholder) ============ -->
@@ -2003,7 +1996,7 @@
         if (flockChartInstance) flockChartInstance.destroy();
         if (coops.length > 0) {
           flockChartInstance = new Chart(flockEl.getContext('2d'), {
-            type: 'bar',
+        type: 'bar',
             data: {
               labels: coopNames,
               datasets: [{
@@ -2160,10 +2153,10 @@
         renderCoopManagement(window._mgmtCoopData);
       }
 
-      // Resize warehouse charts
+      // Load warehouse data when tab becomes visible
       if (tabId === 'warehouse') {
         setTimeout(() => {
-          if (whTrendChartInstance) whTrendChartInstance.resize();
+          loadWhData();
         }, 100);
       }
     }
@@ -2179,10 +2172,6 @@
       return localStorage.getItem('farm-theme') || 'light';
     }
 
-    // Warehouse chart instances (khai báo sớm để setTheme có thể tham chiếu)
-    let whDonutChartInstance = null;
-    let whTrendChartInstance = null;
-
     function setTheme(theme) {
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -2195,9 +2184,6 @@
       if (tempChartInstance && appState.dashboard) {
         createCharts(appState.dashboard);
         createOverviewCharts();
-      }
-      if (whTrendChartInstance) {
-        renderWhCharts();
       }
     }
 
@@ -2239,16 +2225,13 @@
       window.publicAPI = {
         getDashboard:   function() { return _fetch('/dashboard/public'); },
         getFeedItems:   function() { return _fetch('/warehouse/feed'); },
-        getCoops:       function() { return _fetch('/coops/public').then(function(r) { return r.value || r.coops || []; }); },
+        getCoops:       function() { return _fetch('/coops/public').then(function(r) { var list = Array.isArray(r) ? r : (r.value || []); return list.map(function(c) { return { id: c.id, name: c.name, location: c.location || '', chickens: c.current_count || 0, capacity: c.capacity || 0, temp: c.environment ? c.environment.temperature : null, humidity: c.environment ? c.environment.humidity : null, feedLevel: c.environment ? Math.round(c.environment.feed_level) : 50, waterLevel: c.environment ? Math.round(c.environment.water_level) : 50, status: c.status || 'active', alert: c.emergency_alert || false, deviceCount: 0, onlineDeviceCount: 0 }; }); }); },
         getCoopDevices: function(id) { return _fetch('/coops/public/' + id + '/devices').then(function(r) { return r.value || r || []; }); },
         getUnconnectedDevices: function() { return _fetch('/devices/public/unconnected/available').then(function(r) { return r.value || r || []; }); },
         getAllDevices:  function() { return _fetch('/devices/public/all').then(function(r) { return r.value || r || []; }); },
         getItems:       function(t) { return _fetch('/warehouse/feed?type=' + (t||'all')).catch(function() { return {items:[]}; }); },
-        getConsumptionOverview: function(t,p) { return _fetch('/warehouse/consumption/overview?type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {per_coop:{},total_by_type:{}}; }); },
-        getConsumption: function(id,t,p) { return _fetch('/warehouse/consumption?coop_id='+(id||'')+'&type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {daily:[],records:[],total_records:0}; }); },
-        getConsumptionByCoop: function(id,t,p) { return _fetch('/warehouse/consumption/coop/'+id+'?type='+(t||'all')+'&period='+(p||'day')).catch(function(){ return {daily:[],records:[],total_records:0}; }); },
         getFeedConsumptionByCoops: function(p) { return _fetch('/warehouse/consumption/feed/by-coop?period='+(p||'day')).catch(function(){ return {daily:[]}; }); },
-        getFeedConsumptionOverview: function() { return _fetch('/warehouse/consumption/feed/overview').catch(function(){ return {per_coop:{},total:0}; }); },
+        getMedicineConsumptionByCoops: function(p) { return _fetch('/warehouse/consumption/medicine/by-coop?period='+(p||'day')).catch(function(){ return {daily:[]}; }); },
         updateFeedItem: function(id,q) { return _fetch('/warehouse/feed/'+id, {method:'PUT',body:JSON.stringify({quantity_kg:q})}); },
         attachToCoop:   function(did,cid) { return _fetch('/devices/public/attach-to-coop',{method:'POST',body:JSON.stringify({device_id:did,coop_id:cid})}); },
         removeDeviceFromCoop: function(id) { return _fetch('/devices/public/remove-from-coop/'+id,{method:'DELETE'}); },
@@ -2326,7 +2309,7 @@
             if (flockChartInstance) flockChartInstance.resize();
           }
           if (activeTab.id === 'tab-warehouse') {
-            if (whTrendChartInstance) whTrendChartInstance.resize();
+            if (whCompChartInstance) whCompChartInstance.resize();
           }
         }
       }, 250);
@@ -3053,17 +3036,21 @@
     // ==============================================================
     // 16. WAREHOUSE
     // ==============================================================
+    let whCompChartInstance = null;
+    let whCompColors = ['#52b788','#38bdf8','#f59e0b','#e11d48','#8b5cf6','#14b8a6','#f97316','#06b6d4','#84cc16','#ec4899'];
+    let whCompState = {
+      compType: 'feed',
+      compPeriod: 'day',
+      selectedCoops: null,
+    };
+
     let whState = {
       items: [],
       coops: [],
-      consumption: { daily: [], records: [], total_records: 0 },
-      overview: { per_coop: {}, total_by_type: {} },
-      feedConsumption: { daily: [] },
-      feedOverview: { per_coop: {}, total: 0 },
       selectedType: 'all',
       selectedPeriod: 'day',
-      coopSelection: new Set(),
-      multiChartCoopIds: [],
+      feedConsumption: { daily: [] },
+      medicineConsumption: { daily: [] },
     };
 
     async function loadWhData() {
@@ -3075,24 +3062,17 @@
         whState.items = itemsRes.items || [];
         whState.coops = coopsRes || [];
 
-        const overviewRes = await API.getConsumptionOverview(whState.selectedType, whState.selectedPeriod);
-        whState.overview = overviewRes;
-
-        const consumptionRes = await API.getConsumption(null, whState.selectedType, whState.selectedPeriod);
-        whState.consumption = consumptionRes;
-
-        const [feedConsumptionRes, feedOverviewRes] = await Promise.all([
+        const [feedRes, medicineRes] = await Promise.all([
           API.getFeedConsumptionByCoops(whState.selectedPeriod),
-          API.getFeedConsumptionOverview()
+          API.getMedicineConsumptionByCoops(whState.selectedPeriod)
         ]);
-        whState.feedConsumption = feedConsumptionRes;
-        whState.feedOverview = feedOverviewRes;
+        whState.feedConsumption = feedRes;
+        whState.medicineConsumption = medicineRes;
 
         renderWhStats();
-        updateWhTrendTitle();
         renderWhCharts();
         renderWhInventory();
-        loadWhCoopChips();
+        renderWhCompCoopSelector();
       } catch (e) {
         console.error('loadWhData error:', e);
         document.getElementById('whInventoryList').innerHTML = '<p class="text-sm text-red-500 text-center py-4"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Không thể tải dữ liệu kho</p>';
@@ -3141,117 +3121,204 @@
     }
 
     function renderWhCharts() {
-      const colors = getChartColors();
-      const isDark = document.documentElement.classList.contains('dark');
-
-      // Horizontal stacked bar (replaces donut chart)
       renderWhStackedBar(whState.items);
+      renderWhCompChart();
+    }
 
-      // Trend chart — per-coop feed consumption (for 'feed' type)
-      var trendEl = document.getElementById('whTrendChart');
-      var trendMsg = document.getElementById('whTrendMessage');
-      if (trendEl) {
-        var showChart = (whState.selectedType === 'feed');
-        var daily = whState.feedConsumption.daily || [];
-        var coops = whState.coops || [];
+    function renderWhCompChart() {
+      var el = document.getElementById('whCompChart');
+      var msg = document.getElementById('whCompMessage');
+      if (!el) return;
 
-        if (!showChart) {
-          if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
-          trendEl.style.display = 'none';
-          if (trendMsg) {
-            trendMsg.style.display = 'flex';
-            trendMsg.textContent = 'Chỉ hiển thị cho thức ăn';
-          }
-        } else {
-          trendEl.style.display = 'block';
-          if (trendMsg) trendMsg.style.display = 'none';
+      var isDark = document.documentElement.classList.contains('dark');
+      var feedDaily = whState.feedConsumption.daily || [];
+      var medDaily = whState.medicineConsumption.daily || [];
+      var type = whCompState.compType;
+      var coops = whState.coops || [];
+      var selectedCoops = whCompState.selectedCoops;
+      var showAll = !selectedCoops;
 
-          if (daily.length === 0 || coops.length === 0) {
-            if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
-            if (trendMsg) {
-              trendMsg.style.display = 'flex';
-              trendMsg.textContent = 'Không có dữ liệu tiêu thụ';
-            }
-            return;
-          }
+      var daily = type === 'feed' ? feedDaily : medDaily;
 
-          var labels = daily.map(function(d) { return d.date; });
-          var coopColors = ['#52b788','#38bdf8','#f59e0b','#e11d48','#8b5cf6','#14b8a6','#f97316','#06b6d4','#84cc16','#ec4899'];
-          var activeCoopIds = whState.coopSelection;
-          var showAll = (activeCoopIds.size === 0);
-          var datasets = [];
-          coops.forEach(function(coop, idx) {
-            if (!showAll && !activeCoopIds.has(coop.id)) return;
-            var values = daily.map(function(d) {
-              var c = d.coops || {};
-              return c[String(coop.id)] || 0;
-            });
-            var hasData = values.some(function(v) { return v > 0; });
-            if (!hasData) return;
-            datasets.push({
-              label: coop.name || 'Chuồng ' + coop.id,
-              data: values,
-              borderColor: coopColors[idx % coopColors.length],
-              backgroundColor: coopColors[idx % coopColors.length].replace(')', ',0.10)').replace('rgb', 'rgba'),
-              borderWidth: 2,
-              pointRadius: 2,
-              pointHoverRadius: 4,
-              pointBackgroundColor: coopColors[idx % coopColors.length],
-              tension: 0.3,
-              fill: false,
-            });
-          });
+      if (daily.length === 0 || coops.length === 0) {
+        if (whCompChartInstance) { whCompChartInstance.destroy(); whCompChartInstance = null; }
+        msg.style.display = 'flex';
+        msg.textContent = daily.length === 0 ? 'Không có dữ liệu tiêu thụ' : 'Không có dữ liệu chuồng';
+        el.style.display = 'none';
+        return;
+      }
 
-          if (datasets.length === 0) {
-            if (whTrendChartInstance) { whTrendChartInstance.destroy(); whTrendChartInstance = null; }
-            if (trendMsg) {
-              trendMsg.style.display = 'flex';
-              trendMsg.textContent = 'Không có dữ liệu tiêu thụ';
-            }
-            return;
-          }
+      var latest = daily[daily.length - 1];
+      var periodCoops = latest.coops || {};
 
-          if (whTrendChartInstance) whTrendChartInstance.destroy();
-          var ctx2 = trendEl.getContext('2d');
-          whTrendChartInstance = new Chart(ctx2, {
-            type: 'line',
-            data: { labels: labels, datasets: datasets },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              interaction: { intersect: false, mode: 'index' },
-              plugins: {
-                legend: {
-                  position: 'bottom',
-                  labels: {
-                    color: isDark ? '#cbd5e1' : '#64748b',
-                    font: { size: 10 },
-                    boxWidth: 10,
-                    usePointStyle: true,
-                  }
+      var visibleCoops = coops.filter(function(c) {
+        return showAll || selectedCoops.has(c.id);
+      });
+
+      if (visibleCoops.length === 0) {
+        if (whCompChartInstance) { whCompChartInstance.destroy(); whCompChartInstance = null; }
+        msg.style.display = 'flex';
+        msg.textContent = 'Vui lòng chọn chuồng để xem dữ liệu';
+        el.style.display = 'none';
+        return;
+      }
+
+      el.style.display = 'block';
+      msg.style.display = 'none';
+
+      var labels = visibleCoops.map(function(c) { return c.name || 'Chuồng ' + c.id; });
+      var data = visibleCoops.map(function(c) { return periodCoops[String(c.id)] || 0; });
+      var colors = visibleCoops.map(function(c) { return whCompColors[c.id % whCompColors.length]; });
+      var unit = 'kg';
+      var typeLabel = type === 'feed' ? 'Thức ăn' : 'Thuốc';
+
+      if (whCompChartInstance) whCompChartInstance.destroy();
+
+      whCompChartInstance = new Chart(el.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: typeLabel + ' (' + unit + ')',
+            data: data,
+            backgroundColor: colors.map(function(c) { return c + '80'; }),
+            borderColor: colors,
+            borderWidth: 1.5,
+            borderRadius: 4,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: isDark ? '#1e293b' : '#ffffff',
+              titleColor: isDark ? '#f1f5f9' : '#1e293b',
+              bodyColor: isDark ? '#cbd5e1' : '#475569',
+              cornerRadius: 8,
+              padding: 10,
+              callbacks: {
+                label: function(context) {
+                  return context.label + ': ' + formatNumber(context.raw) + ' ' + unit;
                 },
-                tooltip: {
-                  backgroundColor: isDark ? '#1e293b' : '#ffffff',
-                  titleColor: isDark ? '#f1f5f9' : '#1e293b',
-                  bodyColor: isDark ? '#cbd5e1' : '#475569',
-                  cornerRadius: 8,
-                  padding: 10,
-                }
-              },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 }, maxTicksLimit: 10 }
-                },
-                y: {
-                  grid: { color: isDark ? '#334155' : '#e2e8f0' },
-                  ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 9 } },
-                  beginAtZero: true
-                }
+                title: function() { return ''; }
               }
             }
-          });
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 11 } }
+            },
+            y: {
+              grid: { color: isDark ? '#334155' : '#e2e8f0' },
+              ticks: { color: isDark ? '#64748b' : '#94a3b8', font: { size: 10 } },
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: unit,
+                color: isDark ? '#64748b' : '#94a3b8',
+                font: { size: 10 },
+              }
+            }
+          }
         }
+      });
+
+      renderWhCompLegend(visibleCoops, colors, typeLabel);
+    }
+
+    function renderWhCompLegend(coops, colors, typeLabel) {
+      var container = document.getElementById('whCompLegend');
+      if (!container) return;
+      var isDark = document.documentElement.classList.contains('dark');
+      container.innerHTML = coops.map(function(c, i) {
+        return '<span style="display:inline-flex;align-items:center;gap:0.3rem;margin:0.2rem 0.5rem 0.2rem 0;font-size:0.7rem;color:' + (isDark ? '#94a3b8' : '#64748b') + ';">' +
+          '<span style="width:8px;height:8px;border-radius:50%;background:' + colors[i] + ';display:inline-block;"></span>' +
+          (c.name || 'Chuồng ' + c.id) +
+        '</span>';
+      }).join('');
+    }
+
+    function renderWhCompCoopSelector() {
+      var coops = whState.coops || [];
+      if (coops.length === 0) return;
+      var selectedCoops = whCompState.selectedCoops;
+      var showAll = selectedCoops === null;
+      var count = showAll ? coops.length : selectedCoops.size;
+
+      var label = document.getElementById('whCompSelectLabel');
+      if (label) {
+        label.textContent = showAll ? 'Tất cả chuồng (' + count + ')' : 'Đã chọn ' + count + '/' + coops.length;
+      }
+
+      var dropdown = document.getElementById('whCompDropdown');
+      if (!dropdown) return;
+
+      dropdown.innerHTML =
+        '<div class="wh-comp-ms-item wh-comp-ms-select-all' + (showAll ? ' checked' : '') + '" onclick="toggleWhCompSelectAll()" style="--ms-color:#52b788">' +
+          '<span class="wh-comp-ms-check"></span>' +
+          '<span class="wh-comp-ms-name" style="font-weight:600;">' + (showAll ? 'Bỏ tất cả' : 'Chọn tất cả') + '</span>' +
+        '</div>' +
+        coops.map(function(c) {
+          var checked = showAll || selectedCoops.has(c.id);
+          var color = whCompColors[c.id % whCompColors.length];
+          return '<div class="wh-comp-ms-item' + (checked ? ' checked' : '') + '" onclick="toggleWhCompItem(' + c.id + ', this)" style="--ms-color:' + color + '">' +
+            '<span class="wh-comp-ms-check"></span>' +
+            '<span class="wh-comp-ms-color" style="background:' + color + ';"></span>' +
+            '<span class="wh-comp-ms-name">' + (c.name || 'Chuồng ' + c.id) + '</span>' +
+          '</div>';
+        }).join('');
+    }
+
+    function toggleWhCompItem(coopId, el) {
+      var selectedCoops = whCompState.selectedCoops;
+      var isChecked = el.classList.contains('checked');
+
+      if (selectedCoops === null) {
+        selectedCoops = new Set(whState.coops.map(function(c) { return c.id; }));
+        selectedCoops.delete(coopId);
+      } else {
+        if (isChecked) {
+          selectedCoops.delete(coopId);
+        } else {
+          selectedCoops.add(coopId);
+        }
+      }
+
+      whCompState.selectedCoops = (selectedCoops.size === whState.coops.length) ? null : selectedCoops;
+      renderWhCompCoopSelector();
+      renderWhCompChart();
+    }
+
+    function toggleWhCompSelectAll() {
+      if (whCompState.selectedCoops === null) {
+        whCompState.selectedCoops = new Set();
+      } else {
+        whCompState.selectedCoops = null;
+      }
+      renderWhCompCoopSelector();
+      renderWhCompChart();
+    }
+
+    function toggleWhCompDropdown() {
+      var btn = document.querySelector('.wh-comp-ms-btn');
+      var dropdown = document.getElementById('whCompDropdown');
+      if (!btn || !dropdown) return;
+      dropdown.classList.toggle('hidden');
+      btn.classList.toggle('open');
+    }
+
+    function closeWhCompDropdown(e) {
+      var selector = document.getElementById('whCompCoopSelector');
+      if (!selector) return;
+      var dropdown = document.getElementById('whCompDropdown');
+      if (!dropdown || dropdown.classList.contains('hidden')) return;
+      if (!selector.contains(e.target)) {
+        dropdown.classList.add('hidden');
+        var btn = selector.querySelector('.wh-comp-ms-btn');
+        if (btn) btn.classList.remove('open');
       }
     }
 
@@ -3304,153 +3371,25 @@
       loadWhData();
     }
 
-    function updateWhTrendTitle() {
-      var el = document.getElementById('whTrendTitle');
-      if (whState.selectedType === 'feed') {
-        var map = { day: 'ngày', week: 'tuần', month: 'tháng', year: 'năm' };
-        if (el) el.textContent = 'Tiêu thụ thức ăn theo chuồng (' + (map[whState.selectedPeriod] || 'ngày') + ')';
-      } else {
-        if (el) el.textContent = 'Tiêu thụ thức ăn theo chuồng';
-      }
-    }
-
-    function loadWhCoopChips() {
-      const chipsContainerTrend = document.getElementById('whTrendChips');
-      if (!chipsContainerTrend) return;
-
-      const coops = whState.coops || [];
-      if (coops.length === 0) {
-        chipsContainerTrend.classList.add('hidden');
-        return;
-      }
-
-      const selection = whState.coopSelection;
-      chipsContainerTrend.classList.remove('hidden');
-      let html = coops.map(c => {
-        const active = selection.has(c.id) ? ' wh-chip-active' : '';
-        return `<span class="wh-coop-chip${active}" data-coop-id="${c.id}" onclick="toggleWhChip(${c.id}, this)">
-          ${c.name || 'Chuồng ' + c.id}
-        </span>`;
-      }).join('');
-
-      if (coops.length > 4) {
-        html += `<button class="wh-ovf-btn" onclick="showWhOvfPanel()" title="Thêm chuồng"><i class="fa-solid fa-ellipsis-h"></i></button>`;
-      }
-
-      chipsContainerTrend.innerHTML = html;
-    }
-
-    function toggleWhChip(coopId, el) {
-      const sel = whState.coopSelection;
-      if (sel.has(coopId)) {
-        sel.delete(coopId);
-        if (el) el.classList.remove('wh-chip-active');
-      } else {
-        sel.add(coopId);
-        if (el) el.classList.add('wh-chip-active');
-      }
-
-      if (sel.size === 0) {
-        // Reload all coops
-        loadWhData();
-      } else {
-        // Load data for selected coops
-        reloadWhWithSelection();
-      }
-    }
-
-    async function reloadWhWithSelection() {
-      const sel = Array.from(whState.coopSelection);
-      try {
-        const overviewRes = await API.getConsumptionOverview(whState.selectedType, whState.selectedPeriod);
-        whState.overview = overviewRes;
-
-        if (sel.length === 1) {
-          const res = await API.getConsumption(sel[0], whState.selectedType, whState.selectedPeriod);
-          whState.consumption = res;
-        } else {
-          const allRes = await Promise.all(sel.map(id => API.getConsumptionByCoop(id, whState.selectedType, whState.selectedPeriod)));
-          const merged = {
-            daily: [],
-            records: [],
-            total_records: 0
-          };
-          allRes.forEach(r => {
-            merged.records = merged.records.concat(r.records || []);
-            merged.total_records += r.total_records || 0;
-          });
-          // Merge daily
-          const dailyMap = {};
-          allRes.forEach(r => {
-            (r.records || []).forEach(rec => {
-              const d = rec.recorded_date || '';
-              const cat = rec.feed_item_category || 'feed';
-              const key = d + '|' + cat;
-              if (!dailyMap[key]) dailyMap[key] = { date: d, category: cat, total_kg: 0 };
-              dailyMap[key].total_kg += rec.quantity_kg || 0;
-            });
-          });
-          merged.daily = Object.values(dailyMap);
-          whState.consumption = merged;
-        }
-
-        // Refresh feed consumption data
-        const [feedConsumptionRes, feedOverviewRes] = await Promise.all([
-          API.getFeedConsumptionByCoops(whState.selectedPeriod),
-          API.getFeedConsumptionOverview()
-        ]);
-        whState.feedConsumption = feedConsumptionRes;
-        whState.feedOverview = feedOverviewRes;
-
-        updateWhTrendTitle();
-        renderWhCharts();
-      } catch (e) {
-        console.error('reloadWhWithSelection error:', e);
-      }
-    }
-
-    function showWhOvfPanel() {
-      const panel = document.getElementById('whOvfPanel');
-      const list = document.getElementById('whOvfList');
-      if (!panel || !list) return;
-
-      const coops = whState.coops || [];
-      list.innerHTML = coops.map(c => {
-        const checked = whState.coopSelection.has(c.id) ? 'checked' : '';
-        return `<div class="wh-ovf-item" onclick="toggleWhOvfItem(${c.id}, this)">
-          <input type="checkbox" ${checked} onclick="event.stopPropagation(); toggleWhOvfItem(${c.id}, this.parentElement)">
-          <span class="wh-ovf-label">${c.name || 'Chuồng ' + c.id}</span>
-        </div>`;
-      }).join('');
-      panel.classList.remove('hidden');
-    }
-
-    function hideWhOvfPanel() {
-      document.getElementById('whOvfPanel').classList.add('hidden');
-    }
-
-    function toggleWhOvfItem(coopId, el) {
-      const sel = whState.coopSelection;
-      const cb = el.querySelector('input[type="checkbox"]');
-      if (sel.has(coopId)) {
-        sel.delete(coopId);
-        if (cb) cb.checked = false;
-      } else {
-        sel.add(coopId);
-        if (cb) cb.checked = true;
-      }
-      // Sync chips
-      document.querySelectorAll('.wh-coop-chip').forEach(chip => {
-        const id = parseInt(chip.dataset.coopId);
-        chip.classList.toggle('wh-chip-active', sel.has(id));
+    function switchWhCompType(type) {
+      whCompState.compType = type;
+      document.querySelectorAll('#whCompTypeGroup .wh-toggle-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.compType === type);
       });
-
-      if (sel.size === 0) {
-        loadWhData();
-      } else {
-        reloadWhWithSelection();
-      }
+      renderWhCompChart();
+      renderWhCompCoopSelector();
     }
+
+    function switchWhCompPeriod(period) {
+      whCompState.compPeriod = period;
+      whState.selectedPeriod = period;
+      document.querySelectorAll('#whCompPeriodGroup .wh-period-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.compPeriod === period);
+      });
+      loadWhData();
+    }
+
+    document.addEventListener('click', closeWhCompDropdown);
 
     // ==============================================================
     // 17. DEVICES TAB

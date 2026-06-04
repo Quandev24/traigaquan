@@ -576,3 +576,22 @@ class FeedConsumption(db.Model):
             'recorded_date': self.recorded_date.isoformat(),
             'quantity_kg': self.quantity_kg,
         }
+
+
+class MedicineConsumption(db.Model):
+    __tablename__ = 'medicine_consumption'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    recorded_date = db.Column(db.Date, nullable=False)
+    quantity_kg = db.Column(db.Float, nullable=False, default=0)
+    __table_args__ = (db.UniqueConstraint('coop_id', 'recorded_date'),)
+    coop = db.relationship('Coop', backref=db.backref('medicine_consumptions', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'recorded_date': self.recorded_date.isoformat(),
+            'quantity_kg': self.quantity_kg,
+        }

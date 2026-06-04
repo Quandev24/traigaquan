@@ -799,37 +799,6 @@
             }
         },
 
-        getConsumptionOverview: async function(type, period) {
-            try {
-                return await window.apiFetch('/warehouse/consumption/overview?type=' + (type || 'all') + '&period=' + (period || 'day'));
-            } catch (e) {
-                console.warn('getConsumptionOverview not available:', e);
-                return { per_coop: {}, total_by_type: {} };
-            }
-        },
-
-        getConsumption: async function(coopId, type, period) {
-            try {
-                var params = new URLSearchParams();
-                if (coopId) params.set('coop_id', coopId);
-                params.set('type', type || 'all');
-                params.set('period', period || 'day');
-                return await window.apiFetch('/warehouse/consumption?' + params.toString());
-            } catch (e) {
-                console.warn('getConsumption not available:', e);
-                return { daily: [], records: [], total_records: 0 };
-            }
-        },
-
-        getConsumptionByCoop: async function(coopId, type, period) {
-            try {
-                return await window.apiFetch('/warehouse/consumption/coop/' + coopId + '?type=' + (type || 'all') + '&period=' + (period || 'day'));
-            } catch (e) {
-                console.warn('getConsumptionByCoop not available:', e);
-                return { daily: [], records: [], total_records: 0 };
-            }
-        },
-
         getFeedConsumptionByCoops: async function(period) {
             try {
                 return await window.apiFetch('/warehouse/consumption/feed/by-coop?period=' + (period || 'day'));
@@ -839,12 +808,12 @@
             }
         },
 
-        getFeedConsumptionOverview: async function() {
+        getMedicineConsumptionByCoops: async function(period) {
             try {
-                return await window.apiFetch('/warehouse/consumption/feed/overview');
+                return await window.apiFetch('/warehouse/consumption/medicine/by-coop?period=' + (period || 'day'));
             } catch (e) {
-                console.warn('getFeedConsumptionOverview not available:', e);
-                return { per_coop: {}, total: 0 };
+                console.warn('getMedicineConsumptionByCoops not available:', e);
+                return { daily: [] };
             }
         },
 
