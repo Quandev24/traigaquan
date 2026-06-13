@@ -20,14 +20,31 @@ Source types cho recordings:
 - file_path: Đường dẫn file video cục bộ
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required
 from datetime import datetime
 import sys
 import os
+import time
+import logging
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from models import db, Coop, Device, CoopDevice, Environment, VideoRecording
+from models import db, Coop, Device, CoopDevice, Environment, VideoRecording, AIDetection, Alert
+from Camera_AI.Lib_.ai_detector import AIDetector
+
+logger = logging.getLogger(__name__)
+
+
+def _get_stream_manager():
+    """Lazy import stream_manager to avoid circular imports"""
+    from services.stream_manager import stream_manager
+    return stream_manager
+
+
+def _get_websocket_functions():
+    """Lazy import websocket functions to avoid circular imports"""
+    from websocket_server import emit_detection_result, emit_camera_status, has_subscribers
+    return emit_detection_result, emit_camera_status, has_subscribers
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 VIDEO_PATH_FILE = os.path.join(PROJECT_DIR, 'video_path.txt')
@@ -61,9 +78,30 @@ def write_video_path(path):
         f.write("\n".join(existing))
 
 
+def detect_media_type(file_path):
+    """Phát hiện loại media (video/image/unknown) dựa trên phần mở rộng file."""
+    ext = os.path.splitext(file_path)[1].lower()
+    image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.tif', '.svg'}
+    video_exts = {'.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.m4v'}
+    if ext in image_exts:
+        return 'image'
+    if ext in video_exts:
+        return 'video'
+    return 'unknown'
+
+
 def find_first_camera():
     """Tìm camera đầu tiên (device type='camera') chưa bị xóa. Trả về Device object hoặc None."""
     return Device.query.filter_by(type='camera', deleted=False).order_by(Device.id.asc()).first()
+
+
+def find_camera_2():
+    """Tìm camera thứ 2 (Camera 2) chưa bị xóa. Trả về Device object hoặc None."""
+    return Device.query.filter(
+        Device.type == 'camera',
+        Device.deleted == False,
+        Device.name.like('%Camera 2%')
+    ).order_by(Device.id.asc()).first()
 
 
 # Tạo Blueprint cho routes camera
@@ -389,16 +427,18 @@ def delete_recording(device_id, recording_id):
 
 @camera_bp.route('/video-path', methods=['GET'])
 def get_video_path():
-    """Đọc đường dẫn video đầu tiên từ file text video_path.txt."""
+    """Đọc đường dẫn video/ảnh đầu tiên từ file text video_path.txt."""
     path = read_video_path()
-    return jsonify({'video_path': path}), 200
+    media_type = detect_media_type(path) if path else None
+    return jsonify({'video_path': path, 'media_type': media_type}), 200
 
 
 @camera_bp.route('/video-paths', methods=['GET'])
 def get_video_paths():
-    """Đọc tất cả đường dẫn video từ file text video_path.txt (mỗi dòng một path)."""
+    """Đọc tất cả đường dẫn từ file text video_path.txt (mỗi dòng một path)."""
     paths = read_video_paths()
-    return jsonify({'video_paths': paths}), 200
+    media_types = [detect_media_type(p) for p in paths]
+    return jsonify({'video_paths': paths, 'media_types': media_types}), 200
 
 
 @camera_bp.route('/video-path', methods=['PUT'])
@@ -417,28 +457,28 @@ def update_video_path():
 @jwt_required()
 def auto_load_from_file():
     """
-    Tự động load video từ file text vào camera đầu tiên.
+    Tự động load video từ file text vào Camera 2.
 
     Luồng xử lý:
     1. Đọc đường dẫn video từ video_path.txt
-    2. Tìm camera đầu tiên (Device.type == 'camera')
+    2. Tìm Camera 2 (Device.type == 'camera' và name chứa 'Camera 2')
     3. Tạo VideoRecording với source_type='file_path'
     4. Broadcast WebSocket để frontend cập nhật
 
     Returns:
         201: Recording object đã tạo
-        400: File text rỗng hoặc không có camera
+        400: File text rỗng hoặc không có Camera 2
     """
     source_value = read_video_path()
     if not source_value:
-        return jsonify({'error': 'No video path in video_path.txt'}), 400
+        return jsonify({'error': 'No media path in video_path.txt'}), 400
 
     if not os.path.exists(source_value):
-        return jsonify({'error': f'Video file not found: {source_value}'}), 400
+        return jsonify({'error': f'File not found: {source_value}'}), 400
 
-    camera = find_first_camera()
+    camera = find_camera_2()
     if not camera:
-        return jsonify({'error': 'No camera device found'}), 400
+        return jsonify({'error': 'No Camera 2 device found'}), 400
 
     coop_devices = CoopDevice.query.filter_by(device_id=camera.id, deleted=False).first()
     coop_id = coop_devices.coop_id if coop_devices else None
@@ -459,17 +499,77 @@ def auto_load_from_file():
     db.session.add(recording)
     db.session.commit()
 
-    return jsonify(recording.to_dict()), 201
+    ai_result = None
+    try:
+        detector = AIDetector()
+        ext = os.path.splitext(source_value)[1].lower()
+        video_exts = {'.mp4', '.avi', '.mov', '.mkv', '.webm', '.flv', '.wmv', '.m4v'}
+        is_video = ext in video_exts
+
+        last_frame = None
+        if is_video:
+            result = detector.detect_video(source_value, coop_id=coop_id, device_id=camera.id)
+            last_frame = result.pop('_last_frame', None)
+        else:
+            result = detector.detect(source_value, coop_id=coop_id, device_id=camera.id)
+
+        if 'error' not in result:
+            detection = AIDetection(
+                device_id=camera.id,
+                coop_id=coop_id,
+                source_file=source_value,
+                chicken_count=result.get('chicken_count', 0),
+                has_disease=result.get('has_disease', False),
+                diseases=result.get('diseases', []),
+                details=result.get('chickens', []),
+                detected_at=datetime.now(),
+            )
+            db.session.add(detection)
+            db.session.commit()
+
+            image_url = None
+            try:
+                image_url = detector.annotate_and_save(source_value, result, detection_id=detection.id, image=last_frame)
+                if image_url is None:
+                    logger.error("annotate_and_save returned None - image NOT saved for detection_id=%s", detection.id)
+            except Exception as e:
+                logger.exception("annotate_and_save failed for detection_id=%s: %s", detection.id, e)
+                image_url = None
+
+            ai_result = detection.to_dict()
+            ai_result['image_url'] = image_url
+
+            if result.get('has_disease') and coop_id:
+                coop = db.session.get(Coop, coop_id)
+                coop_name = coop.name if coop else 'Unknown'
+                disease_names = ', '.join(d['disease'] for d in result.get('diseases', []))
+                alert = Alert(
+                    coop_id=coop_id,
+                    device_id=camera.id,
+                    type='disease',
+                    level='warning',
+                    message=f'{coop_name}: Phát hiện gà bệnh - {disease_names}',
+                )
+                db.session.add(alert)
+                db.session.commit()
+    except Exception as e:
+        logger.exception("AI detection failed for camera_id=%s: %s", camera.id, e)
+        ai_result = {'error': str(e)}
+
+    response_data = recording.to_dict()
+    response_data['ai_detection'] = ai_result
+
+    return jsonify(response_data), 201
 
 
 @camera_bp.route('/serve-video', methods=['GET'])
 def serve_video():
     """
-    Phục vụ file video từ đường dẫn cục bộ (file_path).
+    Phục vụ file media (video/ảnh) từ đường dẫn cục bộ (file_path).
     Hỗ trợ HTTP Range header cho phát video trong trình duyệt.
 
     Query params:
-        path (str): Đường dẫn file video (VD: D:/Camera_Data/record.mp4)
+        path (str): Đường dẫn file media (VD: D:/Camera_Data/record.mp4 hoặc D:/image.jpg)
 
     Returns:
         206: Partial content (khi có Range header)
@@ -492,6 +592,11 @@ def serve_video():
         '.mov': 'video/quicktime', '.mkv': 'video/x-matroska',
         '.webm': 'video/webm', '.flv': 'video/x-flv',
         '.wmv': 'video/x-ms-wmv', '.m4v': 'video/mp4',
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.png': 'image/png', '.gif': 'image/gif',
+        '.bmp': 'image/bmp', '.webp': 'image/webp',
+        '.tiff': 'image/tiff', '.tif': 'image/tiff',
+        '.svg': 'image/svg+xml',
     }
     mime = mime_map.get(ext, 'application/octet-stream')
 
@@ -591,3 +696,275 @@ def get_coop_camera_detail(coop_id):
             } for d in devices
         ]
     }), 200
+
+
+# ============================================================
+# CAMERA STREAM & DETECTION CONTROL API
+# ============================================================
+
+@camera_bp.route('/<int:device_id>/stream-config', methods=['GET'])
+@jwt_required()
+def get_stream_config(device_id):
+    """Get camera stream configuration"""
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    return jsonify({
+        'device_id': device.id,
+        'stream_url': device.stream_url,
+        'stream_type': device.stream_type,
+        'stream_enabled': device.stream_enabled,
+        'frame_skip': device.frame_skip,
+        'analysis_interval_seconds': getattr(device, 'analysis_interval_seconds', 10)
+    }), 200
+
+
+@camera_bp.route('/<int:device_id>/stream-config', methods=['PUT'])
+@jwt_required()
+def update_stream_config(device_id):
+    """Update camera stream configuration"""
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    was_enabled = device.stream_enabled
+    
+    if 'stream_url' in data:
+        device.stream_url = data['stream_url']
+    if 'stream_type' in data:
+        device.stream_type = data['stream_type']
+    if 'stream_enabled' in data:
+        device.stream_enabled = bool(data['stream_enabled'])
+    if 'frame_skip' in data:
+        device.frame_skip = max(1, int(data['frame_skip']))
+    if 'analysis_interval_seconds' in data:
+        device.analysis_interval_seconds = max(1, int(data['analysis_interval_seconds']))
+    
+    db.session.commit()
+    
+    # Update stream manager
+    from services.stream_manager import stream_manager
+    sm = _get_stream_manager()
+    sm.update_camera_config(
+        device_id, 
+        stream_url=device.stream_url,
+        frame_skip=device.frame_skip,
+        analysis_interval_seconds=getattr(device, 'analysis_interval_seconds', 10)
+    )
+    
+    # Auto-start/stop based on stream_enabled
+    if device.stream_enabled and not was_enabled:
+        sm = _get_stream_manager()
+        sm.start_camera(device_id)
+    elif not device.stream_enabled and was_enabled:
+        sm = _get_stream_manager()
+        sm.stop_camera(device_id)
+    
+    return jsonify({
+        'message': 'Stream config updated',
+        'device_id': device.id,
+        'stream_url': device.stream_url,
+        'stream_type': device.stream_type,
+        'stream_enabled': device.stream_enabled,
+        'frame_skip': device.frame_skip
+    }), 200
+
+
+@camera_bp.route('/<int:device_id>/detection/start', methods=['POST'])
+@jwt_required()
+def start_detection(device_id):
+    """Start real-time detection for a camera"""
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    # Get coop_id
+    coop_device = CoopDevice.query.filter_by(device_id=device_id, deleted=False).first()
+    coop_id = coop_device.coop_id if coop_device else None
+    
+    if not coop_id:
+        return jsonify({'error': 'Camera not assigned to a coop'}), 400
+    
+    # Register if not already registered
+    sm = _get_stream_manager()
+    if device_id not in sm.workers:
+        stream_url = device.stream_url or f'rtsp://camera-{device_id}.local:8554/stream'
+        frame_skip = device.frame_skip or 5
+        sm.register_camera(device_id, stream_url, coop_id, frame_skip)
+    
+    success = sm.start_camera(device_id)
+    
+    if success:
+        return jsonify({
+            'message': 'Detection started',
+            'device_id': device_id,
+            'status': 'running'
+        }), 200
+    else:
+        return jsonify({'error': 'Failed to start detection'}), 500
+
+
+@camera_bp.route('/<int:device_id>/detection/stop', methods=['POST'])
+@jwt_required()
+def stop_detection(device_id):
+    """Stop real-time detection for a camera"""
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    sm = _get_stream_manager()
+    success = sm.stop_camera(device_id)
+    
+    if success:
+        return jsonify({
+            'message': 'Detection stopped',
+            'device_id': device_id,
+            'status': 'stopped'
+        }), 200
+    else:
+        return jsonify({'error': 'Camera not running or not found'}), 400
+
+
+@camera_bp.route('/<int:device_id>/detection/status', methods=['GET'])
+@jwt_required()
+def get_detection_status(device_id):
+    """Get detection worker status"""
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    sm = _get_stream_manager()
+    status = sm.get_camera_status(device_id)
+    
+    if not status:
+        return jsonify({
+            'device_id': device_id,
+            'running': False,
+            'registered': False
+        }), 200
+    
+    status['registered'] = True
+    return jsonify(status), 200
+
+
+@camera_bp.route('/detection/start-all', methods=['POST'])
+@jwt_required()
+def start_all_detection():
+    """Start detection for all Camera 2 devices"""
+    sm = _get_stream_manager()
+    started = sm.start_all()
+    return jsonify({
+        'message': f'Started {started} cameras',
+        'started': started
+    }), 200
+
+
+@camera_bp.route('/detection/stop-all', methods=['POST'])
+@jwt_required()
+def stop_all_detection():
+    """Stop detection for all cameras"""
+    sm = _get_stream_manager()
+    stopped = sm.stop_all()
+    return jsonify({
+        'message': f'Stopped {stopped} cameras',
+        'stopped': stopped
+    }), 200
+
+
+@camera_bp.route('/detection/status-all', methods=['GET'])
+@jwt_required()
+def get_all_detection_status():
+    """Get status of all camera workers"""
+    sm = _get_stream_manager()
+    status_list = sm.get_all_status()
+    health = sm.health_check()
+    
+    return jsonify({
+        'cameras': status_list,
+        'health': health
+    }), 200
+
+
+@camera_bp.route('/<int:device_id>/live.mjpeg', methods=['GET'])
+def live_mjpeg_stream(device_id):
+    """MJPEG stream for live camera viewing"""
+    sm = _get_stream_manager()
+    
+    device = Device.query.filter_by(id=device_id, type='camera').first()
+    if not device:
+        return jsonify({'error': 'Camera not found'}), 404
+    
+    worker = sm.workers.get(device_id)
+    if not worker or not worker.running:
+        return jsonify({'error': 'Camera not running'}), 400
+    
+    def generate():
+        while worker.running:
+            try:
+                # Get latest frame from worker
+                if hasattr(worker, 'mock_frame') and worker.mock_frame is not None:
+                    frame = worker.mock_frame.copy()
+                else:
+                    # For real cameras, we'd need a frame buffer
+                    # This is a placeholder
+                    time.sleep(0.1)
+                    continue
+                
+                _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+                frame_bytes = buffer.tobytes()
+                
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n'
+                       b'Content-Length: ' + str(len(frame_bytes)).encode() + b'\r\n'
+                       b'\r\n' + frame_bytes + b'\r\n')
+                
+                time.sleep(0.05)  # ~20 FPS
+            except Exception as e:
+                logger.error(f"MJPEG stream error: {e}")
+                break
+    
+    from flask import Response
+    return Response(
+        generate(),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
+
+
+@camera_bp.route('/camera2/list', methods=['GET'])
+@jwt_required()
+def list_camera2_devices():
+    """List all Camera 2 devices with their stream config"""
+    cameras = Device.query.filter(
+        Device.type == 'camera',
+        Device.deleted == False,
+        Device.name.like('%Camera 2%')
+    ).order_by(Device.id.asc()).all()
+    
+    result = []
+    sm = _get_stream_manager()
+    
+    for cam in cameras:
+        coop_device = CoopDevice.query.filter_by(device_id=cam.id, deleted=False).first()
+        coop = Coop.query.get(coop_device.coop_id) if coop_device else None
+        
+        worker_status = sm.get_camera_status(cam.id)
+        
+        result.append({
+            'device_id': cam.id,
+            'name': cam.name,
+            'coop_id': coop.id if coop else None,
+            'coop_name': coop.name if coop else None,
+            'stream_url': cam.stream_url,
+            'stream_type': cam.stream_type,
+            'stream_enabled': cam.stream_enabled,
+            'frame_skip': cam.frame_skip,
+            'status': cam.status,
+            'worker': worker_status
+        })
+    
+    return jsonify(result), 200
