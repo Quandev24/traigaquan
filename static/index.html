@@ -453,7 +453,8 @@
       font-size: 0.8125rem;
     }
     .camera-card-placeholder i { font-size: 2.5rem; opacity: 0.5; }
-    .camera-card-detail video { width: 100%; aspect-ratio: 16/9; display: block; object-fit: cover; background: #000; }
+    .camera-card-detail video,
+    .camera-card-detail img.camera-media-img { width: 100%; aspect-ratio: 16/9; display: block; object-fit: cover; background: #000; }
     .camera-card-footer {
       display: flex; align-items: center; justify-content: space-between;
       padding: 0.5rem 0.75rem;
@@ -880,6 +881,9 @@
           </div>
           <div class="nav-tab" data-tab="devices">
             <i class="fa-solid fa-microchip"></i><span>Thiết bị</span>
+          </div>
+          <div class="nav-tab" data-tab="camera">
+            <i class="fa-solid fa-camera-retro"></i><span>Camera AI</span>
           </div>
           <div class="nav-tab" data-tab="warehouse">
             <i class="fa-solid fa-boxes-stacked"></i><span>Quản lý kho</span>
@@ -1489,7 +1493,98 @@
 
     </section>
 
-    <!-- ============ TAB 4: WAREHOUSE ============ -->
+    <!-- ============ TAB 4: CAMERA AI ============ -->
+    <section id="tab-camera" class="tab-content">
+
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-stone-800 dark:text-white flex items-center gap-2">
+            <i class="fa-solid fa-camera-retro text-farm-500"></i>Camera AI - Phát hiện bệnh gà
+          </h1>
+          <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">Giám sát real-time và phát hiện gà bệnh qua AI (cập nhật mỗi 10 giây)</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="refreshCameras()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-farm-50 text-farm-600 hover:bg-farm-100 dark:bg-farm-900/30 dark:text-farm-400 dark:hover:bg-farm-900/50 transition">
+            <i class="fa-solid fa-rotate"></i> Làm mới
+          </button>
+        </div>
+      </div>
+
+      <!-- Error Banner -->
+      <div id="cameraErrorBanner" class="error-banner">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="cameraErrorMessage">Đã xảy ra lỗi khi tải dữ liệu camera</span>
+        <button onclick="refreshCameras()"><i class="fa-solid fa-rotate mr-1"></i>Thử lại</button>
+      </div>
+
+      <!-- Stats Overview -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Tổng Camera</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="camTotal">0</span></p>
+            </div>
+            <div class="icon-box" style="background:#d9f0e3;color:#2d6a4f;">
+              <i class="fa-solid fa-video"></i>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Đang hoạt động</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="camOnline">0</span></p>
+            </div>
+            <div class="icon-box" style="background:#e0f2fe;color:#0284c7;">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Phát hiện bệnh</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="camDisease">0</span></p>
+            </div>
+            <div class="icon-box" style="background:#fee2e2;color:#dc2626;">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="flex items-start justify-between">
+            <div>
+              <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Tổng gà phát hiện</p>
+              <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="camChickenCount">0</span></p>
+            </div>
+            <div class="icon-box" style="background:#fef3c7;color:#d97706;">
+              <i class="fa-solid fa-dove"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Grid -->
+      <div class="stat-card mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
+            <i class="fa-solid fa-camera text-farm-500 mr-1.5"></i>Danh sách Camera AI
+          </h3>
+          <span class="text-xs text-stone-400" id="camCount"></span>
+        </div>
+        <div id="cameraGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="text-center py-12 text-stone-400 dark:text-stone-500 col-span-full">
+            <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+            <p class="mt-2">Đang tải camera...</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ============ TAB 5: WAREHOUSE ============ -->
     <section id="tab-warehouse" class="tab-content">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
@@ -2130,6 +2225,7 @@
       overview: document.getElementById('tab-overview'),
       coops: document.getElementById('tab-coops'),
       devices: document.getElementById('tab-devices'),
+      camera: document.getElementById('tab-camera'),
       warehouse: document.getElementById('tab-warehouse'),
       history: document.getElementById('tab-history')
     };
@@ -2157,6 +2253,13 @@
       if (tabId === 'warehouse') {
         setTimeout(() => {
           loadWhData();
+        }, 100);
+      }
+
+      // Load camera AI data when tab becomes visible
+      if (tabId === 'camera') {
+        setTimeout(() => {
+          loadCameraData();
         }, 100);
       }
     }
@@ -2453,6 +2556,7 @@
       window._currentCoopId = coopId;
       window._cachedDevices = null;
       window._cachedVideoPaths = [];
+      window._cachedMediaTypes = [];
 
       document.getElementById('detailCoopName').textContent = coop.name + ' - ' + coop.location;
       document.getElementById('detailCoopBadge').innerHTML = getCoopBadge(coop);
@@ -2884,16 +2988,18 @@
       ]).then(([devices, pathResult]) => {
         window._cachedDevices = devices;
         window._cachedVideoPaths = pathResult.video_paths || [];
-        render(devices, window._cachedVideoPaths);
+        window._cachedMediaTypes = pathResult.media_types || [];
+        render(devices, window._cachedVideoPaths, window._cachedMediaTypes);
       }).catch(() => {
         if (window._cachedDevices) {
-          render(window._cachedDevices, window._cachedVideoPaths);
+          render(window._cachedDevices, window._cachedVideoPaths, window._cachedMediaTypes);
         } else {
           container.innerHTML = '<p class="text-sm text-red-500 text-center py-8"><i class="fa-solid fa-circle-exclamation mr-1"></i>Không thể tải dữ liệu camera</p>';
         }
       });
 
-      function render(devices, paths) {
+      function render(devices, paths, mediaTypes) {
+        mediaTypes = mediaTypes || [];
         const cameras = (devices || []).filter(d => d.type === 'camera');
         if (cameras.length === 0) {
           container.innerHTML = `
@@ -2923,14 +3029,16 @@
               const connecting = cam.status === 'connecting' || cam.status === 'pending';
               const sClass = online ? 'status-online' : (connecting ? 'status-connecting' : 'status-offline');
               const sText = online ? 'Trực tiếp' : (connecting ? 'Đang kết nối...' : 'Mất tín hiệu');
-              const videoPath = (paths && paths.length > 0) ? paths[idx % paths.length] : null;
-              const videoUrl = videoPath ? '/api/camera/serve-video?path=' + encodeURIComponent(videoPath) : null;
+              const filePath = (paths && paths.length > 0) ? paths[idx % paths.length] : null;
+              const mediaType = (mediaTypes && mediaTypes.length > 0) ? mediaTypes[idx % mediaTypes.length] : null;
+              const mediaUrl = filePath ? '/api/camera/serve-video?path=' + encodeURIComponent(filePath) : null;
+              const isImage = mediaType === 'image';
               return `
                 <div class="camera-card-detail ${sClass}">
-                  ${online && videoUrl ? '<video autoplay muted loop playsinline data-cam-idx="' + idx + '" src="' + videoUrl + '"></video>' : '<div class="camera-card-placeholder"><i class="fa-solid ' + (online ? 'fa-video' : 'fa-video-slash') + '"></i><span>' + (videoPath ? 'Đang kết nối...' : sText) + '</span></div>'}
+                  ${online && mediaUrl ? (isImage ? '<img src="' + mediaUrl + '" alt="' + cam.name + '" class="camera-media-img">' : '<video autoplay muted loop playsinline data-cam-idx="' + idx + '" src="' + mediaUrl + '"></video>') : '<div class="camera-card-placeholder"><i class="fa-solid ' + (online ? 'fa-video' : 'fa-video-slash') + '"></i><span>' + (filePath ? 'Đang kết nối...' : sText) + '</span></div>'}
                   <div class="camera-card-footer">
                     <span class="name">${cam.name}</span>
-                    ${online && videoUrl ? '<span class="live-badge"><span class="dot"></span>LIVE</span>' : ''}
+                    ${online && mediaUrl ? '<span class="live-badge"><span class="dot"></span>LIVE</span>' : ''}
                   </div>
                 </div>
               `;
@@ -2938,16 +3046,15 @@
           </div>
 
           <!-- Sick Chicken Detection Box -->
-          <div class="sick-chicken-box">
+          <div class="sick-chicken-box" id="sickChickenBox-${coopId}">
             <div class="sick-chicken-header">
               <i class="fa-solid fa-notes-medical"></i>
               <span>Phát hiện gà bệnh (AI)</span>
-              <span class="sick-chicken-badge">Chưa phát triển</span>
             </div>
             <div class="sick-chicken-body">
               <div class="sick-chicken-empty">
-                <i class="fa-solid fa-shield-check"></i>
-                <span>Không phát hiện gà bệnh</span>
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Đang tải kết quả AI...</span>
               </div>
             </div>
           </div>
@@ -2962,7 +3069,96 @@
             video.parentNode.replaceChild(fallback, video);
           });
         });
+
+        // Load AI detection results
+        renderAIDetection(coopId);
+
+        // Auto-run AI detection when camera tab opens (once per minute max)
+        var now = Date.now();
+        if (!window._lastAiAutoRun || now - window._lastAiAutoRun > 60000) {
+          window._lastAiAutoRun = now;
+          runAIDetection(coopId);
+        }
       }
+    }
+
+    function buildAIBodyHTML(data) {
+      var parts = [];
+      parts.push('<div class="sick-chicken-count">' +
+        '<div class="count"><i class="fa-solid fa-notes-medical"></i>' + data.diseases.length + '</div>' +
+        '<div class="desc">gà có dấu hiệu bệnh</div>' +
+        '<span class="alert-badge">Cảnh báo</span>' +
+        '</div>');
+      var diseaseTags = (data.diseases || []).map(function(d) {
+        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-red-900/40 text-red-400">' +
+          '<i class="fa-solid fa-triangle-exclamation text-xs"></i> ' + d.disease + ' (' + (d.confidence * 100).toFixed(0) + '%)</span>';
+      }).join(' ');
+      parts.push('<div class="flex flex-wrap gap-1.5 mt-2">' + diseaseTags + '</div>');
+      if (data.image_url) {
+        parts.push('<div class="mt-2 rounded overflow-hidden border border-red-900/50">' +
+          '<img src="' + data.image_url + '" alt="Kết quả AI" class="w-full h-auto object-contain" style="max-height:240px">' +
+          '</div>');
+      }
+      return parts.join('');
+    }
+
+    function renderAIDetection(coopId) {
+      var box = document.getElementById('sickChickenBox-' + coopId);
+      if (!box) return;
+      var body = box.querySelector('.sick-chicken-body');
+
+      API.getDetections({ coop_id: coopId, limit: 1 }).then(function(detections) {
+        if (!detections || detections.length === 0) {
+          body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-shield-check"></i><span>Không phát hiện gà bệnh</span></div>';
+          box.classList.remove('status-warning');
+          return;
+        }
+        var det = detections[0];
+        if (det.has_disease) {
+          box.classList.add('status-warning');
+          body.innerHTML = buildAIBodyHTML(det);
+        } else {
+          box.classList.remove('status-warning');
+          body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-shield-check"></i><span>Không phát hiện gà bệnh</span></div>';
+        }
+      }).catch(function() {
+        body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-shield-check"></i><span>Không phát hiện gà bệnh</span></div>';
+        box.classList.remove('status-warning');
+      });
+    }
+
+    function runAIDetection(coopId) {
+      var box = document.getElementById('sickChickenBox-' + coopId);
+      if (!box) return;
+      var body = box.querySelector('.sick-chicken-body');
+      body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-spinner fa-spin"></i><span>Đang phân tích AI...</span></div>';
+      box.classList.remove('status-warning');
+
+      var filePath = null;
+      if (window._cachedVideoPaths && window._cachedVideoPaths.length > 0) {
+        var imgIdx = (window._cachedMediaTypes || []).indexOf('image');
+        filePath = imgIdx >= 0 ? window._cachedVideoPaths[imgIdx] : window._cachedVideoPaths[0];
+      }
+      if (!filePath) {
+        body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-circle-exclamation"></i><span>Không có file media</span></div>';
+        console.error('[runAIDetection] No file path available', { cachedPaths: window._cachedVideoPaths, cachedMediaTypes: window._cachedMediaTypes });
+        return;
+      }
+
+      console.log('[runAIDetection] Sending detection request', { filePath: filePath, coopId: coopId });
+      API.detectDisease(filePath, coopId).then(function(result) {
+        console.log('[runAIDetection] Detection result', result);
+        if (result.has_disease) {
+          box.classList.add('status-warning');
+          body.innerHTML = buildAIBodyHTML(result);
+        } else {
+          box.classList.remove('status-warning');
+          body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-shield-check"></i><span>Không phát hiện gà bệnh</span></div>';
+        }
+      }).catch(function(err) {
+        console.error('[runAIDetection] Error', err);
+        body.innerHTML = '<div class="sick-chicken-empty"><i class="fa-solid fa-circle-exclamation"></i><span>Lỗi phân tích AI: ' + (err.message || err) + '</span></div>';
+      });
     }
 
     // ==============================================================
@@ -3546,6 +3742,217 @@
       return _origConfirmDeleteDevice();
     };
 
+    // ==============================================================
+    // CAMERA AI FUNCTIONS
+    // ==============================================================
+    const camState = {
+      cameras: [],
+      subscriptions: new Map(),
+      loading: false
+    };
+
+    async function loadCameraData() {
+      if (camState.loading) return;
+      camState.loading = true;
+      
+      const grid = document.getElementById('cameraGrid');
+      const errorBanner = document.getElementById('cameraErrorBanner');
+      
+      try {
+        // Get all cameras (Camera 2 devices)
+        const cameras = await API.getAllDevices();
+        camState.cameras = cameras.filter(d => d.type === 'camera') || [];
+        
+        renderCameraStats();
+        renderCameraGrid();
+        
+        // Subscribe to real-time updates for each camera
+        subscribeToCameras();
+        
+        if (errorBanner) errorBanner.classList.remove('show');
+        
+      } catch (e) {
+        console.error('loadCameraData error:', e);
+        if (grid) {
+          grid.innerHTML = '<div class="text-center py-12 text-red-400 col-span-full"><i class="fa-solid fa-circle-exclamation text-2xl"></i><p class="mt-2">Không thể tải camera</p></div>';
+        }
+        if (errorBanner) {
+          document.getElementById('cameraErrorMessage').textContent = 'Lỗi kết nối đến máy chủ';
+          errorBanner.classList.add('show');
+        }
+      } finally {
+        camState.loading = false;
+      }
+    }
+
+    function subscribeToCameras() {
+      // Clean up old subscriptions
+      camState.subscriptions.forEach(unsub => unsub());
+      camState.subscriptions.clear();
+
+      // Subscribe to each camera
+      camState.cameras.forEach(camera => {
+        const deviceId = camera.id;
+        
+        // Subscribe to detection results
+        const unsubDetection = cameraAPI.subscribeDetection(deviceId, (data) => {
+          updateCameraCard(deviceId, data);
+        });
+        
+        // Subscribe to camera status
+        const unsubStatus = cameraAPI.subscribeCameraStatus(deviceId, (data) => {
+          updateCameraStatus(deviceId, data);
+        });
+        
+        camState.subscriptions.set(deviceId, () => {
+          unsubDetection();
+          unsubStatus();
+        });
+      });
+    }
+
+    function updateCameraCard(deviceId, data) {
+      const card = document.getElementById(`camera-card-${deviceId}`);
+      if (!card) return;
+
+      // Update image if available
+      const img = card.querySelector('.camera-image');
+      if (img && data.image_path) {
+        img.src = data.image_path + '?t=' + Date.now(); // Cache bust
+      } else if (img && data.frame) {
+        img.src = 'data:image/jpeg;base64,' + data.frame;
+      }
+
+      // Update detection info
+      const chickenCount = card.querySelector('.camera-chicken-count');
+      if (chickenCount && data.chicken_count !== undefined) {
+        chickenCount.textContent = data.chicken_count;
+      }
+
+      const diseaseBadge = card.querySelector('.camera-disease-badge');
+      const hasDisease = data.has_disease === true;
+      if (diseaseBadge) {
+        diseaseBadge.textContent = hasDisease ? 'PHÁT HIỆN BỆNH' : 'Bình thường';
+        diseaseBadge.className = 'camera-disease-badge text-xs px-2 py-0.5 rounded-full font-medium ' + 
+          (hasDisease ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400');
+      }
+
+      // Update timestamp
+      const timestamp = card.querySelector('.camera-timestamp');
+      if (timestamp && data.timestamp) {
+        const date = new Date(data.timestamp);
+        timestamp.textContent = date.toLocaleTimeString('vi-VN');
+      }
+
+      // Update status
+      updateCameraStatus(deviceId, { status: 'online', device_id: deviceId });
+
+      // Update stats
+      renderCameraStats();
+    }
+
+    function updateCameraStatus(deviceId, data) {
+      const card = document.getElementById(`camera-card-${deviceId}`);
+      if (!card) return;
+
+      const statusDot = card.querySelector('.camera-status-dot');
+      const statusLabel = card.querySelector('.camera-status-label');
+      
+      if (statusDot && statusLabel) {
+        const status = data.status || 'offline';
+        statusDot.className = 'camera-status-dot w-3 h-3 rounded-full ' + 
+          (status === 'online' ? 'bg-green-500' : status === 'connecting' ? 'bg-yellow-500' : 'bg-red-500');
+        statusLabel.textContent = status === 'online' ? 'Đang hoạt động' : 
+          status === 'connecting' ? 'Đang kết nối...' : 'Mất kết nối';
+      }
+
+      // Update card border
+      card.className = 'camera-card-detail ' + 
+        (status === 'online' ? 'status-online' : 
+         status === 'connecting' ? 'status-connecting' : 'status-offline');
+    }
+
+    function renderCameraStats() {
+      const cameras = camState.cameras;
+      const total = cameras.length;
+      const online = cameras.filter(c => c.status === 'online').length;
+      
+      // Count cameras with disease detections (from recent data)
+      let diseaseCount = 0;
+      let chickenCount = 0;
+      cameras.forEach(c => {
+        const card = document.getElementById(`camera-card-${c.id}`);
+        if (card) {
+          const badge = card.querySelector('.camera-disease-badge');
+          if (badge && badge.textContent.includes('PHÁT HIỆN')) diseaseCount++;
+          const countEl = card.querySelector('.camera-chicken-count');
+          if (countEl) chickenCount += parseInt(countEl.textContent) || 0;
+        }
+      });
+
+      document.getElementById('camTotal').textContent = total;
+      document.getElementById('camOnline').textContent = online;
+      document.getElementById('camDisease').textContent = diseaseCount;
+      document.getElementById('camChickenCount').textContent = chickenCount;
+    }
+
+    function renderCameraGrid() {
+      const grid = document.getElementById('cameraGrid');
+      const countEl = document.getElementById('camCount');
+      const cameras = camState.cameras;
+
+      if (!grid) return;
+      
+      countEl.textContent = cameras.length + ' camera';
+
+      if (cameras.length === 0) {
+        grid.innerHTML = '<div class="text-center py-12 text-stone-400 dark:text-stone-500 col-span-full"><i class="fa-solid fa-video text-3xl mb-2 opacity-30"></i><p class="text-sm">Không tìm thấy camera</p></div>';
+        return;
+      }
+
+      grid.innerHTML = cameras.map(c => {
+        const status = c.status || 'offline';
+        const statusClass = status === 'online' ? 'status-online' : status === 'connecting' ? 'status-connecting' : 'status-offline';
+        const statusLabel = status === 'online' ? 'Đang hoạt động' : status === 'connecting' ? 'Đang kết nối...' : 'Mất kết nối';
+        const statusDotClass = status === 'online' ? 'bg-green-500' : status === 'connecting' ? 'bg-yellow-500' : 'bg-red-500';
+        const coopName = c.coop_name || (c.coop_id ? 'Chuồng ' + c.coop_id : 'Chưa gán chuồng');
+
+        return `
+          <div id="camera-card-${c.id}" class="camera-card-detail ${statusClass}">
+            <div class="camera-card-placeholder" style="position: relative;">
+              <img class="camera-image" src="/ai_detections/detection_${c.id}_placeholder.jpg" alt="Camera ${c.name}" style="display: none;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: rgba(255,255,255,0.5); font-size: 0.8125rem; height: 100%; width: 100%;">
+                <i class="fa-solid fa-video" style="font-size: 2.5rem; opacity: 0.5;"></i>
+                <span>Chờ dữ liệu AI...</span>
+              </div>
+            </div>
+            <div class="camera-card-footer">
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1">
+                  <span class="camera-status-dot w-3 h-3 rounded-full ${statusDotClass}"></span>
+                  <span class="camera-status-label text-xs text-gray-400">${statusLabel}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-1">
+                <span class="camera-disease-badge text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Bình thường</span>
+              </div>
+            </div>
+            <div class="p-3 border-t border-gray-700 bg-gray-900/50">
+              <div class="flex items-center justify-between text-xs text-gray-300 mb-1">
+                <span class="font-medium text-white">${c.name || 'Camera ' + c.id}</span>
+                <span class="camera-timestamp">--:--:--</span>
+              </div>
+              <div class="flex items-center justify-between text-xs text-gray-400">
+                <span><i class="fa-solid fa-warehouse mr-1"></i>${coopName}</span>
+                <span><i class="fa-solid fa-dove mr-1"></i><span class="camera-chicken-count">0</span> gà</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.refreshCameras = loadCameraData;
 
 
     console.log('ChickenFarm Dashboard initialized');

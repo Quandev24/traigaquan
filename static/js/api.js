@@ -579,7 +579,80 @@
                 method: 'POST',
                 body: JSON.stringify(data)
             });
-        }
+        },
+
+        /**
+         * Chạy AI detection trên file media
+         * @param {string} filePath - Đường dẫn file
+         * @param {number} [coopId] - ID chuồng
+         * @param {number} [deviceId] - ID camera
+         * @returns {object} Kết quả detection
+         */
+        detectDisease: async function(filePath, coopId, deviceId) {
+            const body = { file_path: filePath };
+            if (coopId) body.coop_id = coopId;
+            if (deviceId) body.device_id = deviceId;
+            return await window.apiFetch('/ai/detect', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+        },
+
+        /**
+         * Lấy kết quả AI detection
+         * @param {object} [options] - { coop_id, device_id, limit }
+         * @returns {Array} Danh sách kết quả
+         */
+        getDetections: async function(options = {}) {
+            const params = new URLSearchParams();
+            if (options.coop_id) params.set('coop_id', options.coop_id);
+            if (options.device_id) params.set('device_id', options.device_id);
+            if (options.limit) params.set('limit', options.limit);
+            const qs = params.toString();
+            return await window.apiFetch('/ai/detections' + (qs ? '?' + qs : ''));
+        },
+
+        /**
+         * Đăng ký nhận kết quả detection real-time qua WebSocket
+         * @param {number} deviceId - Camera device ID
+         * @param {function} callback - Callback với dữ liệu detection
+         * @returns {function|null} - Hàm unsubscribe hoặc null
+         */
+        subscribeDetection: function(deviceId, callback) {
+            if (window.wsManager && window.wsManager.connected) {
+                return window.wsManager.subscribeCamera(deviceId, callback);
+            } else {
+                // Fallback: poll every 10 seconds (matching backend interval)
+                const interval = setInterval(() => {
+                    window.cameraAPI.getCameraDetection(deviceId).then(data => callback(data)).catch(console.error);
+                }, 10000);
+                return () => clearInterval(interval);
+            }
+        },
+
+        /**
+         * Đăng ký nhận trạng thái camera real-time qua WebSocket
+         * @param {number} deviceId - Camera device ID
+         * @param {function} callback - Callback với dữ liệu status
+         * @returns {function|null} - Hàm unsubscribe hoặc null
+         */
+        subscribeCameraStatus: function(deviceId, callback) {
+            if (window.wsManager && window.wsManager.connected) {
+                return window.wsManager.subscribeCameraStatus(deviceId, callback);
+            } else {
+                return null;
+            }
+        },
+
+        /**
+         * Lấy detection mới nhất cho camera (REST fallback)
+         * @param {number} deviceId - Camera device ID
+         * @returns {object} Detection data
+         */
+        getCameraDetection: async function(deviceId) {
+            return await window.apiFetch(`/ai/detections?device_id=${deviceId}&limit=1`);
+        },
+
     };
 
 

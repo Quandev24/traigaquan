@@ -5,8 +5,9 @@
 **Mục tiêu:** Hệ thống quản lý trang trại gà thông minh sử dụng tự động hóa và giám sát dựa trên dữ liệu để tối ưu hóa hiệu quả chăn nuôi và sức khỏe gà.
 
 **Trạng thái phát triển:**
-- Frontend: ✓ Hoàn tất đầy đủ chức năng quản lý
-- Backend: ✓ API đầy đủ, database models hoàn tất, WebSocket real-time
+- Frontend: ✓ Hoàn tất đầy đủ chức năng quản lý + Camera AI Dashboard
+- Backend: ✓ API đầy đủ, database models hoàn tất, WebSocket real-time, AI Detection Pipeline
+- AI/Computer Vision: ✓ YOLO detection pipeline, video/image file processing, 10s interval analysis
 
 ---
 
@@ -15,7 +16,7 @@
 ```
 AutomatedChickenFarmManagement/
 ├── static/                      # Frontend (SB Admin 2 theme)
-│   ├── index.html               # Dashboard chính
+│   ├── index.html               # Dashboard chính (có tab Camera AI)
 │   ├── coop-list.html           # Danh sách chuồng
 │   ├── coop-detail.html         # Chi tiết chuồng
 │   ├── device-list.html          # Danh sách thiết bị
@@ -24,22 +25,41 @@ AutomatedChickenFarmManagement/
 │   ├── camera-detail.html       # Chi tiết camera
 │   ├── other.html               # Chức năng khác
 │   └── css/js/vendor/img/       # Tài nguyên frontend
+│       └── ai_detections/       # Ảnh AI detection output (auto-generated)
 ├── backend/                     # Flask Backend API
 │   ├── app.py                   # Entry point
-│   ├── models.py                # Database models (7 tables)
+│   ├── models.py                # Database models (9 tables)
 │   ├── config.py                # Cấu hình hệ thống
 │   ├── requirements.txt         # Python dependencies
+│   ├── seed.py                  # Seed dữ liệu mẫu
+│   ├── websocket_server.py      # SocketIO WebSocket handlers
+│   ├── video_path.txt           # Danh sách file video/image cho camera test
+│   └── services/                # Background Services
+│       ├── camera_stream_worker.py    # Camera stream processing (10s interval)
+│       ├── detection_pipeline.py      # YOLO AI detection pipeline
+│       └── stream_manager.py          # Multi-camera worker management
 │   └── api/routes/              # API Endpoints
 │       ├── auth.py              # Authentication
 │       ├── coops.py              # Coop CRUD
 │       ├── devices.py           # Device management
 │       ├── dashboard.py         # Dashboard & stats
-│       ├── camera.py            # Camera control
+│       ├── camera.py            # Camera control + AI detection config
 │       ├── feed_schedule.py     # Lịch cho ăn
 │       ├── environment.py       # Dữ liệu môi trường
-│       └── alerts.py            # Quản lý cảnh báo
+│       ├── alerts.py            # Quản lý cảnh báo
+│       ├── ai_detection.py      # AI detection endpoints
+│       ├── warehouse.py         # Kho thức ăn/thuốc
+│       └── pages.py             # Frontend page routing
 ├── README.md                    # Tài liệu chính
-└── .gitignore
+├── .gitignore
+└── runs/                        # YOLO training outputs
+    └── detect/
+        └── runs/
+            └── my_project/
+                └── model_detect_disease/
+                    └── weights/
+                        ├── best.pt
+                        └── last.pt
 ```
 
 ---
@@ -70,6 +90,11 @@ backend/
 | `feed_schedules` | Lịch cho ăn | N-1 → coops |
 | `alerts` | Cảnh báo | N-1 → coops, devices |
 | `unconnected_devices` | Thiết bị chưa kết nối | FK → devices, coops |
+| `video_recordings` | Video recordings camera | N-1 → devices, coops |
+| `ai_detections` | Kết quả AI detection (gà/bệnh) | N-1 → devices, coops |
+| `warehouse_inventory` | Kho thức ăn/thuốc | - |
+| `feed_consumption` | Tiêu thụ thức ăn theo ngày | N-1 → coops |
+| `medicine_consumption` | Tiêu thụ thuốc theo ngày | N-1 → coops |
 
 ### ERD Sơ Đồ
 
@@ -254,19 +279,29 @@ erDiagram
 ### Chi tiết Tables (bao gồm cột deleted cho soft delete)
 
 ```
-users:          id, username, email, password_hash, full_name, role, created_at, updated_at, deleted
-coops:          id, name, location, capacity, current_count, area,
-                 temp_min, temp_max, humidity_min, humidity_max,
-                 feed_threshold, water_threshold,
-                 feed_time_1, feed_time_2, feed_time_3,
-                 auto_fan, auto_light, auto_feed, auto_water,
-                 emergency_alert, status, created_at, updated_at, deleted
-devices:        id, name, type, mac_address, status, is_active, battery, created_at, updated_at, deleted
-coop_devices:   id, coop_id, device_id, is_active, created_at, deleted
-environments:   id, coop_id, temperature, humidity, feed_level, water_level, recorded_at, deleted
-feed_schedules: id, coop_id, time, amount, enabled, created_at, deleted
-alerts:         id, coop_id, device_id, type, level, message, is_resolved, created_at, resolved_at, deleted
-unconnected_devices: id, name, type, mac_address, status, is_active, battery, device_id (FK→devices), previous_coop_id (FK→coops), unconnected_at, created_at, deleted
+users:                    id, username, email, password_hash, full_name, role, created_at, updated_at, deleted
+coops:                    id, name, location, capacity, current_count, area,
+                          temp_min, temp_max, humidity_min, humidity_max,
+                          feed_threshold, water_threshold,
+                          feed_time_1, feed_time_2, feed_time_3,
+                          auto_fan, auto_light, auto_feed, auto_water,
+                          emergency_alert, status, has_camera, created_at, updated_at, deleted
+devices:                  id, name, type, mac_address, status, is_active, battery,
+                          stream_url, stream_type, stream_enabled, frame_skip, analysis_interval_seconds,
+                          created_at, updated_at, deleted
+coop_devices:             id, coop_id, device_id, is_active, created_at, deleted
+environments:             id, coop_id, temperature, humidity, feed_level, water_level, recorded_at, deleted
+feed_schedules:           id, coop_id, time, amount, enabled, created_at, deleted
+alerts:                   id, coop_id, device_id, type, level, message, is_resolved, created_at, resolved_at, deleted
+unconnected_devices:      id, name, type, mac_address, status, is_active, battery,
+                          device_id (FK→devices), previous_coop_id (FK→coops), unconnected_at, created_at, deleted
+video_recordings:         id, device_id, coop_id, name, source_type, source_value,
+                          thumbnail_url, duration, file_size, recorded_at, created_at, updated_at, deleted
+ai_detections:            id, device_id, coop_id, source_file, chicken_count, has_disease,
+                          diseases (JSON), details (JSON), detected_at, created_at, deleted
+warehouse_inventory:      id, item_name, item_type, quantity_kg, min_threshold_kg, unit, updated_at, deleted
+feed_consumption:         id, coop_id, recorded_date, quantity_kg
+medicine_consumption:     id, coop_id, recorded_date, quantity_kg
 ```
 
 **Chú thích:** Tất cả bảng có thêm cột `deleted` (Boolean, default=False) để hỗ trợ soft delete - khi xóa chỉ đánh dấu deleted=1 thay vì xóa vĩnh viễn khỏi database. Bảng `unconnected_devices` có thêm các cột `device_id`, `previous_coop_id`, `unconnected_at` để theo dõi thiết bị sau khi chuồng bị xóa.
@@ -310,6 +345,20 @@ unconnected_devices: id, name, type, mac_address, status, is_active, battery, de
 | | POST | `/api/camera/<id>/snapshot` | Chụp ảnh |
 | | GET | `/api/camera/<id>/stream` | Lấy URL stream |
 | | GET | `/api/camera/<id>/recordings` | Danh sách recordings |
+| | GET | `/api/camera/<id>/stream-config` | Cấu hình stream (url, type, enabled, frame_skip, analysis_interval) |
+| | PUT | `/api/camera/<id>/stream-config` | Cập nhật cấu hình stream |
+| | POST | `/api/camera/<id>/detection/start` | Bắt đầu AI detection |
+| | POST | `/api/camera/<id>/detection/stop` | Dừng AI detection |
+| | GET | `/api/camera/<id>/detection/status` | Trạng thái detection worker |
+| | POST | `/api/camera/detection/start-all` | Bắt đầu detection tất cả camera |
+| | POST | `/api/camera/detection/stop-all` | Dừng detection tất cả camera |
+| | GET | `/api/camera/detection/status-all` | Trạng thái tất cả detection workers |
+| | GET | `/api/camera/video-path` | Đọc video_path.txt |
+| | GET | `/api/camera/video-paths` | Đọc tất cả paths từ video_path.txt |
+| | PUT | `/api/camera/video-path` | Cập nhật video_path.txt |
+| **AI Detection** | POST | `/api/ai/detect` | Chạy AI detection trên file |
+| | GET | `/api/ai/detections` | Lấy lịch sử detection (filter coop/device) |
+| | GET | `/api/ai/detections/<id>` | Chi tiết detection |
 | **Feed Schedule** | GET | `/api/feed-schedule` | Danh sách lịch cho ăn |
 | | POST | `/api/feed-schedule` | Tạo lịch mới |
 | | PUT | `/api/feed-schedule/<id>` | Cập nhật lịch |
@@ -400,6 +449,26 @@ unconnected_devices: id, name, type, mac_address, status, is_active, battery, de
 
 ---
 
+### June 13, 2026 - Camera AI Detection Pipeline & Video File Processing
+
+| Thay đổi | File | Chi tiết |
+|----------|------|----------|
+| **CameraStreamWorker: File Support** | `backend/services/camera_stream_worker.py` | Hỗ trợ đọc file local (video lặp lại khi hết, ảnh tĩnh), detect file type (video/image/stream), time-based processing 10s interval thay vì frame_skip |
+| **StreamManager: video_path.txt Integration** | `backend/services/stream_manager.py` | Đọc `video_path.txt`, phân phối file cho 5 Camera 2 devices (xen kẽ video/image), tự động dùng CameraStreamWorker cho file local |
+| **Default Real Workers** | `backend/services/stream_manager.py` | `use_mock_workers = False` mặc định, chỉ dùng mock khi không có stream/file |
+| **Camera AI Dashboard Tab** | `static/index.html` | Thêm tab "Camera AI" với grid 5 camera cards, stats real-time (tổng/online/bệnh/gà), WebSocket subscription, auto-refresh 10s |
+| **WebSocket Camera Events** | `static/js/ws-manager.js` | Thêm event `detection_result`, `camera_status`, methods `subscribeCamera()`, `subscribeCameraStatus()`, auto-rejoin rooms on reconnect |
+| **Camera Detection API** | `static/js/api.js` | Thêm `cameraAPI.subscribeDetection()`, `subscribeCameraStatus()`, `getCameraDetection()` |
+| **Detection Pipeline: Save Annotated Frame** | `backend/services/detection_pipeline.py` | Thêm `save_annotated_frame()` lưu ảnh có annotation với filename `detection_{device_id}_{YYYYMMDD_HHMMSS}.jpg` |
+| **WebSocket Payload** | `backend/websocket_server.py`, `backend/app.py` | `emit_detection_result` bao gồm `image_path`, base64 frame, detection data |
+| **API Endpoints** | `backend/api/routes/camera.py` | GET/PUT `/api/camera/<id>/stream-config` bao gồm `analysis_interval_seconds` |
+
+**Kết quả:**
+- 5 Camera 2 workers chạy real-time, mỗi 10s phân tích 1 frame từ video/image file
+- Ảnh annotated lưu vào `static/ai_detections/detection_{id}_{timestamp}.jpg`
+- Frontend Camera AI tab hiển thị real-time qua WebSocket (không cần polling)
+- Tự động phát hiện bệnh gà → tạo Alert level=warning
+
 ## 6. Tech Stack & Setup
 
 ### Tech Stack
@@ -412,6 +481,8 @@ unconnected_devices: id, name, type, mac_address, status, is_active, battery, de
 | Auth | JWT (flask-jwt-extended) |
 | IoT | REST API, QR Code / Manual code connection |
 | Real-time | WebSocket (SocketIO) với REST polling fallback |
+| AI/Computer Vision | YOLOv8 (ultralytics), OpenCV, PyTorch, TorchVision |
+| Video Processing | OpenCV VideoCapture (local files, RTSP, HTTP streams) |
 
 ### Setup - Frontend Only
 
@@ -451,6 +522,21 @@ flask run
 # API: http://localhost:5000/api/
 ```
 
+### Cấu hình Camera AI Test (Video/Image Files)
+
+File `video_path.txt` (ở root project) chứa danh sách đường dẫn video/image để test camera AI:
+
+```
+D:\Share_Projects\AutomatedChickenFarmManagement\avian-pox-in-chickens-1024x705-1-768x529.jpg
+D:\Share_Projects\AutomatedChickenFarmManagement\backend\Camera_AI\Data\Test_data\Videos\video_test.mp4
+```
+
+- Hệ thống tự động đọc file này khi khởi động StreamManager
+- 5 Camera 2 devices sẽ được phân phối xen kẽ các file này
+- Video file: lặp lại liên tục khi phát hết
+- Image file: xử lý cùng một ảnh mỗi 10s (giả lập camera tĩnh)
+- Kết quả annotated image lưu tại: `static/ai_detections/detection_{device_id}_{timestamp}.jpg`
+
 ### API Test Example
 
 ```bash
@@ -462,6 +548,37 @@ curl -X POST http://localhost:5000/api/auth/login \
 # Lấy dashboard stats (cần token)
 curl -X GET http://localhost:5000/api/dashboard/stats \
   -H "Authorization: Bearer <token>"
+```
+
+### Camera AI Test Example
+
+```bash
+# Lấy cấu hình stream camera
+curl -X GET http://localhost:5000/api/camera/8/stream-config \
+  -H "Authorization: Bearer <token>"
+
+# Cập nhật analysis interval (10 giây)
+curl -X PUT http://localhost:5000/api/camera/8/stream-config \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"analysis_interval_seconds": 10}'
+
+# Bắt đầu AI detection cho camera
+curl -X POST http://localhost:5000/api/camera/8/detection/start \
+  -H "Authorization: Bearer <token>"
+
+# Chạy AI detection trên file video/image
+curl -X POST http://localhost:5000/api/ai/detect \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"file_path": "D:/path/to/video.mp4", "coop_id": 1, "device_id": 8}'
+
+# Lấy lịch sử AI detection
+curl -X GET "http://localhost:5000/api/ai/detections?device_id=8&limit=10" \
+  -H "Authorization: Bearer <token>"
+
+# Đọc video_path.txt
+curl -X GET http://localhost:5000/api/camera/video-paths
 ```
 
 ---
@@ -491,6 +608,11 @@ curl -X GET http://localhost:5000/api/dashboard/stats \
 - [x] **Cảnh báo động** - Tính từ database, viền vàng khi có cảnh báo
 - [x] **Tự động làm mới** - Cập nhật dữ liệu mỗi 30 giây
 - [x] **Camera detail dynamic** - API tổng hợp, skeleton loading, realtime polling 30s, color-coded device status
+- [x] **Camera AI Detection Pipeline** - YOLO single model detection (gà + bệnh), 10s interval analysis
+- [x] **Video/Image file processing** - Camera workers đọc từ file local (video lặp, ảnh tĩnh), lưu kết quả annotated
+- [x] **Camera AI Dashboard Tab** - Real-time grid 5 camera, WebSocket push, stats (tổng/online/bệnh/gà phát hiện)
+- [x] **AI Detection Storage** - Annotated images lưu vào `static/ai_detections/` với timestamp filename
+- [x] **Disease Alert Integration** - Tự động tạo Alert khi phát hiện gà bệnh qua AI
 
 ### Chưa hoàn thành
 
