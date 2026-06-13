@@ -14,6 +14,7 @@ import os
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_socketio import SocketIO
 from dotenv import load_dotenv
 
 # Import cấu hình và database từ project
@@ -26,6 +27,9 @@ from api.routes.pages import pages_bp
 # Load biến môi trường từ .env file (nếu có)
 load_dotenv()
 
+# SocketIO will be initialized inside create_app
+socketio = None
+
 
 # ============================================================
 # 2. APPLICATION FACTORY FUNCTION
@@ -37,19 +41,29 @@ def create_app(config_name='development'):
     
     Args:
         config_name: Tên cấu hình ('development', 'production', 'testing')
-                     Mặc định là 'development'
+                         Mặc định là 'development'
     
     Returns:
         Flask application instance
     """
     
+    import os as _os
+    import logging
+    import sys
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        handlers=[logging.StreamHandler(sys.stdout)]
+    )
+    
     # --- Khởi tạo Flask app ---
-    # template_folder='templates': Chỉ định thư mục chứa HTML templates
-    # static_folder: Chỉ định thư mục chứa file tĩnh (CSS, JS, images)
+    # template_folder='templates': Chỉ chỉ định thư mục chứa HTML templates
+    # static_folder: Chỉ chỉ định thư mục chứa file tĩnh (CSS, JS, images)
     # Đường dẫn: từ backend/ đi ra ngoài đến static/
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(base_dir)
-    static_dir = os.path.join(project_root, 'static')
+    base_dir = _os.path.dirname(_os.path.abspath(__file__))
+    project_root = _os.path.dirname(base_dir)
+    static_dir = _os.path.join(project_root, 'static')
     
     app = Flask(__name__, 
                 template_folder=static_dir,
@@ -77,6 +91,16 @@ def create_app(config_name='development'):
     # Quản lý xác thực người dùng bằng JWT token
     jwt = JWTManager(app)
     
+    # --- SocketIO ---
+    # Real-time communication for camera detection
+    global socketio
+    from flask_socketio import SocketIO
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+    
+    # Initialize websocket_server with the socketio instance
+    import websocket_server
+    websocket_server.init_socketio(socketio)
+    
     # ============================================================
     # 4. REGISTER BLUEPRINTS - Đăng ký API routes
     # ============================================================
@@ -102,7 +126,7 @@ def create_app(config_name='development'):
     with app.app_context():
         db_file = app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
 
-        if not os.path.exists(db_file):
+        if not _os.path.exists(db_file):
             print(f"Creating new database: {db_file}")
             db.create_all()
             print("Database tables created successfully!")
@@ -123,6 +147,29 @@ def create_app(config_name='development'):
             if 'unconnected_at' not in existing_cols:
                 migrations.append('ALTER TABLE unconnected_devices ADD COLUMN unconnected_at DATETIME')
             for migration_sql in migrations:
+                try:
+                    db.session.execute(text(migration_sql))
+                    db.session.commit()
+                    print(f"Migration applied: {migration_sql}")
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Migration skipped (column may exist): {e}")
+        
+        # Auto-migrate: add camera stream columns to devices
+        if 'devices' in inspector.get_table_names():
+            existing_cols = {col['name'] for col in inspector.get_columns('devices')}
+            device_migrations = []
+            if 'stream_url' not in existing_cols:
+                device_migrations.append('ALTER TABLE devices ADD COLUMN stream_url TEXT')
+            if 'stream_type' not in existing_cols:
+                device_migrations.append("ALTER TABLE devices ADD COLUMN stream_type TEXT DEFAULT 'rtsp'")
+            if 'stream_enabled' not in existing_cols:
+                device_migrations.append('ALTER TABLE devices ADD COLUMN stream_enabled BOOLEAN DEFAULT 0')
+            if 'frame_skip' not in existing_cols:
+                device_migrations.append('ALTER TABLE devices ADD COLUMN frame_skip INTEGER DEFAULT 5')
+            if 'analysis_interval_seconds' not in existing_cols:
+                device_migrations.append('ALTER TABLE devices ADD COLUMN analysis_interval_seconds INTEGER DEFAULT 10')
+            for migration_sql in device_migrations:
                 try:
                     db.session.execute(text(migration_sql))
                     db.session.commit()
@@ -171,6 +218,39 @@ def create_app(config_name='development'):
     return app
 
 
+def init_stream_manager(app):
+    """Initialize stream manager with app context (call after app creation)"""
+    with app.app_context():
+        from services.stream_manager import stream_manager
+        stream_manager.init_from_database()
+        
+        # Set up WebSocket callbacks
+        from websocket_server import (
+            emit_detection_result, emit_camera_status, emit_stats_update,
+            has_subscribers
+        )
+        
+        def on_detection(device_id, detections, annotated_frame, image_path=None):
+            if has_subscribers(device_id):
+                emit_detection_result(device_id, detections, annotated_frame, image_path=image_path)
+        
+        def on_frame(device_id, frame):
+            pass  # Frame callback for MJPEG streaming
+        
+        def on_status_change(device_id, status):
+            emit_camera_status(device_id, status)
+        
+        stream_manager.set_callbacks(
+            on_detection=on_detection,
+            on_frame=on_frame,
+            on_status_change=on_status_change
+        )
+        
+        # Auto-start cameras if enabled
+        if os.environ.get('AUTO_START_CAMERAS', 'true').lower() == 'true':
+            stream_manager.start_all()
+
+
 # ============================================================
 # 8. MAIN - Chạy ứng dụng
 # ============================================================
@@ -179,9 +259,11 @@ if __name__ == '__main__':
     config_name = os.environ.get('FLASK_ENV', 'development')
     print(f"Starting Flask app with config: {config_name}")
     app = create_app(config_name)
-    app.run(
+    init_stream_manager(app)
+    socketio.run(
+        app,
         host='0.0.0.0',
         port=5000,
         debug=True,
-        use_reloader=True
+        use_reloader=False  # Disable reloader for SocketIO
     )

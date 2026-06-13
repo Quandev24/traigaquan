@@ -229,6 +229,14 @@ class Device(db.Model):
     status = db.Column(db.String(20), default='offline')
     is_active = db.Column(db.Boolean, default=False)
     battery = db.Column(db.Integer, default=100)
+    
+    # Camera stream configuration
+    stream_url = db.Column(db.String(500), nullable=True)
+    stream_type = db.Column(db.String(20), default='rtsp')
+    stream_enabled = db.Column(db.Boolean, default=False)
+    frame_skip = db.Column(db.Integer, default=5)
+    analysis_interval_seconds = db.Column(db.Integer, default=10)
+    
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     deleted = db.Column(db.Boolean, default=False)
@@ -246,6 +254,11 @@ class Device(db.Model):
             'status': self.status,
             'is_active': self.is_active,
             'battery': self.battery,
+            'stream_url': self.stream_url,
+            'stream_type': self.stream_type,
+            'stream_enabled': self.stream_enabled,
+            'frame_skip': self.frame_skip,
+            'analysis_interval_seconds': self.analysis_interval_seconds,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'coop_id': self.coops[0].id if self.coops else None
@@ -398,7 +411,8 @@ class Alert(db.Model):
         'humidity',
         'feed',
         'water',
-        'device'
+        'device',
+        'disease'
     ]
     
     ALERT_LEVELS = [
@@ -530,6 +544,59 @@ class VideoRecording(db.Model):
 
     def __repr__(self):
         return f'<VideoRecording {self.name} ({self.source_type})>'
+
+
+class AIDetection(db.Model):
+    """
+    Model kết quả phát hiện bệnh từ AI.
+
+    Lưu trữ kết quả phát hiện gà bệnh từ pipeline AI:
+    YOLO-1 (chicken detection) → crop → YOLO-2 (disease detection).
+
+    Attributes:
+        id: Primary key tự tăng
+        device_id: Foreign key đến Device (camera)
+        coop_id: Foreign key đến Coop
+        source_file: Đường dẫn file gốc (video/ảnh)
+        chicken_count: Số lượng gà phát hiện được
+        has_disease: Có phát hiện bệnh hay không
+        diseases: JSON array các bệnh phát hiện [{disease, confidence, bbox}]
+        details: JSON chi tiết từng box gà và kết quả disease
+        detected_at: Thời điểm phát hiện
+        created_at: Thời điểm tạo bản ghi
+    """
+    __tablename__ = 'ai_detections'
+
+    id = db.Column(db.Integer, primary_key=True)
+    device_id = db.Column(db.Integer, db.ForeignKey('devices.id'), nullable=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=True)
+    source_file = db.Column(db.Text, nullable=False)
+    chicken_count = db.Column(db.Integer, default=0)
+    has_disease = db.Column(db.Boolean, default=False)
+    diseases = db.Column(db.JSON, default=list)
+    details = db.Column(db.JSON, default=list)
+    detected_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, default=False)
+
+    device = db.relationship('Device', backref='ai_detections', lazy='joined')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'device_id': self.device_id,
+            'coop_id': self.coop_id,
+            'source_file': self.source_file,
+            'chicken_count': self.chicken_count,
+            'has_disease': self.has_disease,
+            'diseases': self.diseases or [],
+            'details': self.details or [],
+            'detected_at': self.detected_at.isoformat() if self.detected_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def __repr__(self):
+        return f'<AIDetection #{self.id} disease={self.has_disease}>'
 
 
 class WarehouseInventory(db.Model):
