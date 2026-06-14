@@ -24,11 +24,8 @@
                 'environment:update', 
                 'coop:update', 
                 'device:update', 
-                'alert:new',
-                'detection_result',    // Camera AI detection results
-                'camera_status'        // Camera connection status
+                'alert:new'
             ];
-            this.cameraRooms = new Set(); // Track subscribed camera rooms
         }
 
         /**
@@ -52,11 +49,6 @@
                     this.reconnectAttempts = 0;
                     this.fallbackMode = false;
                     this._emit('ws:connected', null);
-                    
-                    // Re-join camera rooms on reconnect
-                    this.cameraRooms.forEach(deviceId => {
-                        this.socket.emit('subscribe_camera', { device_id: deviceId });
-                    });
                 });
 
                 this.socket.on('disconnect', (reason) => {
@@ -180,66 +172,6 @@
             } else {
                 delete this.callbacks[event];
             }
-        }
-
-        /**
-         * Subscribe to camera detection results
-         * Joins the Socket.IO room for the specific camera
-         * @param {number} deviceId - Camera device ID
-         * @param {function} callback - Callback function with detection data
-         */
-        subscribeCamera(deviceId, callback) {
-            const event = 'detection_result';
-            const room = `camera_${deviceId}`;
-            
-            // Subscribe to the event
-            this.subscribe(event, (data) => {
-                // Filter by device_id
-                if (data && data.device_id === deviceId) {
-                    callback(data);
-                }
-            });
-
-            // Join the camera room if connected
-            if (this.connected && this.socket) {
-                this.socket.emit('subscribe_camera', { device_id: deviceId });
-                this.cameraRooms.add(deviceId);
-            }
-
-            // Return unsubscribe function
-            return () => this.unsubscribeCamera(deviceId, callback);
-        }
-
-        /**
-         * Unsubscribe from camera detection results
-         * Leaves the Socket.IO room for the specific camera
-         * @param {number} deviceId - Camera device ID
-         * @param {function} callback - Callback function to remove
-         */
-        unsubscribeCamera(deviceId, callback) {
-            const event = 'detection_result';
-            this.unsubscribe(event, callback);
-
-            // Leave the camera room if connected
-            if (this.connected && this.socket) {
-                this.socket.emit('unsubscribe_camera', { device_id: deviceId });
-                this.cameraRooms.delete(deviceId);
-            }
-        }
-
-        /**
-         * Subscribe to camera status changes
-         * @param {number} deviceId - Camera device ID
-         * @param {function} callback - Callback function with status data
-         */
-        subscribeCameraStatus(deviceId, callback) {
-            const event = 'camera_status';
-            this.subscribe(event, (data) => {
-                if (data && data.device_id === deviceId) {
-                    callback(data);
-                }
-            });
-            return () => this.unsubscribe(event, callback);
         }
 
         /**

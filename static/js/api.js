@@ -1,7 +1,7 @@
 /**
  * API Helper - Kết nối Frontend với Backend Flask
  * 
- * Sử dụng: Nhúng vào HTML và sử dụng các object: authAPI, dashboardAPI, coopsAPI, devicesAPI, cameraAPI
+ * Sử dụng: Nhúng vào HTML và sử dụng các object: authAPI, dashboardAPI, coopsAPI, devicesAPI
  * 
  * Ví dụ:
  *   const token = await authAPI.login('admin', 'admin123');
@@ -510,154 +510,7 @@
 
 
     // ============================================================
-    // 8. CAMERA API
-    // ============================================================
-
-    window.cameraAPI = {
-        /**
-         * Lấy danh sách camera
-         * @returns {array}
-         */
-        getAll: async function() {
-            return await window.apiFetch('/camera');
-        },
-
-        /**
-         * Lấy thông tin một camera
-         * @param {number} id 
-         * @returns {object}
-         */
-        getOne: async function(id) {
-            return await window.apiFetch(`/camera/${id}`);
-        },
-
-        /**
-         * Lấy camera theo chuồng
-         * @param {number} coopId 
-         * @returns {array}
-         */
-        getByCoop: async function(coopId) {
-            return await window.apiFetch(`/camera/coop/${coopId}`);
-        },
-
-        /**
-         * Đọc đường dẫn video từ file text
-         * @returns {object} { video_path }
-         */
-        getVideoPath: async function() {
-            return await window.apiFetch('/camera/video-path');
-        },
-
-        /**
-         * Đọc tất cả đường dẫn video từ file text
-         * @returns {object} { video_paths }
-         */
-        getVideoPaths: async function() {
-            return await window.apiFetch('/camera/video-paths');
-        },
-
-        /**
-         * Ghi đường dẫn video vào file text
-         * @param {string} videoPath - Đường dẫn video
-         * @returns {object}
-         */
-        setVideoPath: async function(videoPath) {
-            return await window.apiFetch('/camera/video-path', {
-                method: 'PUT',
-                body: JSON.stringify({ video_path: videoPath })
-            });
-        },
-
-        /**
-         * Tạo recording từ đường dẫn trong file text
-         * @param {number} deviceId - ID camera
-         * @param {object} data - { name, duration, file_size }
-         * @returns {object}
-         */
-        createRecordingFromFile: async function(deviceId, data = {}) {
-            return await window.apiFetch(`/camera/${deviceId}/recordings/from-file`, {
-                method: 'POST',
-                body: JSON.stringify(data)
-            });
-        },
-
-        /**
-         * Chạy AI detection trên file media
-         * @param {string} filePath - Đường dẫn file
-         * @param {number} [coopId] - ID chuồng
-         * @param {number} [deviceId] - ID camera
-         * @returns {object} Kết quả detection
-         */
-        detectDisease: async function(filePath, coopId, deviceId) {
-            const body = { file_path: filePath };
-            if (coopId) body.coop_id = coopId;
-            if (deviceId) body.device_id = deviceId;
-            return await window.apiFetch('/ai/detect', {
-                method: 'POST',
-                body: JSON.stringify(body)
-            });
-        },
-
-        /**
-         * Lấy kết quả AI detection
-         * @param {object} [options] - { coop_id, device_id, limit }
-         * @returns {Array} Danh sách kết quả
-         */
-        getDetections: async function(options = {}) {
-            const params = new URLSearchParams();
-            if (options.coop_id) params.set('coop_id', options.coop_id);
-            if (options.device_id) params.set('device_id', options.device_id);
-            if (options.limit) params.set('limit', options.limit);
-            const qs = params.toString();
-            return await window.apiFetch('/ai/detections' + (qs ? '?' + qs : ''));
-        },
-
-        /**
-         * Đăng ký nhận kết quả detection real-time qua WebSocket
-         * @param {number} deviceId - Camera device ID
-         * @param {function} callback - Callback với dữ liệu detection
-         * @returns {function|null} - Hàm unsubscribe hoặc null
-         */
-        subscribeDetection: function(deviceId, callback) {
-            if (window.wsManager && window.wsManager.connected) {
-                return window.wsManager.subscribeCamera(deviceId, callback);
-            } else {
-                // Fallback: poll every 10 seconds (matching backend interval)
-                const interval = setInterval(() => {
-                    window.cameraAPI.getCameraDetection(deviceId).then(data => callback(data)).catch(console.error);
-                }, 10000);
-                return () => clearInterval(interval);
-            }
-        },
-
-        /**
-         * Đăng ký nhận trạng thái camera real-time qua WebSocket
-         * @param {number} deviceId - Camera device ID
-         * @param {function} callback - Callback với dữ liệu status
-         * @returns {function|null} - Hàm unsubscribe hoặc null
-         */
-        subscribeCameraStatus: function(deviceId, callback) {
-            if (window.wsManager && window.wsManager.connected) {
-                return window.wsManager.subscribeCameraStatus(deviceId, callback);
-            } else {
-                return null;
-            }
-        },
-
-        /**
-         * Lấy detection mới nhất cho camera (REST fallback)
-         * @param {number} deviceId - Camera device ID
-         * @returns {object} Detection data
-         */
-        getCameraDetection: async function(deviceId) {
-            return await window.apiFetch(`/ai/detections?device_id=${deviceId}&limit=1`);
-        },
-
-    };
-
-
-    // ============================================================
-    // 9. ALERTS API (WebSocket + Fallback)
+    // 8. ALERTS API (WebSocket + Fallback)
     // ============================================================
 
     window.alertsAPI = {
@@ -891,8 +744,13 @@
         },
 
         getVideoPaths: async function() {
-            return await window.apiFetch('/camera/video-paths');
-        }
+            return await window.apiFetch('/coops/public/video-paths');
+        },
+
+        getDiseaseImages: async function(coopId) {
+            return await window.apiFetch('/coops/public/disease-images?coop_id=' + coopId);
+        },
+
     };
 
     console.log('✓ api.js loaded - API helper ready');

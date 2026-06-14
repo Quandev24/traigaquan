@@ -7,7 +7,7 @@
 **Trạng thái phát triển:**
 - Frontend: ✓ Hoàn tất đầy đủ chức năng quản lý + Camera AI Dashboard
 - Backend: ✓ API đầy đủ, database models hoàn tất, WebSocket real-time, AI Detection Pipeline
-- AI/Computer Vision: ✓ YOLO detection pipeline, video/image file processing, 10s interval analysis
+- AI/Computer Vision: ✓ YOLO detection pipeline, video/image file processing, 45s interval analysis
 
 ---
 
@@ -27,17 +27,19 @@ AutomatedChickenFarmManagement/
 │   └── css/js/vendor/img/       # Tài nguyên frontend
 │       └── ai_detections/       # Ảnh AI detection output (auto-generated)
 ├── backend/                     # Flask Backend API
-│   ├── app.py                   # Entry point
+│   ├── run.py                   # Entry point (khởi tạo services + socketio)
 │   ├── models.py                # Database models (9 tables)
 │   ├── config.py                # Cấu hình hệ thống
 │   ├── requirements.txt         # Python dependencies
 │   ├── seed.py                  # Seed dữ liệu mẫu
 │   ├── websocket_server.py      # SocketIO WebSocket handlers
 │   ├── video_path.txt           # Danh sách file video/image cho camera test
-│   └── services/                # Background Services
-│       ├── camera_stream_worker.py    # Camera stream processing (10s interval)
-│       ├── detection_pipeline.py      # YOLO AI detection pipeline
-│       └── stream_manager.py          # Multi-camera worker management
+ │   └── services/                # Background Services
+ │       ├── __init__.py                # Package init
+  │       ├── camera_stream_worker.py    # Camera stream processing (45s interval)
+ │       ├── detection_pipeline.py      # YOLO AI detection pipeline
+ │       ├── stream_manager.py          # Multi-camera worker management
+ │       └── video_processor.py         # Video file processing (every 10s timestamp)
 │   └── api/routes/              # API Endpoints
 │       ├── auth.py              # Authentication
 │       ├── coops.py              # Coop CRUD
@@ -72,7 +74,16 @@ backend/
 ├── config.py              # Cấu hình (Development/Production/Testing)
 ├── models.py              # Database Models (Flask-SQLAlchemy)
 ├── requirements.txt       # Python dependencies
-├── app.py                 # Flask entry point
+├── app.py                 # Flask Application Factory
+├── run.py                 # Entry point (khởi tạo services + socketio)
+├── websocket_server.py    # SocketIO WebSocket handlers
+├── video_path.txt         # Danh sách file video/image cho camera test
+├── services/              # Background Services
+│   ├── __init__.py
+│   ├── camera_stream_worker.py
+│   ├── detection_pipeline.py
+│   ├── stream_manager.py
+│   └── video_processor.py
 └── api/
     ├── __init__.py       # API Blueprint Factory
     └── routes/           # API endpoints
@@ -298,7 +309,7 @@ unconnected_devices:      id, name, type, mac_address, status, is_active, batter
 video_recordings:         id, device_id, coop_id, name, source_type, source_value,
                           thumbnail_url, duration, file_size, recorded_at, created_at, updated_at, deleted
 ai_detections:            id, device_id, coop_id, source_file, chicken_count, has_disease,
-                          diseases (JSON), details (JSON), detected_at, created_at, deleted
+                          diseases (JSON), details (JSON), image_path, detected_at, created_at, deleted
 warehouse_inventory:      id, item_name, item_type, quantity_kg, min_threshold_kg, unit, updated_at, deleted
 feed_consumption:         id, coop_id, recorded_date, quantity_kg
 medicine_consumption:     id, coop_id, recorded_date, quantity_kg
@@ -357,6 +368,9 @@ medicine_consumption:     id, coop_id, recorded_date, quantity_kg
 | | GET | `/api/camera/video-paths` | Đọc tất cả paths từ video_path.txt |
 | | PUT | `/api/camera/video-path` | Cập nhật video_path.txt |
 | **AI Detection** | POST | `/api/ai/detect` | Chạy AI detection trên file |
+| | POST | `/api/ai/detect-all` | Chạy AI detection trên tất cả camera đang hoạt động |
+| | POST | `/api/ai/process-video` | Xử lý video file (background task, mỗi 10s detect 1 frame) |
+| | GET | `/api/ai/process-video/<task_id>` | Poll trạng thái xử lý video |
 | | GET | `/api/ai/detections` | Lấy lịch sử detection (filter coop/device) |
 | | GET | `/api/ai/detections/<id>` | Chi tiết detection |
 | **Feed Schedule** | GET | `/api/feed-schedule` | Danh sách lịch cho ăn |
@@ -469,6 +483,48 @@ medicine_consumption:     id, coop_id, recorded_date, quantity_kg
 - Frontend Camera AI tab hiển thị real-time qua WebSocket (không cần polling)
 - Tự động phát hiện bệnh gà → tạo Alert level=warning
 
+### June 13, 2026 - Update 2: Batch Detection & Video File Processing & Camera 1 Guards
+
+| Thay đổi | File | Chi tiết |
+|----------|------|----------|
+| **Video Processor Service** | `backend/services/video_processor.py` | Module xử lý video: mỗi 10s timestamp seek 1 frame → YOLO detect → lưu ảnh `{video_name}_{giây}.jpg` |
+| **Background Task Manager** | `backend/services/video_processor.py` | Quản lý async task bằng threading, progress tracking, status polling |
+| **API process-video** | `backend/api/routes/ai_detection.py` | `POST /api/ai/process-video` start task + `GET /api/ai/process-video/<task_id>` poll status |
+| **API detect-all** | `backend/api/routes/ai_detection.py` | `POST /api/ai/detect-all` force detection trên tất cả workers |
+| **Force detection** | `backend/services/camera_stream_worker.py` | Thêm `force_detect()` method, lưu `latest_raw_frame` |
+| **Fix run.py** | `backend/run.py` | Thêm `sys.path.insert(0, ...)`, `init_stream_manager()`, `socketio.run()` |
+| **Auto detection on page load** | `static/index.html` | `renderAIDetection()`, `runAIDetection()`, xoá throttle 60s, auto-run on Camera tab |
+| **Frontend detectAll API** | `static/js/api.js` | `cameraAPI.detectAll()` |
+| **Fix response_data scope bug** | `backend/api/routes/ai_detection.py` | Di chuyển `response_data = detection.to_dict()` ra ngoài `if` block để tránh `UnboundLocalError` |
+
+**Kết quả:**
+- Có thể force detect tất cả camera ngay lập tức qua API hoặc UI
+- Xử lý video file background không block request
+- Auto detect khi load trang Camera AI tab (không cần click nút)
+- Ảnh annotated từ video lưu với tên `{video_name}_{giây}.jpg` để dễ lookup theo timestamp
+
+### June 14, 2026 - Update 3: Camera 2 File Naming, Counter, Cleanup & 45s Interval
+
+| Thay đổi | File | Chi tiết |
+|----------|------|----------|
+| **Interval 45s** | `backend/services/camera_stream_worker.py` | Default `analysis_interval_seconds` thay đổi từ 10 → **45 giây** |
+| **Interval 45s** | `backend/services/stream_manager.py` | `analysis_interval` default thay đổi từ 10 → **45 giây** |
+| **New File Naming** | `backend/services/detection_pipeline.py` | `save_annotated_frame()` dùng tên mới `camera_2_{id_chuồng}_{counter}.jpg` thay vì `detection_{device_id}_{timestamp}.jpg` |
+| **Sequential Counter** | `backend/services/detection_pipeline.py` | `_save_counter` tăng dần, không phụ thuộc vào DB record ID (giảm ~9600 writes/ngày) |
+| **Auto Cleanup** | `backend/services/detection_pipeline.py` | `_cleanup_old_files()`: giữ 50 file `camera_2_*` gần nhất, cleanup tự động sau mỗi 10 lần lưu |
+| **Remove Duplicate Save** | `backend/services/detection_pipeline.py` | `save_detection_to_db()` xóa bỏ việc lưu ảnh trùng lặp; thay vào đó nhận `image_path` từ `save_annotated_frame()` |
+| **image_path Column** | `backend/models.py` | Thêm cột `image_path` vào `AIDetection` model để lưu URL ảnh disease detection |
+| **image_path Column** | DB migration | `ALTER TABLE ai_detections ADD COLUMN image_path TEXT` |
+| **Use image_path from DB** | `backend/api/routes/ai_detection.py` | `GET /detections` và `GET /detections/<id>` đọc `image_url` từ `d.image_path` thay vì ghép tên file `detection_{id}.jpg` |
+| **New Save Flow** | `backend/services/camera_stream_worker.py` | `_process_frame()`: lưu ảnh annotated trước → `save_annotated_frame()` → nếu có bệnh, gọi `save_detection_to_db(image_path=...)` |
+
+**Kết quả:**
+- File naming mới: `static/ai_detections/camera_2_1_5.jpg` (camera_2_{coop_id}_{counter})
+- Chỉ giữ 50 file gần nhất, cleanup tự động
+- Camera 1 hoàn toàn bị loại khỏi AI detection (guard trên tất cả endpoints)
+- `AIDetection.image_path` lưu trong DB để frontend hiển thị ảnh bệnh chính xác
+- Khoảng cách phân tích tăng lên 45 giây (giảm tải server)
+
 ## 6. Tech Stack & Setup
 
 ### Tech Stack
@@ -512,10 +568,8 @@ source venv/bin/activate
 # 4. Cài đặt dependencies
 pip install -r requirements.txt
 
-# 5. Chạy server
-python app.py
-# Hoặc
-flask run
+# 5. Chạy server (dùng run.py để đảm bảo services khởi tạo đúng)
+python run.py
 
 # 6. Truy cập
 # Frontend: http://localhost:5000
@@ -534,8 +588,9 @@ D:\Share_Projects\AutomatedChickenFarmManagement\backend\Camera_AI\Data\Test_dat
 - Hệ thống tự động đọc file này khi khởi động StreamManager
 - 5 Camera 2 devices sẽ được phân phối xen kẽ các file này
 - Video file: lặp lại liên tục khi phát hết
-- Image file: xử lý cùng một ảnh mỗi 10s (giả lập camera tĩnh)
-- Kết quả annotated image lưu tại: `static/ai_detections/detection_{device_id}_{timestamp}.jpg`
+- Image file: xử lý cùng một ảnh mỗi 45s (giả lập camera tĩnh)
+- Kết quả annotated image lưu tại: `static/ai_detections/camera_2_{coop_id}_{counter}.jpg`
+- Tự động cleanup: giữ 50 file `camera_2_*` gần nhất, dọn mỗi 10 lần lưu
 
 ### API Test Example
 
@@ -557,11 +612,11 @@ curl -X GET http://localhost:5000/api/dashboard/stats \
 curl -X GET http://localhost:5000/api/camera/8/stream-config \
   -H "Authorization: Bearer <token>"
 
-# Cập nhật analysis interval (10 giây)
+# Cập nhật analysis interval (45 giây)
 curl -X PUT http://localhost:5000/api/camera/8/stream-config \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
-  -d '{"analysis_interval_seconds": 10}'
+  -d '{"analysis_interval_seconds": 45}'
 
 # Bắt đầu AI detection cho camera
 curl -X POST http://localhost:5000/api/camera/8/detection/start \
@@ -575,6 +630,20 @@ curl -X POST http://localhost:5000/api/ai/detect \
 
 # Lấy lịch sử AI detection
 curl -X GET "http://localhost:5000/api/ai/detections?device_id=8&limit=10" \
+  -H "Authorization: Bearer <token>"
+
+# Force detect tất cả camera
+curl -X POST http://localhost:5000/api/ai/detect-all \
+  -H "Authorization: Bearer <token>"
+
+# Xử lý video file (background task)
+curl -X POST http://localhost:5000/api/ai/process-video \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"file_path": "videos/barn1.mp4", "coop_id": 1}'
+
+# Poll kết quả xử lý video
+curl http://localhost:5000/api/ai/process-video/a1b2c3d4 \
   -H "Authorization: Bearer <token>"
 
 # Đọc video_path.txt
@@ -608,11 +677,17 @@ curl -X GET http://localhost:5000/api/camera/video-paths
 - [x] **Cảnh báo động** - Tính từ database, viền vàng khi có cảnh báo
 - [x] **Tự động làm mới** - Cập nhật dữ liệu mỗi 30 giây
 - [x] **Camera detail dynamic** - API tổng hợp, skeleton loading, realtime polling 30s, color-coded device status
-- [x] **Camera AI Detection Pipeline** - YOLO single model detection (gà + bệnh), 10s interval analysis
+- [x] **Camera AI Detection Pipeline** - YOLO single model detection (gà + bệnh), 45s interval analysis
 - [x] **Video/Image file processing** - Camera workers đọc từ file local (video lặp, ảnh tĩnh), lưu kết quả annotated
 - [x] **Camera AI Dashboard Tab** - Real-time grid 5 camera, WebSocket push, stats (tổng/online/bệnh/gà phát hiện)
-- [x] **AI Detection Storage** - Annotated images lưu vào `static/ai_detections/` với timestamp filename
+- [x] **AI Detection Storage** - Annotated images lưu vào `static/ai_detections/` với định dạng `camera_2_{coop_id}_{counter}.jpg`
+- [x] **Auto Cleanup** - Tự động giữ 50 file `camera_2_*` gần nhất, cleanup mỗi 10 lần lưu
+- [x] **Camera 1 Guards** - Hoàn toàn loại bỏ AI detection khỏi Camera 1 (tất cả endpoints)
+- [x] **image_path Column** - Lưu URL ảnh disease detection trong DB để UI hiển thị chính xác
 - [x] **Disease Alert Integration** - Tự động tạo Alert khi phát hiện gà bệnh qua AI
+- [x] **Batch Detection** - `POST /api/ai/detect-all` force detect trên tất cả camera
+- [x] **Video File Processing** - `POST /api/ai/process-video` xử lý video file async, mỗi 10s timestamp detect 1 frame
+- [x] **Auto Detection on Page Load** - Tự động detect khi vào Camera AI tab mà không cần click nút
 
 ### Chưa hoàn thành
 

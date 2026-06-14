@@ -24,6 +24,27 @@ def index():
     return render_template('index.html')
 
 
+@pages_bp.route('/login')
+def login_page():
+    """Trang đăng nhập (dùng chung index.html, login form hiển thị qua hash/state)"""
+    from flask import render_template
+    return render_template('index.html')
+
+
+@pages_bp.route('/register')
+def register_page():
+    """Trang đăng ký (dùng chung index.html)"""
+    from flask import render_template
+    return render_template('index.html')
+
+
+@pages_bp.route('/logout')
+def logout_page():
+    """Đăng xuất - chuyển hướng về trang chủ"""
+    from flask import redirect, url_for
+    return redirect(url_for('pages.index'))
+
+
 # ============================================================
 # 3. CÁC ROUTE CŨ TRẢ VỀ 404
 # ============================================================
@@ -39,9 +60,6 @@ _OLD_ROUTES = {
     'cameras':            '/cameras',
     'camera_detail':      '/cameras/<coop>',
     'other':              '/other',
-    'login':              '/login',
-    'register':           '/register',
-    'logout':             '/logout',
 }
 
 def _not_found():

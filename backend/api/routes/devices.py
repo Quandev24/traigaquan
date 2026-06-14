@@ -285,10 +285,6 @@ def add_device_to_coop():
     coop_device = CoopDevice(coop_id=coop_id, device_id=device.id, is_active=True)
     db.session.add(coop_device)
     
-    # Đồng bộ has_camera nếu là thiết bị camera
-    if device.type == 'camera':
-        coop.has_camera = 1
-    
     # Xóa khỏi unconnected list
     db.session.delete(unconnected)
     db.session.commit()
@@ -360,10 +356,6 @@ def attach_device_to_coop():
         device.status = 'connecting'
         device.is_active = True
         
-        # Đồng bộ has_camera nếu là thiết bị camera
-        if device.type == 'camera':
-            coop.has_camera = 1
-        
         db.session.commit()
         
         # Broadcast updates
@@ -405,20 +397,6 @@ def remove_device_from_coop(device_id):
     
     # Gỡ liên kết với chuồng
     CoopDevice.query.filter_by(device_id=device_id).delete()
-    
-    # Đồng bộ has_camera nếu là thiết bị camera
-    if device.type == 'camera':
-        for coop_id in coop_ids:
-            coop = db.session.get(Coop, coop_id)
-            if coop:
-                # Kiểm tra còn camera nào trong chuồng không
-                remaining_cameras = db.session.query(CoopDevice).join(Device).filter(
-                    CoopDevice.coop_id == coop_id,
-                    Device.type == 'camera',
-                    Device.deleted == False
-                ).count()
-                if remaining_cameras == 0:
-                    coop.has_camera = 0
     
     # Thêm vào unconnected list
     unconnected = UnconnectedDevice(

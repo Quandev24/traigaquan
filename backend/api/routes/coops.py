@@ -11,11 +11,13 @@ Mỗi chuồng có thể chứa nhiều thiết bị và có các thông số m�
 Các thông số cảnh báo (ngưỡng nhiệt độ, độ ẩm,...) được cấu hình cho từng chuồng.
 """
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime, UTC
 import sys
 import os
+import re
+import mimetypes
 
 # Thêm đường dẫn parent vào sys.path để có thể import models
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -232,36 +234,162 @@ def get_public_coop_history(coop_id):
     return jsonify([env.to_dict() for env in environments]), 200
 
 
-@coops_bp.route('/<int:coop_id>/camera', methods=['PATCH'])
-@jwt_required()
-def update_coop_camera(coop_id):
-    """
-    Cập nhật trạng thái camera của chuồng.
-    
-    Args:
-        coop_id (int): ID của chuồng
-        Request Body (JSON):
-            - has_camera (int): 1 để bật camera, 0 để tắt
-            
-    Returns:
-        200: Coop object đã cập nhật
-        400: Giá trị has_camera không hợp lệ
-        404: Không tìm thấy chuồng
-    """
-    coop = db.session.get(Coop, coop_id)
-    if not coop or coop.deleted:
-        return jsonify({'error': 'Coop not found'}), 404
-    
-    data = request.get_json()
-    has_camera = data.get('has_camera')
-    
-    if has_camera is not None:
-        if has_camera not in [0, 1]:
-            return jsonify({'error': 'has_camera must be 0 or 1'}), 400
-        coop.has_camera = has_camera
-        db.session.commit()
-    
-    return jsonify(coop.to_dict()), 200
+# ============================================================
+# CAMERA: Serve video/images from video_path.txt (public, no auth)
+# ============================================================
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mov', '.mkv', '.webm'}
+IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp'}
+
+MIME_MAP = {
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/x-msvideo',
+    '.mov': 'video/quicktime',
+    '.mkv': 'video/x-matroska',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.bmp': 'image/bmp',
+}
+
+
+@coops_bp.route('/public/video-paths', methods=['GET'])
+def get_video_paths():
+    path_file = os.path.join(PROJECT_ROOT, 'video_path.txt')
+    if not os.path.exists(path_file):
+        return jsonify({'paths': [], 'types': []}), 200
+
+    with open(path_file, 'r', encoding='utf-8') as f:
+        lines = [l.strip() for l in f if l.strip()]
+
+    paths = []
+    for line in lines:
+        if ' = ' in line:
+            line = line.split(' = ', 1)[1]
+        paths.append(line)
+
+    types = []
+    for p in paths:
+        ext = os.path.splitext(p)[1].lower()
+        if ext in VIDEO_EXTENSIONS:
+            types.append('video')
+        elif ext in IMAGE_EXTENSIONS:
+            types.append('image')
+        else:
+            types.append('unknown')
+
+    return jsonify({'paths': paths, 'types': types}), 200
+
+
+@coops_bp.route('/public/serve-media', methods=['GET'])
+def serve_media():
+    file_path = request.args.get('path', '')
+    if not file_path or not os.path.exists(file_path):
+        return '', 404
+
+    ext = os.path.splitext(file_path)[1].lower()
+    mime_type = MIME_MAP.get(ext)
+    if not mime_type:
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+
+    file_size = os.path.getsize(file_path)
+    range_header = request.headers.get('Range')
+
+    if range_header:
+        match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+        if match:
+            start = int(match.group(1))
+            end = file_size - 1
+            if match.group(2):
+                end = int(match.group(2))
+            if start >= file_size:
+                return '', 416
+            length = end - start + 1
+            with open(file_path, 'rb') as f:
+                f.seek(start)
+                data = f.read(length)
+            resp = Response(data, 206, mimetype=mime_type)
+            resp.headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+            resp.headers['Accept-Ranges'] = 'bytes'
+            resp.headers['Content-Length'] = str(length)
+            resp.headers['Cache-Control'] = 'no-cache'
+            return resp
+
+    with open(file_path, 'rb') as f:
+        data = f.read()
+    resp = Response(data, 200, mimetype=mime_type)
+    resp.headers['Accept-Ranges'] = 'bytes'
+    resp.headers['Content-Length'] = str(file_size)
+    return resp
+
+
+# ============================================================
+# DISEASE DETECTION: list & serve detected images
+# ============================================================
+
+DISEASE_DIR = os.path.join(PROJECT_ROOT, 'disease_detect')
+
+
+@coops_bp.route('/public/disease-images', methods=['GET'])
+def get_disease_images():
+    coop_id = request.args.get('coop_id', type=int)
+    if not coop_id:
+        return jsonify({'error': 'coop_id is required'}), 400
+
+    coop_dir = os.path.join(DISEASE_DIR, f'coop_{coop_id}')
+    if not os.path.exists(coop_dir):
+        return jsonify({'images': []}), 200
+
+    files = sorted([
+        f for f in os.listdir(coop_dir)
+        if f.endswith('.jpg') and f.startswith('camera_2_')
+    ], reverse=True)
+
+    return jsonify({'images': files}), 200
+
+
+@coops_bp.route('/public/serve-disease-media', methods=['GET'])
+def serve_disease_media():
+    coop_id = request.args.get('coop_id', type=int)
+    filename = request.args.get('file', '')
+
+    if not coop_id or not filename:
+        return '', 404
+
+    # Security: prevent path traversal
+    if '..' in filename or '/' in filename or '\\' in filename:
+        return '', 400
+
+    file_path = os.path.join(DISEASE_DIR, f'coop_{coop_id}', filename)
+    # Ensure we're still inside DISEASE_DIR
+    file_path = os.path.normpath(file_path)
+    if not file_path.startswith(os.path.normpath(DISEASE_DIR)):
+        return '', 400
+
+    if not os.path.exists(file_path):
+        return '', 404
+
+    ext = os.path.splitext(file_path)[1].lower()
+    mime_type = MIME_MAP.get(ext)
+    if not mime_type:
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+
+    with open(file_path, 'rb') as f:
+        data = f.read()
+
+    resp = Response(data, 200, mimetype=mime_type)
+    resp.headers['Content-Length'] = str(os.path.getsize(file_path))
+    resp.headers['Cache-Control'] = 'private, max-age=60'
+    return resp
 
 
 @coops_bp.route('', methods=['GET'])
@@ -270,19 +398,12 @@ def get_coops():
     """
     Lấy danh sách tất cả các chuồng.
 
-    Query Params:
-        has_camera (int, optional): Lọc chuồng có camera (1) hoặc không có (0)
         
     Returns:
         200: Array of coop objects (bao gồm environment data mới nhất và priority)
         401: Unauthorized
     """
-    has_camera = request.args.get('has_camera', type=int)
-    
     query = Coop.query.filter_by(deleted=False)
-    
-    if has_camera is not None:
-        query = query.filter_by(has_camera=has_camera)
     
     coops = query.all()
     return jsonify([coop.to_dict(include_environment=True) for coop in coops]), 200

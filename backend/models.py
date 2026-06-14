@@ -120,7 +120,6 @@ class Coop(db.Model):
     
     emergency_alert = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default='active')
-    has_camera = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
     deleted = db.Column(db.Boolean, default=False)
@@ -158,7 +157,6 @@ class Coop(db.Model):
             'auto_water': self.auto_water,
             'emergency_alert': self.emergency_alert,
             'status': self.status,
-            'has_camera': self.has_camera,
             'deleted': self.deleted,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
@@ -211,8 +209,7 @@ class Device(db.Model):
         'fan',
         'light',
         'feeder',
-        'water',
-        'camera'
+        'water'
     ]
     
     DEVICE_STATUS = [
@@ -230,12 +227,6 @@ class Device(db.Model):
     is_active = db.Column(db.Boolean, default=False)
     battery = db.Column(db.Integer, default=100)
     
-    # Camera stream configuration
-    stream_url = db.Column(db.String(500), nullable=True)
-    stream_type = db.Column(db.String(20), default='rtsp')
-    stream_enabled = db.Column(db.Boolean, default=False)
-    frame_skip = db.Column(db.Integer, default=5)
-    analysis_interval_seconds = db.Column(db.Integer, default=10)
     
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
@@ -254,11 +245,6 @@ class Device(db.Model):
             'status': self.status,
             'is_active': self.is_active,
             'battery': self.battery,
-            'stream_url': self.stream_url,
-            'stream_type': self.stream_type,
-            'stream_enabled': self.stream_enabled,
-            'frame_skip': self.frame_skip,
-            'analysis_interval_seconds': self.analysis_interval_seconds,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'coop_id': self.coops[0].id if self.coops else None
@@ -461,7 +447,7 @@ class UnconnectedDevice(db.Model):
     Attributes:
         id: Primary key tự tăng
         name: Tên thiết bị
-        type: Loại thiết bị (temperature/humidity/fan/light/feeder/camera)
+        type: Loại thiết bị (temperature/humidity/fan/light/feeder)
         mac_address: Địa chỉ MAC
         status: Trạng thái (online/offline/connecting)
         is_active: Bật/tắt thiết bị
@@ -504,99 +490,6 @@ class UnconnectedDevice(db.Model):
 
     def __repr__(self):
         return f'<UnconnectedDevice {self.name}>'
-
-
-class VideoRecording(db.Model):
-    __tablename__ = 'video_recordings'
-
-    SOURCE_TYPES = ['text', 'video_url', 'file_path']
-
-    id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.Integer, db.ForeignKey('devices.id'), nullable=False)
-    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
-    name = db.Column(db.String(200), nullable=False)
-    source_type = db.Column(db.String(20), nullable=False)
-    source_value = db.Column(db.Text, nullable=False)
-    thumbnail_url = db.Column(db.String(500))
-    duration = db.Column(db.Float)
-    file_size = db.Column(db.Integer)
-    recorded_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
-    deleted = db.Column(db.Boolean, default=False)
-
-    device = db.relationship('Device', backref='video_recordings', lazy='joined')
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'device_id': self.device_id,
-            'coop_id': self.coop_id,
-            'name': self.name,
-            'source_type': self.source_type,
-            'source_value': self.source_value,
-            'thumbnail_url': self.thumbnail_url,
-            'duration': self.duration,
-            'file_size': self.file_size,
-            'recorded_at': self.recorded_at.isoformat() if self.recorded_at else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-        }
-
-    def __repr__(self):
-        return f'<VideoRecording {self.name} ({self.source_type})>'
-
-
-class AIDetection(db.Model):
-    """
-    Model kết quả phát hiện bệnh từ AI.
-
-    Lưu trữ kết quả phát hiện gà bệnh từ pipeline AI:
-    YOLO-1 (chicken detection) → crop → YOLO-2 (disease detection).
-
-    Attributes:
-        id: Primary key tự tăng
-        device_id: Foreign key đến Device (camera)
-        coop_id: Foreign key đến Coop
-        source_file: Đường dẫn file gốc (video/ảnh)
-        chicken_count: Số lượng gà phát hiện được
-        has_disease: Có phát hiện bệnh hay không
-        diseases: JSON array các bệnh phát hiện [{disease, confidence, bbox}]
-        details: JSON chi tiết từng box gà và kết quả disease
-        detected_at: Thời điểm phát hiện
-        created_at: Thời điểm tạo bản ghi
-    """
-    __tablename__ = 'ai_detections'
-
-    id = db.Column(db.Integer, primary_key=True)
-    device_id = db.Column(db.Integer, db.ForeignKey('devices.id'), nullable=True)
-    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=True)
-    source_file = db.Column(db.Text, nullable=False)
-    chicken_count = db.Column(db.Integer, default=0)
-    has_disease = db.Column(db.Boolean, default=False)
-    diseases = db.Column(db.JSON, default=list)
-    details = db.Column(db.JSON, default=list)
-    detected_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    deleted = db.Column(db.Boolean, default=False)
-
-    device = db.relationship('Device', backref='ai_detections', lazy='joined')
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'device_id': self.device_id,
-            'coop_id': self.coop_id,
-            'source_file': self.source_file,
-            'chicken_count': self.chicken_count,
-            'has_disease': self.has_disease,
-            'diseases': self.diseases or [],
-            'details': self.details or [],
-            'detected_at': self.detected_at.isoformat() if self.detected_at else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-        }
-
-    def __repr__(self):
-        return f'<AIDetection #{self.id} disease={self.has_disease}>'
 
 
 class WarehouseInventory(db.Model):
@@ -642,137 +535,6 @@ class FeedConsumption(db.Model):
             'coop_id': self.coop_id,
             'recorded_date': self.recorded_date.isoformat(),
             'quantity_kg': self.quantity_kg,
-        }
-
-
-class ChickenBatch(db.Model):
-    """
-    Model quản lý đàn gà (Batch).
-    
-    Attributes:
-        id: Primary key
-        coop_id: Foreign key đến Coop
-        batch_name: Tên đàn gà (VD: Đợt gà Ai Cập tháng 6)
-        quantity: Số lượng gà ban đầu
-        breed: Giống gà
-        arrival_date: Ngày nhập đàn (dùng để tính tuổi)
-        status: Trạng thái (active/sold/deceased)
-        created_at: Thời gian tạo
-    """
-    __tablename__ = 'chicken_batches'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
-    batch_name = db.Column(db.String(100), nullable=False)
-    quantity = db.Column(db.Integer, default=0)
-    breed = db.Column(db.String(50))
-    arrival_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), default='active')
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
-    deleted = db.Column(db.Boolean, default=False)
-    
-    vaccinations = db.relationship('VaccinationRecord', backref='batch', lazy='dynamic')
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'coop_id': self.coop_id,
-            'batch_name': self.batch_name,
-            'quantity': self.quantity,
-            'breed': self.breed,
-            'arrival_date': self.arrival_date.isoformat() if self.arrival_date else None,
-            'status': self.status,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'age_days': (datetime.now().date() - self.arrival_date).days if self.arrival_date else 0
-        }
-
-
-class VaccinationRecord(db.Model):
-    """
-    Model nhật ký tiêm phòng cho đàn gà.
-    """
-    __tablename__ = 'vaccination_records'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    batch_id = db.Column(db.Integer, db.ForeignKey('chicken_batches.id'), nullable=False)
-    vaccine_name = db.Column(db.String(100), nullable=False)
-    administered_date = db.Column(db.Date, nullable=False)
-    next_dose_date = db.Column(db.Date)
-    status = db.Column(db.String(20), default='completed')  # completed/scheduled
-    notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    deleted = db.Column(db.Boolean, default=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'batch_id': self.batch_id,
-            'vaccine_name': self.vaccine_name,
-            'administered_date': self.administered_date.isoformat() if self.administered_date else None,
-            'next_dose_date': self.next_dose_date.isoformat() if self.next_dose_date else None,
-            'status': self.status,
-            'notes': self.notes,
-            'created_at': self.created_at.isoformat() if self.created_at else None
-        }
-
-
-class HealthRecord(db.Model):
-    """
-    Model nhật ký kiểm tra và khám sức khỏe cho đàn gà.
-    """
-    __tablename__ = 'health_records'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    batch_id = db.Column(db.Integer, db.ForeignKey('chicken_batches.id'), nullable=False)
-    record_type = db.Column(db.String(50), nullable=False)  # inspection/medical_exam
-    check_date = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    inspector = db.Column(db.String(100))
-    result = db.Column(db.String(100))  # Khỏe mạnh, Cần theo dõi, Có dấu hiệu bệnh...
-    notes = db.Column(db.Text)
-    deleted = db.Column(db.Boolean, default=False)
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'batch_id': self.batch_id,
-            'record_type': self.record_type,
-            'check_date': self.check_date.isoformat() if self.check_date else None,
-            'inspector': self.inspector,
-            'result': self.result,
-            'notes': self.notes
-        }
-
-
-class InventoryLog(db.Model):
-    """
-    Model nhật ký nhập/xuất kho.
-    """
-    __tablename__ = 'inventory_logs'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey('warehouse_inventory.id'), nullable=False)
-    transaction_type = db.Column(db.String(20), nullable=False)  # import/export/adjustment
-    quantity = db.Column(db.Float, nullable=False)
-    unit_price = db.Column(db.Float)
-    supplier = db.Column(db.String(100))
-    transaction_date = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
-    notes = db.Column(db.Text)
-    deleted = db.Column(db.Boolean, default=False)
-    
-    item = db.relationship('WarehouseInventory', backref='logs')
-
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'item_id': self.item_id,
-            'item_name': self.item.item_name if self.item else None,
-            'transaction_type': self.transaction_type,
-            'quantity': self.quantity,
-            'unit_price': self.unit_price,
-            'supplier': self.supplier,
-            'transaction_date': self.transaction_date.isoformat() if self.transaction_date else None,
-            'notes': self.notes
         }
 
 
