@@ -37,372 +37,461 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
+
+    /* ===== Design Tokens ===== */
+    :root {
+      --primary: #1B4332;
+      --primary-light: #2D6A4F;
+      --accent: #52B788;
+      --accent-light: #74C69D;
+      --highlight: #F9C74F;
+      --bg: #F4F9F6;
+      --bg-card: #ffffff;
+      --text: #1c1917;
+      --text-muted: #8a8a7e;
+      --text-label: #6b6b5e;
+      --border: #e2e8f0;
+      --warning: #FF9F1C;
+      --danger: #E63946;
+      --success: #52B788;
+      --shadow-card: 0 4px 16px rgba(45,106,79,0.12);
+      --radius-card: 16px;
+      --radius-btn: 24px;
+      --radius-pill: 999px;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    html.dark {
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-label: #94a3b8;
+      --border: #334155;
+      --shadow-card: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
     body {
-      font-family: 'Inter', system-ui, sans-serif;
-      background: #f8faf0;
-      color: #1c1917;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       transition: background 0.3s, color 0.3s;
+      padding-top: 64px;
+      padding-bottom: 80px;
     }
-    html.dark body { background: #0f172a; color: #e2e8f0; }
+    @media (min-width: 769px) { body { padding-bottom: 1.5rem; } }
 
-    /* ===== Scrollbar ===== */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    /* ===== Navigation ===== */
-    .nav-bar {
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(82,183,136,0.4); } 50% { box-shadow: 0 0 0 8px rgba(82,183,136,0); } }
+
+    /* ===== Topbar ===== */
+    .topbar {
       position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid #e2e8f0;
-      transition: background 0.3s, border-color 0.3s;
+      background: linear-gradient(135deg, #1B4332, #2D6A4F);
+      padding: 0 1rem;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
-    html.dark .nav-bar {
-      background: rgba(15,23,42,0.9);
-      border-bottom: 1px solid #1e293b;
+    .topbar-left { display: flex; align-items: center; gap: 0.625rem; }
+    .topbar-emoji { font-size: 1.5rem; line-height: 1; }
+    .topbar-title { font-weight: 700; font-size: 1.125rem; color: #fff; letter-spacing: -0.01em; }
+    .topbar-right { display: flex; align-items: center; gap: 0.75rem; }
+    .topbar-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      border: none; color: #fff; font-size: 1.125rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
-    .nav-tab {
-      position: relative;
-      padding: 0.75rem 1.25rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: #78716c;
+    .topbar-btn:hover { background: rgba(255,255,255,0.25); }
+    .topbar-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--highlight); color: #1B4332;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.75rem;
       cursor: pointer;
-      transition: color 0.2s, background 0.2s;
-      border-radius: 0.5rem;
+    }
+
+    /* ===== Tab Navigation (Desktop) ===== */
+    .tab-nav-desktop {
+      display: none;
+      align-items: center;
+      gap: 0.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-nav-desktop::-webkit-scrollbar { display: none; }
+    .tab-nav-desktop .nav-tab {
+      padding: 0.625rem 1rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: var(--radius-btn);
       white-space: nowrap;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
-    html.dark .nav-tab { color: #94a3b8; }
-    .nav-tab:hover { color: #2d6a4f; background: #f0faf4; }
-    html.dark .nav-tab:hover { color: #52b788; background: rgba(45,106,79,0.15); }
-    .nav-tab.active { color: #2d6a4f; background: #d9f0e3; }
-    html.dark .nav-tab.active { color: #52b788; background: rgba(45,106,79,0.2); }
-    .nav-tab i { font-size: 1.1rem; }
+    .tab-nav-desktop .nav-tab:hover { color: #fff; background: rgba(255,255,255,0.1); }
+    .tab-nav-desktop .nav-tab.active { color: #fff; background: rgba(255,255,255,0.2); }
+    .tab-nav-desktop .nav-tab i { font-size: 1.05rem; }
+    @media (min-width: 769px) { .tab-nav-desktop { display: flex; } }
 
-    /* ===== Cards ===== */
-    .stat-card {
-      background: #ffffff;
-      border-radius: 1rem;
-      padding: 1.25rem;
-      border: 1px solid #e2e8f0;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      will-change: transform;
-      position: relative;
-      overflow: hidden;
-    }
-    html.dark .stat-card {
-      background: #1e293b;
-      border-color: #334155;
-    }
-    .stat-card:hover {
-      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
-      transform: translateY(-2px);
-    }
-    html.dark .stat-card:hover {
-      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-    }
-    .stat-card .icon-box {
-      width: 52px; height: 52px;
-      border-radius: 0.75rem;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.75rem;
-    }
-    .stat-card .trend-up { color: #16a34a; }
-    .stat-card .trend-down { color: #dc2626; }
-    html.dark .stat-card .trend-up { color: #4ade80; }
-    html.dark .stat-card .trend-down { color: #f87171; }
-
-    /* ===== Quick Navigation ===== */
-    .quick-nav-card {
-      background: #ffffff;
-      border-radius: 1rem;
-      padding: 1rem;
-      border: 1px solid #e2e8f0;
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    /* ===== Bottom Navigation (Mobile) ===== */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      justify-content: space-around;
+      padding: 0.375rem 0;
+      padding-bottom: calc(0.375rem + env(safe-area-inset-bottom, 0));
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+      animation: slideUp 0.3s ease;
     }
-    html.dark .quick-nav-card {
-      background: #1e293b;
-      border-color: #334155;
-    }
-    .quick-nav-card:hover {
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      transform: translateY(-2px);
-    }
-    html.dark .quick-nav-card:hover {
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .quick-nav-card .q-icon {
-      width: 44px; height: 44px;
-      border-radius: 0.75rem;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-    }
-    .quick-nav-card .q-title {
-      font-weight: 600;
-      font-size: 0.875rem;
-      color: #1c1917;
-    }
-    html.dark .quick-nav-card .q-title { color: #e2e8f0; }
-    .quick-nav-card .q-desc {
-      font-size: 0.75rem;
-      color: #a8a29e;
-      margin-top: 0.125rem;
-    }
-    html.dark .quick-nav-card .q-desc { color: #64748b; }
-
-    .coop-card {
-      background: #ffffff;
-      border-radius: 0.75rem;
-      padding: 1rem;
-      border: 1px solid #e2e8f0;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    html.dark .coop-card {
-      background: #1e293b;
-      border-color: #334155;
-    }
-    .coop-card:hover {
-      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
-    }
-    html.dark .coop-card:hover {
-      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-    }
-
-    /* ===== Overview Coop Row ===== */
-    .ov-coop-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.625rem 0.75rem;
-      border-radius: 0.5rem;
-      background: #f8fafc;
-      transition: background 0.2s;
-    }
-    html.dark .ov-coop-row { background: #0f172a; }
-    .ov-coop-row:hover { background: #f1f5f9; }
-    html.dark .ov-coop-row:hover { background: #1e293b; }
-    .ov-coop-row .ocr-name { font-weight: 500; font-size: 0.875rem; color: #1c1917; }
-    html.dark .ov-coop-row .ocr-name { color: #e2e8f0; }
-    .ov-coop-row .ocr-stat { font-size: 0.75rem; color: #78716c; }
-    html.dark .ov-coop-row .ocr-stat { color: #94a3b8; }
-    .ov-coop-row .ocr-stat i { width: 1rem; text-align: center; }
-
-    .ov-stock-period-group {
-      display: inline-flex;
-      background: #e2e8f0;
-      border-radius: 9999px;
-      padding: 2px;
-    }
-    html.dark .ov-stock-period-group { background: #334155; }
-    .ov-stock-period-btn {
+    @media (min-width: 769px) { .bottom-nav { display: none; } }
+    .bn-item {
+      display: flex; flex-direction: column; align-items: center; gap: 0.125rem;
       padding: 0.375rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #64748b;
+      border: none; background: transparent; cursor: pointer;
+      border-radius: var(--radius-pill);
       transition: all 0.2s;
+      min-width: 56px;
     }
-    .ov-stock-period-btn.active {
-      background: #ffffff;
-      color: #1c1917;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    .bn-item i {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      transition: color 0.2s;
     }
-    html.dark .ov-stock-period-btn.active {
-      background: #1e293b;
-      color: #f1f5f9;
+    .bn-item span {
+      font-size: 0.625rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.2s;
     }
-    .ov-stock-period-btn:hover:not(.active) { color: #334155; }
-    html.dark .ov-stock-period-btn:hover:not(.active) { color: #cbd5e1; }
+    .bn-item.active { background: rgba(82,183,136,0.12); }
+    .bn-item.active i { color: var(--accent); }
+    .bn-item.active span { color: var(--accent); font-weight: 600; }
 
     /* ===== Tab Content ===== */
     .tab-content { display: none; animation: fadeIn 0.3s ease; }
     .tab-content.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .main-container { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+    @media (min-width: 768px) { .main-container { padding: 0 1.5rem; } }
 
-    /* ===== Alert Items ===== */
-    .alert-item {
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      border-left: 3px solid;
-      margin-bottom: 0.5rem;
-      background: #fefce8;
-      transition: background 0.3s;
+    /* ===== Hero Card (Dashboard) ===== */
+    .hero-card {
+      background: linear-gradient(135deg, #e8f5e9, #f0faf4);
+      border-radius: var(--radius-card);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-card);
     }
-    html.dark .alert-item { background: rgba(251,191,36,0.05); }
-    .alert-item.warning { border-left-color: #d97706; }
-    .alert-item.critical { border-left-color: #dc2626; }
-    .alert-item.info { border-left-color: #3b82f6; }
+    html.dark .hero-card { background: linear-gradient(135deg, #1a2e24, #1e293b); }
+    .hero-metrics { display: flex; align-items: center; justify-content: space-around; }
+    .hm-item { text-align: center; flex: 1; }
+    .hm-label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .hm-value { font-size: 2rem; font-weight: 800; color: var(--primary); line-height: 1.2; display: block; margin-top: 0.25rem; }
+    html.dark .hm-value { color: var(--accent-light); }
+    .hm-value.hm-healthy { color: var(--success); }
+    .hm-value.hm-warning { color: var(--warning); }
+    .hm-value.hm-danger { color: var(--danger); }
+    .hm-divider { width: 1px; height: 48px; background: var(--border); }
 
-    /* ===== Placeholder tabs ===== */
+    /* ===== Section Headers ===== */
+    .section-title {
+      font-size: 1rem; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .section-title .badge-count {
+      font-size: 0.6875rem; font-weight: 600;
+      padding: 0.0625rem 0.5rem; border-radius: var(--radius-pill);
+      background: rgba(82,183,136,0.12); color: var(--accent);
+    }
+
+    /* ===== Alert Card ===== */
+    .alert-card {
+      background: linear-gradient(135deg, #fff7ed, #fffbeb);
+      border-radius: var(--radius-card);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255,159,28,0.2);
+    }
+    html.dark .alert-card { background: linear-gradient(135deg, #1c1917, #1e293b); border-color: rgba(255,159,28,0.15); }
+    .alert-card-header {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.875rem; font-weight: 600; color: var(--warning);
+      margin-bottom: 0.75rem;
+    }
+    .alert-card-header i { font-size: 1.25rem; }
+    .alert-badge-pill {
+      margin-left: auto;
+      font-size: 0.6875rem; font-weight: 600;
+      padding: 0.0625rem 0.5rem; border-radius: var(--radius-pill);
+      background: rgba(255,159,28,0.15); color: var(--warning);
+    }
+    .alert-item {
+      display: flex; align-items: flex-start; gap: 0.625rem;
+      padding: 0.625rem 0.75rem;
+      border-radius: 12px;
+      margin-bottom: 0.375rem;
+      background: rgba(255,255,255,0.7);
+      transition: background 0.2s;
+    }
+    html.dark .alert-item { background: rgba(255,255,255,0.05); }
+    .alert-item.warning { border-left: 3px solid var(--warning); }
+    .alert-item.critical { border-left: 3px solid var(--danger); }
+    .alert-item.info { border-left: 3px solid #3b82f6; }
+    .alert-item i.alert-icon { font-size: 1rem; margin-top: 0.125rem; flex-shrink: 0; }
+    .alert-item .alert-body { flex: 1; min-width: 0; }
+    .alert-item .alert-body .alert-coop { font-size: 0.75rem; font-weight: 600; color: var(--text); }
+    .alert-item .alert-body .alert-msg { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem; }
+    .alert-item .alert-body .alert-time { font-size: 0.625rem; color: var(--text-label); margin-top: 0.125rem; }
+
+    /* ===== Stat Card ===== */
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
+      padding: 1.25rem;
+      border: 1px solid var(--border);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card:hover { box-shadow: var(--shadow-card); transform: translateY(-2px); }
+    .stat-card .icon-box {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+    }
+    .stat-card .trend-up { color: var(--success); }
+    .stat-card .trend-down { color: var(--danger); }
+
+    /* ===== Quick Navigation ===== */
+    .quick-nav-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
+      padding: 1rem;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .quick-nav-card:hover { box-shadow: var(--shadow-card); transform: translateY(-2px); }
+    .quick-nav-card .q-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .quick-nav-card .q-title { font-weight: 600; font-size: 0.875rem; color: var(--text); }
+    .quick-nav-card .q-desc { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.125rem; }
+
+    /* ===== Coop Overview Row ===== */
+    .ov-coop-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.625rem 0.75rem; border-radius: 12px;
+      background: rgba(82,183,136,0.06);
+      transition: background 0.2s;
+    }
+    .ov-coop-row:hover { background: rgba(82,183,136,0.1); }
+    .ov-coop-row .ocr-name { font-weight: 600; font-size: 0.8125rem; color: var(--text); }
+    .ov-coop-row .ocr-stat { font-size: 0.75rem; color: var(--text-muted); }
+    .ov-coop-row .ocr-stat i { width: 1rem; text-align: center; }
+
+    .ov-stock-period-group {
+      display: inline-flex;
+      background: var(--border); border-radius: var(--radius-pill); padding: 2px;
+    }
+    .ov-stock-period-btn {
+      padding: 0.375rem 0.75rem; border-radius: var(--radius-pill);
+      font-size: 0.6875rem; font-weight: 600;
+      border: none; cursor: pointer;
+      background: transparent; color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .ov-stock-period-btn.active {
+      background: var(--bg-card); color: var(--text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    }
+    .ov-stock-period-btn:hover:not(.active) { color: var(--text); }
+
+    /* ===== Placeholder Tab ===== */
     .placeholder-tab {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       min-height: 60vh; text-align: center;
-      color: #a8a29e;
+      color: var(--text-muted);
     }
-    html.dark .placeholder-tab { color: #64748b; }
     .placeholder-tab i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
-    .placeholder-tab h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: #57534e; }
-    html.dark .placeholder-tab h3 { color: #94a3b8; }
+    .placeholder-tab h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text); }
 
-    /* ===== Progress bar ===== */
-    .progress-fill {
-      height: 100%; border-radius: inherit;
-      transition: width 1s ease;
-    }
+    /* ===== Progress Bar ===== */
+    .progress-fill { height: 100%; border-radius: inherit; transition: width 1s ease; }
 
     /* ===== Dark Mode Toggle ===== */
     .theme-toggle {
-      position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 60;
-      width: 48px; height: 48px; border-radius: 50%;
-      background: #1e293b; color: #fbbf24;
-      border: none; cursor: pointer; font-size: 1.25rem;
+      position: fixed; bottom: 5.5rem; right: 1.25rem; z-index: 60;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--primary); color: var(--highlight);
+      border: none; cursor: pointer; font-size: 1.125rem;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
       transition: all 0.3s;
     }
-    html.dark .theme-toggle { background: #fbbf24; color: #1e293b; }
+    html.dark .theme-toggle { background: var(--highlight); color: var(--primary); }
     .theme-toggle:hover { transform: scale(1.1); }
 
-    /* ===== Responsive ===== */
-    @media (max-width: 768px) {
-      .nav-tab span { display: none; }
-      .nav-tab { padding: 0.75rem; font-size: 1rem; }
-      .nav-tab i { font-size: 1.25rem; }
-      .stat-card { padding: 1rem; }
-      .stat-card .icon-box { width: 40px; height: 40px; font-size: 1.375rem; }
-      .quick-nav-card { padding: 0.75rem; }
-      .quick-nav-card .q-icon { width: 36px; height: 36px; font-size: 1rem; }
-      .quick-nav-card .q-desc { display: none; }
-      .ov-coop-row { flex-wrap: wrap; gap: 0.25rem; }
-      .ov-coop-row .ocr-stat { font-size: 0.7rem; }
-    }
-
-    /* ===== Coop Management ===== */
-    .coop-mgmt-card {
-      background: #ffffff;
-      border-radius: 0.75rem;
+    /* ===== Coop Management Card ===== */
+    .coop-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
       padding: 1rem;
-      border: 1px solid #e2e8f0;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--success);
+      transition: transform 0.2s, box-shadow 0.2s;
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
-    html.dark .coop-mgmt-card {
-      background: #1e293b;
-      border-color: #334155;
+    .coop-card:hover { box-shadow: var(--shadow-card); transform: translateY(-2px); }
+    .coop-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+    .coop-card-header h4 { font-size: 0.9375rem; font-weight: 700; color: var(--text); }
+    .coop-card-stats { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
+    .cc-stat { flex: 1; }
+    .cc-label { display: block; font-size: 0.625rem; font-weight: 600; color: var(--text-label); text-transform: uppercase; letter-spacing: 0.06em; }
+    .cc-value { display: block; font-size: 1.125rem; font-weight: 700; color: var(--text); margin-top: 0.125rem; }
+
+    /* ===== Status Badge/Pill ===== */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      padding: 0.125rem 0.5rem; border-radius: var(--radius-pill);
+      font-size: 0.625rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .coop-mgmt-card:hover {
-      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-      transform: translateY(-2px);
+    .status-pill.active { background: rgba(82,183,136,0.12); color: var(--success); }
+    .status-pill.warning { background: rgba(255,159,28,0.12); color: var(--warning); }
+    .status-pill.danger { background: rgba(230,57,70,0.12); color: var(--danger); }
+    .status-pill.info { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    .status-pill.neutral { background: rgba(100,116,139,0.12); color: #64748b; }
+    .status-pill::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
     }
-    html.dark .coop-mgmt-card:hover {
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    .mgmt-mini-bar {
-      height: 4px; border-radius: 2px; overflow: hidden;
-      background: #e2e8f0;
-    }
-    html.dark .mgmt-mini-bar { background: #334155; }
-    .mgmt-mini-bar-fill {
-      height: 100%; border-radius: 2px;
-      transition: width 1s ease;
-    }
+    .status-pill.active::before { background: var(--success); }
+    .status-pill.warning::before { background: var(--warning); }
+    .status-pill.danger::before { background: var(--danger); }
+    .status-pill.info::before { background: #3b82f6; }
+    .status-pill.neutral::before { background: #64748b; }
+
+    /* ===== Mini Progress Bar ===== */
+    .mgmt-mini-bar { height: 4px; border-radius: 2px; overflow: hidden; background: var(--border); }
+    .mgmt-mini-bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
 
     /* ===== Detail Panel ===== */
     .detail-panel {
       position: fixed; top: 0; right: 0; z-index: 50;
       height: 100%; width: 100%; max-width: 42rem;
-      background: #ffffff; box-shadow: -8px 0 30px rgba(0,0,0,0.1);
+      background: var(--bg-card);
+      box-shadow: -8px 0 30px rgba(0,0,0,0.1);
       overflow-y: auto;
       animation: slideInRight 0.3s ease;
     }
-    html.dark .detail-panel { background: #1e293b; }
-    @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
-
-    /* ===== Coop Detail Tabs ===== */
-    .coop-tab-btn {
-      position: relative;
-      padding: 0.625rem 1rem;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: #78716c;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -1px;
-      white-space: nowrap;
+    .detail-header {
+      background: linear-gradient(135deg, #1B4332, #2D6A4F);
+      padding: 1.25rem;
+      color: #fff;
     }
-    .coop-tab-btn:hover { color: #44403c; }
-    .coop-tab-btn.active { color: #2d6a4f; border-bottom-color: #2d6a4f; }
-    html.dark .coop-tab-btn { color: #a8a29e; }
-    html.dark .coop-tab-btn:hover { color: #e7e5e4; }
-    html.dark .coop-tab-btn.active { color: #6ee7b7; border-bottom-color: #6ee7b7; }
+    .detail-back {
+      background: none; border: none; color: rgba(255,255,255,0.8);
+      font-size: 0.8125rem; cursor: pointer; display: flex; align-items: center; gap: 0.375rem;
+      padding: 0; margin-bottom: 0.5rem;
+    }
+    .detail-back:hover { color: #fff; }
+    .detail-title { font-size: 1.375rem; font-weight: 700; }
+    .detail-subtitle { font-size: 0.8125rem; color: rgba(255,255,255,0.7); margin-top: 0.125rem; }
+
+    /* ===== Detail Tab Bar ===== */
+    .coop-tab-bar {
+      display: flex; border-bottom: 1px solid var(--border);
+      padding: 0 1rem; overflow-x: auto;
+    }
+    .coop-tab-btn {
+      padding: 0.625rem 1rem; font-size: 0.8125rem; font-weight: 500;
+      color: var(--text-muted); background: transparent; border: none;
+      cursor: pointer; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .coop-tab-btn:hover { color: var(--text); }
+    .coop-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
     .coop-tab-pane { display: none; }
     .coop-tab-pane.active { display: block; }
 
-    /* ===== Coop Detail: Device Cards ===== */
+    /* ===== Detail Metric Row ===== */
+    .detail-metrics { display: flex; gap: 0.75rem; margin-bottom: 1.25rem; }
+    .dm-card {
+      flex: 1; text-align: center;
+      background: var(--bg); border-radius: 14px; padding: 0.875rem 0.5rem;
+    }
+    .dm-icon { font-size: 1.25rem; margin-bottom: 0.25rem; }
+    .dm-value { font-size: 1.375rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+    .dm-label { font-size: 0.625rem; font-weight: 600; color: var(--text-label); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 0.125rem; }
+
+    /* ===== Device Card in Detail ===== */
     .device-card-detail {
-      background: #ffffff;
-      border-left: 4px solid #22c55e;
-      border-radius: 0.5rem;
+      background: var(--bg-card);
+      border-left: 4px solid var(--success);
+      border-radius: 12px;
       padding: 0.75rem 1rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      display: flex; flex-direction: column; gap: 0.5rem;
+      transition: all 0.2s;
     }
-    html.dark .device-card-detail { background: #1e293b; }
-    .device-card-detail.status-active { border-left-color: #22c55e; }
-    .device-card-detail.status-connecting { border-left-color: #f59e0b; }
-    .device-card-detail.status-error { border-left-color: #ef4444; }
-    .device-card-detail.status-waiting { border-left-color: #9ca3af; }
-    .status-dot-detail {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-    }
-    .status-dot-detail.active { background: #22c55e; }
-    .status-dot-detail.connecting { background: #f59e0b; }
-    .status-dot-detail.error { background: #ef4444; }
-    .status-dot-detail.waiting { background: #9ca3af; }
+    .device-card-detail.status-active { border-left-color: var(--success); }
+    .device-card-detail.status-connecting { border-left-color: var(--warning); }
+    .device-card-detail.status-error { border-left-color: var(--danger); }
+    .device-card-detail.status-waiting { border-left-color: var(--text-label); }
+    .status-dot-detail { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot-detail.active { background: var(--success); }
+    .status-dot-detail.connecting { background: var(--warning); }
+    .status-dot-detail.error { background: var(--danger); }
+    .status-dot-detail.waiting { background: var(--text-label); }
     .device-toggle-btn {
-      padding: 6px 16px; border-radius: 6px; font-size: 12px; font-weight: 600;
-      border: none; cursor: pointer; min-width: 60px; transition: all 0.2s ease;
+      padding: 6px 16px; border-radius: 8px; font-size: 11px; font-weight: 600;
+      border: none; cursor: pointer; min-width: 56px; transition: all 0.2s;
     }
-    .device-toggle-btn.on { background: #22c55e; color: white; }
-    .device-toggle-btn.off { background: #9ca3af; color: white; }
-    .device-toggle-btn:hover { opacity: 0.85; transform: scale(1.02); }
+    .device-toggle-btn.on { background: var(--success); color: #fff; }
+    .device-toggle-btn.off { background: var(--text-label); color: #fff; }
+    .device-toggle-btn:hover { opacity: 0.85; }
     .device-delete-btn {
-      padding: 6px 12px; border-radius: 6px; font-size: 12px;
-      border: 1px solid #fca5a5; color: #dc2626; background: transparent;
-      cursor: pointer; transition: all 0.2s ease;
+      padding: 6px 12px; border-radius: 8px; font-size: 11px;
+      border: 1px solid rgba(230,57,70,0.3); color: var(--danger); background: transparent;
+      cursor: pointer; transition: all 0.2s;
     }
-    .device-delete-btn:hover { background: #fef2f2; }
-    html.dark .device-delete-btn { border-color: #7f1d1d; color: #fca5a5; }
-    html.dark .device-delete-btn:hover { background: #450a0a; }
+    .device-delete-btn:hover { background: rgba(230,57,70,0.08); }
 
     /* ===== Donut Chart ===== */
     .donut-container-detail {
       display: flex; align-items: center; gap: 1rem;
-      padding: 0.75rem; border-radius: 0.5rem;
-      background: #f8fafc; margin-bottom: 0.75rem;
+      padding: 0.75rem; border-radius: 12px;
+      background: var(--bg); margin-bottom: 0.75rem;
     }
-    html.dark .donut-container-detail { background: #1a2332; }
     .donut-chart-detail { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
     .donut-chart-detail svg { width: 100%; height: 100%; }
     .donut-center-detail {
@@ -410,23 +499,17 @@
       transform: translate(-50%, -50%);
       text-align: center;
     }
-    .donut-center-detail .total { font-size: 1.25rem; font-weight: 700; color: #1e293b; display: block; line-height: 1; }
-    html.dark .donut-center-detail .total { color: #f1f5f9; }
-    .donut-center-detail .label { font-size: 0.65rem; color: #94a3b8; }
-    .donut-legend-detail {
-      display: flex; flex-direction: column; gap: 0.25rem; flex: 1;
-    }
+    .donut-center-detail .total { font-size: 1.25rem; font-weight: 700; color: var(--text); display: block; line-height: 1; }
+    .donut-center-detail .label { font-size: 0.625rem; color: var(--text-label); }
+    .donut-legend-detail { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
     .donut-legend-item-detail {
       display: flex; align-items: center; gap: 0.5rem;
-      font-size: 0.75rem; color: #64748b; cursor: pointer;
+      font-size: 0.75rem; color: var(--text-muted); cursor: pointer;
     }
-    html.dark .donut-legend-item-detail { color: #94a3b8; }
-    .donut-legend-dot-detail {
-      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
-    }
+    .donut-legend-dot-detail { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .donut-tooltip-detail {
       position: fixed; z-index: 9999;
-      background: #1e293b; color: white;
+      background: #1e293b; color: #fff;
       padding: 6px 12px; border-radius: 6px;
       font-size: 0.75rem; pointer-events: none;
       display: none; white-space: nowrap;
@@ -434,280 +517,142 @@
     .donut-tooltip-detail.show { display: block; }
     .donut-segment-detail { cursor: pointer; transition: stroke-width 0.2s, filter 0.2s; }
 
-    /* ===== (Camera Cards removed) ===== */
-    }
-
-    /* ===== Sick Chicken Detection ===== */
-    /* ===== (sick-chicken-box removed) ===== */
-    ._disabled_sick_chicken_box {
-      margin-top: 0.75rem;
-      border-radius: 0.75rem; overflow: hidden;
-      background: #1e293b; border: 1px solid #334155;
-    }
-    .sick-chicken-box.status-warning { border-color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.15); }
-    .sick-chicken-header {
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.5rem 0.75rem;
-      background: rgba(0,0,0,0.3);
-      font-size: 0.8125rem; font-weight: 600; color: #e2e8f0;
-    }
-    .sick-chicken-header i { color: #f43f5e; font-size: 1rem; }
-    .sick-chicken-badge {
-      margin-left: auto;
-      font-size: 0.625rem; font-weight: 700;
-      padding: 0.125rem 0.5rem; border-radius: 999px;
-      background: rgba(100,116,139,0.3); color: #94a3b8;
-    }
-    .sick-chicken-body {
-      padding: 1rem 0.75rem;
-    }
-    .sick-chicken-empty {
-      display: flex; align-items: center; justify-content: center;
-      gap: 0.5rem;
-      color: rgba(255,255,255,0.45);
-      font-size: 0.8125rem;
-    }
-    .sick-chicken-empty i { font-size: 1.5rem; color: #22c55e; opacity: 0.7; }
-    .sick-chicken-count {
-      display: flex; align-items: center; gap: 0.75rem;
-    }
-    .sick-chicken-count .count {
-      display: flex; align-items: center; gap: 0.375rem;
-      font-size: 1.25rem; font-weight: 700; color: #ef4444;
-    }
-    .sick-chicken-count .count i { font-size: 1.25rem; }
-    .sick-chicken-count .desc { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
-    .sick-chicken-count .alert-badge {
-      font-size: 0.625rem; font-weight: 700;
-      padding: 0.125rem 0.5rem; border-radius: 999px;
-      background: rgba(239,68,68,0.2); color: #ef4444;
-    }
-
-    /* ===== AI Gallery ===== */
-    /* ===== (ai-gallery removed) ===== */
-    ._disabled_ai_gallery {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 0.375rem;
-    }
-    .ai-gallery-item {
-      position: relative;
-      aspect-ratio: 4/3;
-      border-radius: 0.375rem; overflow: hidden;
-      background: #0f172a;
-      cursor: pointer;
-    }
-    .ai-gallery-item img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transition: opacity 0.2s;
-    }
-    .ai-gallery-item img:hover { opacity: 0.85; }
-    .ai-gallery-badge {
-      position: absolute; top: 0.25rem; left: 0.25rem;
-      font-size: 0.5625rem; font-weight: 700;
-      padding: 0.0625rem 0.375rem; border-radius: 999px;
-      white-space: nowrap;
-    }
-    .ai-gallery-badge.disease { background: rgba(239,68,68,0.85); color: #fff; }
-    .ai-gallery-badge.healthy { background: rgba(34,197,94,0.85); color: #fff; }
-    .ai-gallery-diseases {
-      position: absolute; bottom: 0.25rem; left: 0.25rem; right: 0.25rem;
-      display: flex; flex-wrap: wrap; gap: 0.125rem;
-    }
-    .ai-gallery-diseases .disease-tag {
-      font-size: 0.5rem; padding: 0.0625rem 0.25rem;
-      background: rgba(239,68,68,0.75); color: #fff;
-      border-radius: 0.125rem;
-    }
-    /* ===== (ai-lightbox removed) ===== */
-    ._disabled_ai_lightbox {
+    /* ===== Modal ===== */
+    .modal-overlay {
       position: fixed; inset: 0; z-index: 100;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.4);
       animation: fadeIn 0.2s ease;
     }
-    .ai-lightbox.hidden { display: none; }
-    /* ===== (ai-lightbox-close removed) ===== */
-    ._disabled_ai_lightbox_close {
-      position: absolute; top: 1rem; right: 1.5rem;
-      font-size: 2.5rem; color: #fff; cursor: pointer;
-      opacity: 0.7; transition: opacity 0.2s; line-height: 1;
-    }
-    .ai-lightbox-close:hover { opacity: 1; }
-    /* ===== (ai-lightbox-img removed) ===== */
-    ._disabled_ai_lightbox_img {
-      max-width: 90vw; max-height: 90vh;
-      border-radius: 0.5rem;
-      box-shadow: 0 0 40px rgba(0,0,0,0.5);
-    }
-
-    /* ===== Modal ===== */
-    .mgmt-modal-overlay {
-      position: fixed; inset: 0; z-index: 50;
-      display: flex; align-items: center; justify-content: center;
-      animation: fadeIn 0.2s ease;
-    }
-    .mgmt-modal-box {
-      position: relative; z-index: 10;
-      background: #ffffff; border-radius: 1rem;
+    .modal-box {
+      background: var(--bg-card); border-radius: 20px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.15);
       width: 100%; max-width: 28rem; margin: 1rem;
       padding: 1.5rem;
-      animation: fadeIn 0.2s ease;
+      animation: slideUp 0.25s ease;
     }
-    html.dark .mgmt-modal-box { background: #1e293b; }
+    .modal-title { font-size: 1.125rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .modal-close {
+      margin-left: auto; background: none; border: none;
+      color: var(--text-muted); cursor: pointer; font-size: 1.25rem; padding: 0.25rem;
+    }
+    .modal-close:hover { color: var(--text); }
 
-    /* ===== Skeleton Loading ===== */
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    /* ===== Form Elements ===== */
+    input, select, textarea {
+      font-family: var(--font);
+      font-size: 0.875rem;
+    }
+    .form-input {
+      width: 100%; padding: 0.625rem 0.875rem;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      background: var(--bg-card); color: var(--text);
+      outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(82,183,136,0.12); }
+    .form-label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-label); margin-bottom: 0.375rem; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius-btn);
+      font-size: 0.8125rem; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { opacity: 0.9; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-sm { padding: 0.375rem 0.875rem; font-size: 0.75rem; }
+
+    /* ===== Al Button (mint) ===== */
+    .btn-ai {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      padding: 0.375rem 0.875rem;
+      border-radius: var(--radius-btn);
+      font-size: 0.75rem; font-weight: 600;
+      background: rgba(82,183,136,0.12); color: var(--accent);
+      border: none; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-ai:hover { background: var(--accent); color: #fff; }
+
+    /* ===== Toggle Group ===== */
+    .toggle-group {
+      display: inline-flex;
+      background: var(--border); border-radius: var(--radius-pill); padding: 2px;
+    }
+    .toggle-btn {
+      padding: 0.375rem 1rem; border-radius: var(--radius-pill);
+      font-size: 0.6875rem; font-weight: 600;
+      border: none; cursor: pointer;
+      background: transparent; color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .toggle-btn.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+    .toggle-btn:hover:not(.active) { color: var(--text); }
+
+    /* ===== Skeleton ===== */
     .skeleton {
-      background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+      background: linear-gradient(90deg, var(--border) 25%, var(--bg) 50%, var(--border) 75%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
-      border-radius: 0.375rem;
-    }
-    html.dark .skeleton {
-      background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
-      background-size: 200% 100%;
+      border-radius: 0.5rem;
     }
     .skeleton-text { height: 1.25rem; width: 60%; margin-top: 0.375rem; }
-    .skeleton-stat { height: 2.25rem; width: 40%; margin-top: 0.25rem; }
+    .skeleton-stat { height: 2.5rem; width: 40%; margin-top: 0.25rem; }
     .skeleton-trend { height: 0.875rem; width: 35%; margin-top: 0.375rem; }
 
     /* ===== Error Banner ===== */
     .error-banner {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 0.5rem;
+      background: rgba(230,57,70,0.06);
+      border: 1px solid rgba(230,57,70,0.2);
+      border-radius: 12px;
       padding: 0.75rem 1rem;
       margin-bottom: 1rem;
       display: none;
       align-items: center;
       gap: 0.5rem;
-      font-size: 0.875rem;
-      color: #dc2626;
-    }
-    html.dark .error-banner {
-      background: rgba(220,38,38,0.1);
-      border-color: rgba(220,38,38,0.3);
-      color: #fca5a5;
+      font-size: 0.8125rem;
+      color: var(--danger);
     }
     .error-banner.show { display: flex; }
     .error-banner button {
       margin-left: auto;
       padding: 0.25rem 0.75rem;
-      border-radius: 0.375rem;
+      border-radius: var(--radius-btn);
       font-size: 0.75rem;
       font-weight: 500;
-      background: #dc2626;
+      background: var(--danger);
       color: white;
       border: none;
       cursor: pointer;
     }
-    html.dark .error-banner button { background: #ef4444; }
-    .error-banner button:hover { opacity: 0.9; }
 
     /* ===== Inline Edit ===== */
     .inline-edit-input {
       width: 100px;
       padding: 0.25rem 0.5rem;
-      border: 1px solid #2d6a4f;
-      border-radius: 0.375rem;
+      border: 1.5px solid var(--accent);
+      border-radius: 8px;
       font-size: inherit;
       font-weight: inherit;
       font-family: inherit;
       outline: none;
-      background: #ffffff;
-      color: #1c1917;
-    }
-    html.dark .inline-edit-input {
-      background: #1e293b;
-      color: #f1f5f9;
-      border-color: #52b788;
+      background: var(--bg-card);
+      color: var(--text);
     }
     .inline-edit-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.25rem 0;
-      font-size: 0.75rem;
-      border-bottom: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.25rem 0; font-size: 0.75rem;
+      border-bottom: 1px solid var(--border);
     }
-    html.dark .inline-edit-item { border-color: #334155; }
     .inline-edit-item:last-child { border-bottom: none; }
 
-    /* ===== Warehouse ===== */
-    .wh-toggle-group {
-      display: inline-flex;
-      background: #e2e8f0;
-      border-radius: 9999px;
-      padding: 2px;
-    }
-    html.dark .wh-toggle-group { background: #334155; }
-    .wh-toggle-btn {
-      padding: 0.375rem 1rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-    .wh-toggle-btn.active {
-      background: #ffffff;
-      color: #1c1917;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    }
-    html.dark .wh-toggle-btn.active {
-      background: #1e293b;
-      color: #f1f5f9;
-    }
-    .wh-toggle-btn:hover:not(.active) { color: #334155; }
-    html.dark .wh-toggle-btn:hover:not(.active) { color: #cbd5e1; }
-
-    .wh-period-group {
-      display: inline-flex;
-      background: #e2e8f0;
-      border-radius: 9999px;
-      padding: 2px;
-    }
-    html.dark .wh-period-group { background: #334155; }
-    .wh-period-btn {
-      padding: 0.375rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #64748b;
-      transition: all 0.2s;
-    }
-    .wh-period-btn.active {
-      background: #ffffff;
-      color: #1c1917;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-    }
-    html.dark .wh-period-btn.active {
-      background: #1e293b;
-      color: #f1f5f9;
-    }
-    .wh-period-btn:hover:not(.active) { color: #334155; }
-    html.dark .wh-period-btn:hover:not(.active) { color: #cbd5e1; }
-
-    @keyframes wh-shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-2px); }
-      75% { transform: translateX(2px); }
-    }
-    .wh-shake { animation: wh-shake 0.3s ease-in-out; }
-
-    /* ===== Horizontal Stacked Bar (Warehouse Distribution) ===== */
-    #whStackedBarContainer {
-      padding: 0.75rem 0;
-    }
+    /* ===== Warehouse Stacked Bar ===== */
+    #whStackedBarContainer { padding: 0.75rem 0; }
     .wh-stacked-bar {
       display: flex; height: 32px; border-radius: 8px; overflow: hidden;
       background: rgba(0,0,0,0.06);
@@ -719,52 +664,41 @@
     .wh-bar-empty {
       width: 100%; height: 100%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.75rem; color: #94a3b8;
+      font-size: 0.75rem; color: var(--text-muted);
     }
-    .wh-bar-legend {
-      margin-top: 1rem;
-      display: flex; flex-direction: column; gap: 0.25rem;
-    }
+    .wh-bar-legend { margin-top: 1rem; display: flex; flex-direction: column; gap: 0.25rem; }
     .wh-bar-legend-item {
       display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.375rem 0.5rem; border-radius: 6px;
+      padding: 0.375rem 0.5rem; border-radius: 8px;
       font-size: 0.8125rem; cursor: default;
     }
     .wh-bar-legend-item:hover { background: rgba(0,0,0,0.03); }
     html.dark .wh-bar-legend-item:hover { background: rgba(255,255,255,0.05); }
     .wh-bar-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .wh-bar-name { flex: 1; font-weight: 500; color: #1e293b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    html.dark .wh-bar-name { color: #e2e8f0; }
-    .wh-bar-pct { font-weight: 600; color: #64748b; min-width: 3rem; text-align: right; }
-    .wh-bar-kg { font-weight: 500; color: #94a3b8; min-width: 4.5rem; text-align: right; }
-    html.dark .wh-bar-pct { color: #94a3b8; }
-    html.dark .wh-bar-kg { color: #64748b; }
+    .wh-bar-name { flex: 1; font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wh-bar-pct { font-weight: 600; color: var(--text-muted); min-width: 3rem; text-align: right; }
+    .wh-bar-kg { font-weight: 500; color: var(--text-label); min-width: 4.5rem; text-align: right; }
 
-    /* ===== Warehouse Comparison Chart ===== */
+    /* ===== Warehouse Comparison ===== */
     .wh-comp-multiselect { position: relative; width: 100%; }
     .wh-comp-ms-btn {
       display: flex; align-items: center; gap: 0.5rem;
       width: 100%; padding: 0.4rem 0.75rem;
-      border-radius: 9999px; font-size: 0.8rem; font-weight: 500;
-      border: 1.5px solid #e2e8f0; cursor: pointer;
-      background: transparent; color: #64748b;
+      border-radius: var(--radius-pill); font-size: 0.8rem; font-weight: 500;
+      border: 1.5px solid var(--border); cursor: pointer;
+      background: transparent; color: var(--text-muted);
       transition: all 0.15s;
     }
-    .wh-comp-ms-btn:hover { border-color: #cbd5e1; }
-    html.dark .wh-comp-ms-btn { border-color: #334155; color: #94a3b8; }
-    html.dark .wh-comp-ms-btn:hover { border-color: #475569; }
+    .wh-comp-ms-btn:hover { border-color: var(--accent); }
     .wh-comp-ms-arrow { margin-left: auto; transition: transform 0.2s; }
     .wh-comp-ms-btn.open .wh-comp-ms-arrow { transform: rotate(180deg); }
     .wh-comp-ms-dropdown {
       position: absolute; top: 100%; left: 0; right: 0;
       z-index: 50; margin-top: 4px;
       min-width: 200px; max-height: 220px; overflow-y: auto;
-      background: #ffffff; border: 1px solid #e2e8f0;
-      border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: var(--shadow-card);
       padding: 0.375rem;
-    }
-    html.dark .wh-comp-ms-dropdown {
-      background: #1e293b; border-color: #334155;
     }
     .wh-comp-ms-item {
       display: flex; align-items: center; gap: 0.5rem;
@@ -777,180 +711,98 @@
     .wh-comp-ms-item input[type="checkbox"] { display: none; }
     .wh-comp-ms-check {
       width: 16px; height: 16px; border-radius: 4px;
-      border: 1.5px solid #cbd5e1; flex-shrink: 0;
+      border: 1.5px solid var(--border); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.15s;
     }
-    .wh-comp-ms-item.checked .wh-comp-ms-check {
-      background: var(--ms-color); border-color: var(--ms-color);
-    }
-    .wh-comp-ms-item.checked .wh-comp-ms-check::after {
-      content: '\2713'; color: #fff; font-size: 11px; font-weight: 700;
-    }
-    .wh-comp-ms-color {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
+    .wh-comp-ms-item.checked .wh-comp-ms-check { background: var(--ms-color); border-color: var(--ms-color); }
+    .wh-comp-ms-item.checked .wh-comp-ms-check::after { content: '\2713'; color: #fff; font-size: 11px; font-weight: 700; }
+    .wh-comp-ms-color { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .wh-comp-ms-item .wh-comp-ms-color { opacity: 0.4; }
     .wh-comp-ms-item.checked .wh-comp-ms-color { opacity: 1; }
-    .wh-comp-ms-name { flex: 1; color: #1e293b; }
-    html.dark .wh-comp-ms-name { color: #e2e8f0; }
-    .wh-comp-ms-select-all {
-      border-bottom: 1px solid #e2e8f0;
-      margin-bottom: 0.25rem; padding-bottom: 0.375rem;
-    }
-    html.dark .wh-comp-ms-select-all { border-color: #334155; }
+    .wh-comp-ms-name { flex: 1; color: var(--text); }
+    .wh-comp-ms-select-all { border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; padding-bottom: 0.375rem; }
 
-    /* ===== Devices ===== */
+    /* ===== Device Tab Card ===== */
     .dev-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
       padding: 0.75rem;
-      border-radius: 0.75rem;
-      border: 1px solid #f1f5f9;
-      background: #fafbfc;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
       transition: all 0.15s;
     }
-    html.dark .dev-card { border-color: #334155; background: #1e293b; }
-    .dev-card:hover { border-color: #d1d5db; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
-    html.dark .dev-card:hover { border-color: #475569; }
-    .dev-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.5rem;
-    }
+    .dev-card:hover { border-color: var(--accent); box-shadow: var(--shadow-card); }
+    .dev-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
     .dev-card-name {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8125rem;
-      font-weight: 600;
-      color: #1c1917;
-      min-width: 0;
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.8125rem; font-weight: 600; color: var(--text); min-width: 0;
     }
-    html.dark .dev-card-name { color: #f1f5f9; }
-    .dev-card-name i { width: 1rem; text-align: center; color: #52b788; flex-shrink: 0; }
+    .dev-card-name i { width: 1rem; text-align: center; color: var(--accent); flex-shrink: 0; }
     .dev-card-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .dev-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.7rem;
-      color: #94a3b8;
-    }
+    .dev-card-meta { display: flex; align-items: center; gap: 0.75rem; font-size: 0.7rem; color: var(--text-muted); }
     .dev-card-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-      margin-top: 0.25rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid #f1f5f9;
+      display: flex; align-items: center; gap: 0.375rem;
+      margin-top: 0.25rem; padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
     }
-    html.dark .dev-card-actions { border-color: #334155; }
     .dev-toggle-btn {
-      padding: 0.2rem 0.6rem;
-      border-radius: 9999px;
-      font-size: 0.65rem;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: all 0.15s;
+      padding: 0.2rem 0.6rem; border-radius: var(--radius-pill);
+      font-size: 0.65rem; font-weight: 600;
+      border: none; cursor: pointer; transition: all 0.15s;
     }
-    .dev-toggle-btn.on { background: #22c55e; color: white; }
-    .dev-toggle-btn.on:hover { background: #16a34a; }
-    .dev-toggle-btn.off { background: #e2e8f0; color: #64748b; }
-    html.dark .dev-toggle-btn.off { background: #475569; color: #94a3b8; }
+    .dev-toggle-btn.on { background: var(--success); color: #fff; }
+    .dev-toggle-btn.on:hover { background: var(--primary-light); }
+    .dev-toggle-btn.off { background: var(--border); color: var(--text-muted); }
     .dev-toggle-btn.off:hover { background: #cbd5e1; }
-    html.dark .dev-toggle-btn.off:hover { background: #64748b; }
+    html.dark .dev-toggle-btn.off:hover { background: #475569; }
     .dev-toggle-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .dev-del-btn {
-      padding: 0.2rem 0.5rem;
-      border-radius: 0.375rem;
-      font-size: 0.65rem;
-      border: none;
-      cursor: pointer;
-      background: transparent;
-      color: #94a3b8;
-      transition: all 0.15s;
+      padding: 0.2rem 0.5rem; border-radius: 0.375rem;
+      font-size: 0.65rem; border: none; cursor: pointer;
+      background: transparent; color: var(--text-muted); transition: all 0.15s;
     }
-    .dev-del-btn:hover { background: #fee2e2; color: #dc2626; }
-    html.dark .dev-del-btn:hover { background: rgba(239,68,68,0.15); }
+    .dev-del-btn:hover { background: rgba(230,57,70,0.1); color: var(--danger); }
 
-    /* ===== Coop Camera Tab ===== */
-    .coop-camera-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
+    /* ===== Camera Tab ===== */
+    .coop-camera-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .camera-card {
-      background: #fff;
-      border-radius: 0.75rem;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-      cursor: pointer;
+      background: var(--bg-card); border-radius: 14px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    html.dark .camera-card { background: #1e293b; }
-    .camera-card:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+    .camera-card:hover { transform: scale(1.02); box-shadow: var(--shadow-card); }
     .camera-card video, .camera-card img {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      display: block;
-      background: #000;
+      width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: #000;
     }
     .camera-card-label {
-      padding: 0.5rem 0.75rem;
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: #44403c;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-weight: 500;
+      color: var(--text); display: flex; align-items: center; gap: 0.5rem;
     }
-    html.dark .camera-card-label { color: #e7e5e4; }
-    .camera-card-label i { color: #2d6a4f; }
-    html.dark .camera-card-label i { color: #6ee7b7; }
+    .camera-card-label i { color: var(--accent); }
     .camera-placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      aspect-ratio: 16 / 9;
-      background: #f5f5f4;
-      color: #a8a29e;
-      font-size: 0.8125rem;
-      border-radius: 0.75rem 0.75rem 0 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      aspect-ratio: 16 / 9; background: var(--bg); color: var(--text-muted);
+      font-size: 0.8125rem; border-radius: 14px 14px 0 0;
     }
-    html.dark .camera-placeholder { background: #1e293b; color: #64748b; }
     .camera-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5; }
     .camera-loading {
       display: flex; align-items: center; justify-content: center;
-      aspect-ratio: 16 / 9;
-      background: #f5f5f4;
-      color: #a8a29e;
+      aspect-ratio: 16 / 9; background: var(--bg); color: var(--text-muted);
     }
-    html.dark .camera-loading { background: #1e293b; }
 
     /* ===== Disease Thumbnails ===== */
     .disease-thumb {
-      border-radius: 0.5rem;
-      overflow: hidden;
-      cursor: pointer;
+      border-radius: 12px; overflow: hidden; cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s;
-      border: 2px solid #fecaca;
+      border: 2px solid rgba(230,57,70,0.25);
     }
-    html.dark .disease-thumb { border-color: rgba(239,68,68,0.3); }
-    .disease-thumb:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(239,68,68,0.2); }
-    .disease-thumb img {
-      width: 100%;
-      aspect-ratio: 1;
-      object-fit: cover;
-      display: block;
-    }
+    .disease-thumb:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(230,57,70,0.2); }
+    .disease-thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
 
     /* ===== Camera Zoom Overlay ===== */
     .camera-zoom-overlay {
-      position: fixed; inset: 0; z-index: 100;
+      position: fixed; inset: 0; z-index: 200;
       background: rgba(0,0,0,0.85);
       display: flex; align-items: center; justify-content: center;
       animation: fadeIn 0.2s ease;
@@ -958,56 +810,75 @@
     }
     .camera-zoom-overlay video, .camera-zoom-overlay img {
       max-width: 90vw; max-height: 90vh;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
       box-shadow: 0 0 40px rgba(0,0,0,0.5);
     }
+
+    /* ===== Warehouse Shake ===== */
+    @keyframes wh-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+    .wh-shake { animation: wh-shake 0.3s ease-in-out; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 640px) {
+      .hero-card { padding: 1.25rem 0.75rem; }
+      .hm-value { font-size: 1.5rem; }
+      .detail-metrics { gap: 0.5rem; }
+      .dm-card { padding: 0.625rem 0.375rem; }
+      .dm-value { font-size: 1.125rem; }
+      .coop-card-stats { gap: 0.5rem; }
+      .cc-value { font-size: 1rem; }
+      .stat-card { padding: 1rem; }
+      .stat-card .icon-box { width: 40px; height: 40px; font-size: 1.375rem; }
+      .quick-nav-card { padding: 0.75rem; }
+      .quick-nav-card .q-icon { width: 36px; height: 36px; font-size: 1rem; }
+      .quick-nav-card .q-desc { display: none; }
+      .ov-coop-row { flex-wrap: wrap; gap: 0.25rem; }
+      .ov-coop-row .ocr-stat { font-size: 0.65rem; }
+      .camera-card-label { font-size: 0.75rem; }
+      .disease-thumb { border-width: 1.5px; }
+    }
+    @media (min-width: 769px) { .theme-toggle { bottom: 1.5rem; } }
   </style>
 </head>
 <body>
 
   <!-- ============================================================ -->
-  <!-- TOP NAVIGATION BAR -->
+  <!-- TOPBAR (Gen Z Design) -->
   <!-- ============================================================ -->
-  <nav class="nav-bar">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6">
-      <div class="flex items-center justify-between h-16">
-        <!-- Brand -->
-        <div class="flex items-center gap-2 shrink-0">
-          <div class="w-8 h-8 rounded-lg bg-farm-500 flex items-center justify-center text-white text-sm">
-            <i class="fa-solid fa-seedling"></i>
-          </div>
-          <span class="font-bold text-lg text-farm-600 dark:text-farm-400 hidden sm:block">ChickenFarm</span>
-        </div>
-
-        <!-- Tabs -->
-        <div class="flex items-center gap-1 overflow-x-auto no-scrollbar" id="tabNav">
-          <div class="nav-tab active" data-tab="overview">
-            <i class="fa-solid fa-house"></i><span>Tổng quan</span>
-          </div>
-          <div class="nav-tab" data-tab="coops">
-            <i class="fa-solid fa-warehouse"></i><span>Quản lý chuồng</span>
-          </div>
-          <div class="nav-tab" data-tab="devices">
-            <i class="fa-solid fa-microchip"></i><span>Thiết bị</span>
-          </div>
-          <div class="nav-tab" data-tab="warehouse">
-            <i class="fa-solid fa-boxes-stacked"></i><span>Quản lý kho</span>
-          </div>
-          <div class="nav-tab" data-tab="history">
-            <i class="fa-solid fa-clock-rotate-left"></i><span>Lịch sử đàn</span>
-          </div>
-        </div>
-
-        <!-- Spacer -->
-        <div class="w-8"></div>
-      </div>
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-emoji">🐔</span>
+      <span class="topbar-title">ChickenFarm</span>
     </div>
-  </nav>
+
+    <!-- Desktop Tab Nav -->
+    <nav class="tab-nav-desktop" id="tabNav">
+      <button class="nav-tab active" data-tab="overview">
+        <i class="fa-solid fa-house"></i><span>Tổng quan</span>
+      </button>
+      <button class="nav-tab" data-tab="coops">
+        <i class="fa-solid fa-warehouse"></i><span>Chuồng</span>
+      </button>
+      <button class="nav-tab" data-tab="devices">
+        <i class="fa-solid fa-microchip"></i><span>Thiết bị</span>
+      </button>
+      <button class="nav-tab" data-tab="warehouse">
+        <i class="fa-solid fa-boxes-stacked"></i><span>Kho</span>
+      </button>
+      <button class="nav-tab" data-tab="history">
+        <i class="fa-solid fa-clock-rotate-left"></i><span>Lịch sử</span>
+      </button>
+    </nav>
+
+    <div class="topbar-right">
+      <div class="topbar-avatar">NV</div>
+    </div>
+  </header>
 
   <!-- ============================================================ -->
   <!-- MAIN CONTENT -->
   <!-- ============================================================ -->
-  <main class="pt-20 pb-12 px-4 sm:px-6 max-w-7xl mx-auto">
+  <main class="main-container">
 
     <!-- ============ TAB 1: OVERVIEW ============ -->
     <section id="tab-overview" class="tab-content active">
@@ -1034,6 +905,18 @@
         <i class="fa-solid fa-circle-exclamation"></i>
         <span id="errorMessage">Đã xảy ra lỗi khi tải dữ liệu</span>
         <button onclick="refreshData()"><i class="fa-solid fa-rotate mr-1"></i>Thử lại</button>
+      </div>
+
+      <!-- ===== Hero Welcome Card ===== -->
+      <div class="hero-card">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-stone-600 dark:text-stone-300">Xin chào! 👋</p>
+            <h2 class="text-xl font-bold text-stone-800 dark:text-white mt-1">Trang trại của bạn</h2>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">Mọi thứ đang hoạt động ổn định</p>
+          </div>
+          <div class="text-5xl leading-none">🐔</div>
+        </div>
       </div>
 
       <!-- ===== Stat Cards Row ===== -->
@@ -1232,13 +1115,12 @@
       </div>
 
       <!-- ===== Notifications: split ===== -->
-      <div class="stat-card mb-6">
-        <!-- Section A -->
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
-            <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1.5"></i>Vấn đề hệ thống
-          </h3>
-          <span id="alertCount" class="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">0 cảnh báo</span>
+      <div class="alert-card mb-6">
+        <!-- Section A: Alerts -->
+        <div class="alert-card-header">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>Vấn đề hệ thống</span>
+          <span class="alert-badge-pill" id="alertCount">0 cảnh báo</span>
         </div>
         <div id="alertList">
           <div class="flex flex-col items-center justify-center py-6 text-stone-400 dark:text-stone-500">
@@ -1247,43 +1129,41 @@
           </div>
         </div>
 
-        <hr class="border-stone-100 dark:border-stone-700 my-3">
+        <hr class="border-stone-200 dark:border-stone-700 my-3">
 
-        <!-- Section B -->
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
-            <i class="fa-solid fa-syringe text-farm-500 mr-1.5"></i>Lịch nhắc tiêm phòng
-          </h3>
-        </div>
+        <!-- Section B: Vaccination Schedule -->
+        <h3 class="section-title mb-3 mt-1">
+          <i class="fa-solid fa-syringe text-farm-500"></i>Lịch nhắc tiêm phòng
+        </h3>
         <div class="space-y-2">
-          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-white/70 dark:bg-stone-700/30">
             <div>
               <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng A</p>
               <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Newcastle</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-stone-500 dark:text-stone-400">02/06/2026</p>
-              <span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Sắp đến</span>
+              <span class="status-pill warning">Sắp đến</span>
             </div>
           </div>
-          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-white/70 dark:bg-stone-700/30">
             <div>
               <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng C</p>
               <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Gumboro</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-stone-500 dark:text-stone-400">28/05/2026</p>
-              <span class="text-xs px-1.5 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 font-medium">Hôm nay</span>
+              <span class="status-pill danger">Hôm nay</span>
             </div>
           </div>
-          <div class="flex items-center justify-between p-2.5 rounded-lg bg-stone-50 dark:bg-stone-700/40">
+          <div class="flex items-center justify-between p-2.5 rounded-lg bg-white/70 dark:bg-stone-700/30">
             <div>
               <p class="text-sm font-medium text-stone-700 dark:text-stone-200">Chuồng E</p>
               <p class="text-xs text-stone-500 dark:text-stone-400">Vaccine Cúm gia cầm</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-stone-500 dark:text-stone-400">10/06/2026</p>
-              <span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 font-medium">Sắp đến</span>
+              <span class="status-pill warning">Sắp đến</span>
             </div>
           </div>
         </div>
@@ -1305,10 +1185,10 @@
         <div class="flex items-center gap-3">
           <div class="relative">
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm pointer-events-none"></i>
-            <input type="text" id="coopSearchInput_mgmt" placeholder="Tìm chuồng..." class="pl-9 pr-8 py-2 w-48 sm:w-56 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none transition">
+            <input type="text" id="coopSearchInput_mgmt" placeholder="Tìm chuồng..." class="form-input pl-9 pr-8 py-2 w-48 sm:w-56">
             <button id="coopSearchClear_mgmt" class="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hidden text-lg leading-none">&times;</button>
           </div>
-          <button onclick="showAddCoopModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-farm-500 text-white hover:bg-farm-600 transition shadow-sm">
+          <button onclick="showAddCoopModal()" class="btn btn-primary btn-sm">
             <i class="fa-solid fa-plus"></i> Thêm chuồng
           </button>
         </div>
@@ -1316,21 +1196,21 @@
 
       <!-- Summary Stats -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
-          <p class="text-xs text-stone-400 dark:text-stone-500">Tổng chuồng</p>
-          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtTotalCoops">0</span></p>
+        <div class="stat-card">
+          <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Tổng chuồng</p>
+          <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="mgmtTotalCoops">0</span></p>
         </div>
-        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
-          <p class="text-xs text-stone-400 dark:text-stone-500">Tổng đàn</p>
-          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtTotalChickens">0</span></p>
+        <div class="stat-card">
+          <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Tổng đàn</p>
+          <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="mgmtTotalChickens">0</span></p>
         </div>
-        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
-          <p class="text-xs text-stone-400 dark:text-stone-500">Nhiệt độ TB</p>
-          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtAvgTemp">--</span><span class="text-sm font-normal text-stone-400">°C</span></p>
+        <div class="stat-card">
+          <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Nhiệt độ TB</p>
+          <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="mgmtAvgTemp">--</span><span class="text-base font-medium text-stone-400">°C</span></p>
         </div>
-        <div class="rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 p-3">
-          <p class="text-xs text-stone-400 dark:text-stone-500">Độ ẩm TB</p>
-          <p class="text-xl font-bold text-stone-800 dark:text-white mt-0.5"><span id="mgmtAvgHumid">--</span><span class="text-sm font-normal text-stone-400">%</span></p>
+        <div class="stat-card">
+          <p class="text-xs font-medium text-stone-400 dark:text-stone-500 uppercase tracking-wider">Độ ẩm TB</p>
+          <p class="text-2xl font-bold text-stone-800 dark:text-white mt-1"><span id="mgmtAvgHumid">--</span><span class="text-base font-medium text-stone-400">%</span></p>
         </div>
       </div>
 
@@ -1345,29 +1225,22 @@
       <!-- Detail Slide-in Panel -->
       <div id="coopDetailOverlay" class="hidden fixed inset-0 z-40 bg-black/30" onclick="closeCoopDetail()"></div>
       <div id="coopDetailPanel" class="hidden detail-panel">
-        <!-- Fixed Header -->
-        <div class="sticky top-0 bg-white dark:bg-stone-800 z-10 border-b border-stone-200 dark:border-stone-700">
-          <div class="flex items-center justify-between px-6 pt-4 pb-2">
-            <button onclick="closeCoopDetail()" class="flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200 transition">
-              <i class="fa-solid fa-arrow-left"></i> Quay lại
-            </button>
-            <button onclick="closeCoopDetail()" class="p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-400 transition">
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+        <!-- Gradient Header -->
+        <div class="detail-header">
+          <button onclick="closeCoopDetail()" class="detail-back">
+            <i class="fa-solid fa-arrow-left"></i> Quay lại
+          </button>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="detail-title" id="detailCoopName"></h2>
+            <span id="detailCoopBadge"></span>
           </div>
-          <div class="px-6 pb-3">
-            <div class="flex items-center gap-2 flex-wrap">
-              <h2 class="text-lg font-bold text-stone-800 dark:text-white" id="detailCoopName"></h2>
-              <span id="detailCoopBadge"></span>
-            </div>
-            <div class="flex items-center gap-4 mt-1 text-sm text-stone-500" id="detailCoopSummary"></div>
-          </div>
+          <p class="detail-subtitle" id="detailCoopSummary"></p>
         </div>
 
         <!-- Tab Bar -->
-        <div class="flex border-b border-stone-200 dark:border-stone-700 px-6">
+        <nav class="coop-tab-bar">
           <button class="coop-tab-btn active" data-coop-tab="overview" onclick="switchCoopTab('overview')">
-            <i class="fa-solid fa-chart-simple mr-1.5"></i>Tổng quan chuồng
+            <i class="fa-solid fa-chart-simple mr-1.5"></i>Tổng quan
           </button>
           <button class="coop-tab-btn" data-coop-tab="devices" onclick="switchCoopTab('devices')">
             <i class="fa-solid fa-microchip mr-1.5"></i>Thiết bị
@@ -1375,7 +1248,7 @@
           <button class="coop-tab-btn" data-coop-tab="camera" onclick="switchCoopTab('camera')">
             <i class="fa-solid fa-camera mr-1.5"></i>Camera
           </button>
-        </div>
+        </nav>
 
         <!-- Tab Content -->
         <div class="p-6">
@@ -1434,48 +1307,46 @@
       </div>
 
       <!-- Add Coop Modal -->
-      <div id="addCoopModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+      <div id="addCoopModal" class="modal-overlay hidden">
         <div class="fixed inset-0 bg-black/40" onclick="hideAddCoopModal()"></div>
-        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
+        <div class="modal-box">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-bold text-stone-800 dark:text-white">
-              <i class="fa-solid fa-plus-circle text-farm-500 mr-2"></i>Thêm chuồng mới
+            <h3 class="modal-title mb-0">
+              <i class="fa-solid fa-plus-circle text-farm-500"></i>Thêm chuồng mới
             </h3>
-            <button onclick="hideAddCoopModal()" class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition">
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+            <button onclick="hideAddCoopModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <form id="addCoopForm" onsubmit="saveNewCoop(event)" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Tên chuồng</label>
-              <input type="text" id="newCoopName" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="VD: Chuồng E">
+              <label class="form-label">Tên chuồng</label>
+              <input type="text" id="newCoopName" required class="form-input" placeholder="VD: Chuồng E">
             </div>
             <div>
-              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Số lượng gà</label>
-              <input type="number" id="newCoopChickens" min="0" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="0">
+              <label class="form-label">Số lượng gà</label>
+              <input type="number" id="newCoopChickens" min="0" required class="form-input" placeholder="0">
             </div>
             <div>
-              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Sức chứa</label>
-              <input type="number" id="newCoopCapacity" min="0" required class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="500">
+              <label class="form-label">Sức chứa</label>
+              <input type="number" id="newCoopCapacity" min="0" required class="form-input" placeholder="500">
             </div>
             <div>
-              <label class="block text-sm font-medium text-stone-700 dark:text-stone-300 mb-1">Khu vực</label>
-              <input type="text" id="newCoopLocation" class="w-full px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-sm focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none" placeholder="VD: Khu C">
+              <label class="form-label">Khu vực</label>
+              <input type="text" id="newCoopLocation" class="form-input" placeholder="VD: Khu C">
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
       <!-- Delete Device Modal -->
-      <div id="deleteDeviceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+      <div id="deleteDeviceModal" class="modal-overlay hidden">
         <div class="fixed inset-0 bg-black/40" onclick="hideDeleteDeviceModal()"></div>
-        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-6 z-10">
+        <div class="modal-box">
           <div class="flex items-center gap-3 mb-4">
             <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
               <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <div>
-              <h3 class="text-base font-bold text-stone-800 dark:text-white">Xác nhận xóa thiết bị</h3>
+              <h3 class="modal-title mb-0">Xác nhận xóa thiết bị</h3>
               <p class="text-sm text-stone-500 dark:text-stone-400">Thao tác này không thể hoàn tác.</p>
             </div>
           </div>
@@ -1483,28 +1354,26 @@
             Bạn có chắc chắn muốn xóa thiết bị <strong id="deleteDeviceName" class="text-stone-800 dark:text-white"></strong>?
           </p>
           <div class="flex gap-3">
-            <button onclick="hideDeleteDeviceModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 transition">Hủy</button>
-            <button onclick="confirmDeleteDevice()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition">Xóa</button>
+            <button onclick="hideDeleteDeviceModal()" class="btn btn-ghost flex-1">Hủy</button>
+            <button onclick="confirmDeleteDevice()" class="btn btn-danger flex-1">Xóa</button>
           </div>
         </div>
       </div>
 
       <!-- Add Device Modal -->
-      <div id="addDeviceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+      <div id="addDeviceModal" class="modal-overlay hidden">
         <div class="fixed inset-0 bg-black/40" onclick="hideAddDeviceModal()"></div>
-        <div class="relative bg-white dark:bg-stone-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6 z-10">
+        <div class="modal-box">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-bold text-stone-800 dark:text-white">
-              <i class="fa-solid fa-plus-circle text-farm-500 mr-2"></i>Thêm thiết bị vào chuồng
+            <h3 class="modal-title mb-0">
+              <i class="fa-solid fa-plus-circle text-farm-500"></i>Thêm thiết bị vào chuồng
             </h3>
-            <button onclick="hideAddDeviceModal()" class="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition">
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+            <button onclick="hideAddDeviceModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div class="mb-3">
             <div class="relative">
               <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
-              <input type="text" id="searchDeviceInput" placeholder="Tìm thiết bị..." class="w-full pl-9 pr-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
+              <input type="text" id="searchDeviceInput" placeholder="Tìm thiết bị..." class="form-input pl-9">
             </div>
           </div>
           <div id="unconnectedDeviceList" class="space-y-2 max-h-56 overflow-y-auto border border-stone-100 dark:border-stone-700 rounded-lg p-3 bg-stone-50/50 dark:bg-stone-700/30 mb-3">
@@ -1512,8 +1381,8 @@
           </div>
           <div class="text-xs font-medium text-stone-500 dark:text-stone-400 mb-4" id="selectedCount">Đã chọn: 0 thiết bị</div>
           <div class="flex gap-3">
-            <button onclick="hideAddDeviceModal()" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 transition">Hủy</button>
-            <button onclick="addSelectedDevices()" id="confirmAddDeviceBtn" class="flex-1 px-4 py-2 rounded-lg text-sm font-medium bg-farm-500 text-white hover:bg-farm-600 transition">Thêm thiết bị</button>
+            <button onclick="hideAddDeviceModal()" class="btn btn-ghost flex-1">Hủy</button>
+            <button onclick="addSelectedDevices()" id="confirmAddDeviceBtn" class="btn btn-primary flex-1">Thêm thiết bị</button>
           </div>
         </div>
       </div>
@@ -1534,11 +1403,11 @@
         <div class="flex items-center gap-2">
           <div class="relative">
             <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
-            <input type="text" id="devSearchInput" placeholder="Tìm thiết bị..." oninput="filterDevices()" class="w-36 sm:w-48 pl-9 pr-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
+            <input type="text" id="devSearchInput" placeholder="Tìm thiết bị..." oninput="filterDevices()" class="form-input w-36 sm:w-48 pl-9">
           </div>
-          <select id="devTypeFilter" onchange="filterDevices()" class="px-3 py-2 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-700 text-sm text-stone-800 dark:text-stone-200 focus:ring-2 focus:ring-farm-500 focus:border-farm-500 outline-none">
-        <option value="all">Tất cả loại</option>
-        <option value="temperature" selected>Cảm biến nhiệt</option>
+          <select id="devTypeFilter" onchange="filterDevices()" class="form-input w-auto">
+            <option value="all">Tất cả loại</option>
+            <option value="temperature" selected>Cảm biến nhiệt</option>
             <option value="humidity">Cảm biến độ ẩm</option>
             <option value="fan">Quạt thông gió</option>
             <option value="light">Đèn LED</option>
@@ -1587,12 +1456,10 @@
 
       <!-- Device Cards -->
       <div class="stat-card mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold text-stone-700 dark:text-stone-200 text-sm">
-            <i class="fa-solid fa-list text-farm-500 mr-1.5"></i>Danh sách thiết bị
-          </h3>
-          <span class="text-xs text-stone-400" id="devCount"></span>
-        </div>
+        <h3 class="section-title mb-4">
+          <i class="fa-solid fa-list text-farm-500"></i>Danh sách thiết bị
+          <span class="badge-count" id="devCount"></span>
+        </h3>
         <div id="devList" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           <div class="text-center py-12 text-stone-400 dark:text-stone-500 col-span-full">
             <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
@@ -1751,6 +1618,32 @@
     </section>
 
   </main>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM NAV (Mobile) -->
+  <!-- ============================================================ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bn-item active" data-tab="overview">
+      <i class="fa-solid fa-house"></i>
+      <span>Tổng quan</span>
+    </button>
+    <button class="bn-item" data-tab="coops">
+      <i class="fa-solid fa-warehouse"></i>
+      <span>Chuồng</span>
+    </button>
+    <button class="bn-item" data-tab="devices">
+      <i class="fa-solid fa-microchip"></i>
+      <span>Thiết bị</span>
+    </button>
+    <button class="bn-item" data-tab="warehouse">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      <span>Kho</span>
+    </button>
+    <button class="bn-item" data-tab="history">
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      <span>Lịch sử</span>
+    </button>
+  </nav>
 
   <!-- ============================================================ -->
   <!-- THEME TOGGLE (Dark Mode) -->
@@ -2251,6 +2144,8 @@
     function switchTab(tabId) {
       tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabId));
       Object.entries(contents).forEach(([id, el]) => el.classList.toggle('active', id === tabId));
+      // Sync bottom nav active state
+      document.querySelectorAll('.bn-item').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
 
       // Re-render charts when switching back to overview (fixes sizing)
       if (tabId === 'overview' && tempChartInstance && humidChartInstance) {
@@ -2278,6 +2173,11 @@
 
     tabs.forEach(tab => {
       tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    // Bottom nav click handlers
+    document.querySelectorAll('.bn-item').forEach(item => {
+      item.addEventListener('click', () => switchTab(item.dataset.tab));
     });
 
     // ==============================================================
@@ -2491,33 +2391,28 @@
         const totalDevices = coop.deviceCount || (coop.devices ? coop.devices.length : 0);
 
         return `
-          <div class="coop-mgmt-card" onclick="showCoopDetail(${coop.id})">
-            <div class="flex items-start justify-between mb-3">
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <h4 class="font-semibold text-stone-800 dark:text-white truncate">${coop.name}</h4>
-                  ${getCoopBadge(coop)}
-                </div>
-                <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1"></i>${coop.location}</p>
-              </div>
+          <div class="coop-card" onclick="showCoopDetail(${coop.id})">
+            <div class="coop-card-header">
+              <h4>${coop.name}</h4>
+              ${getCoopBadge(coop)}
             </div>
 
-            <div class="grid grid-cols-2 gap-y-2 gap-x-3 mb-3 text-sm">
-              <div>
-                <span class="text-stone-400 dark:text-stone-500 text-xs">Đàn</span>
-                <p class="font-semibold text-stone-700 dark:text-stone-200">${formatNumber(coop.chickens)} <span class="text-stone-400 font-normal text-xs">/ ${formatNumber(coop.capacity)}</span></p>
+            <div class="coop-card-stats">
+              <div class="cc-stat">
+                <span class="cc-label">Đàn</span>
+                <span class="cc-value">${formatNumber(coop.chickens)} <span class="text-xs font-normal text-stone-400">/ ${formatNumber(coop.capacity)}</span></span>
               </div>
-              <div>
-                <span class="text-stone-400 dark:text-stone-500 text-xs">Nhiệt độ</span>
-                <p class="font-semibold text-stone-700 dark:text-stone-200">${coop.temp}°C</p>
+              <div class="cc-stat">
+                <span class="cc-label">Nhiệt độ</span>
+                <span class="cc-value">${coop.temp}°C</span>
               </div>
-              <div>
-                <span class="text-stone-400 dark:text-stone-500 text-xs">Độ ẩm</span>
-                <p class="font-semibold text-stone-700 dark:text-stone-200">${coop.humidity}%</p>
+              <div class="cc-stat">
+                <span class="cc-label">Độ ẩm</span>
+                <span class="cc-value">${coop.humidity}%</span>
               </div>
-              <div>
-                <span class="text-stone-400 dark:text-stone-500 text-xs">Thiết bị</span>
-                <p class="font-semibold text-stone-700 dark:text-stone-200">${onlineDevices}/${totalDevices} <span class="text-stone-400 font-normal text-xs">online</span></p>
+              <div class="cc-stat">
+                <span class="cc-label">Thiết bị</span>
+                <span class="cc-value">${onlineDevices}/${totalDevices}</span>
               </div>
             </div>
 
@@ -2543,8 +2438,8 @@
             </div>
 
             <div class="flex gap-2 mt-3 pt-3 border-t border-stone-100 dark:border-stone-700">
-              <button onclick="event.stopPropagation();showCoopDetail(${coop.id})" class="flex-1 text-xs py-1.5 rounded-lg bg-farm-50 text-farm-600 hover:bg-farm-100 dark:bg-farm-900/20 dark:text-farm-400 dark:hover:bg-farm-900/40 transition font-medium"><i class="fa-solid fa-eye mr-1"></i>Xem chi tiết</button>
-              <button onclick="event.stopPropagation();deleteCoop(${coop.id},'${coop.name}')" class="text-xs py-1.5 px-3 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition font-medium"><i class="fa-solid fa-trash-can"></i></button>
+              <button onclick="event.stopPropagation();showCoopDetail(${coop.id})" class="btn btn-sm btn-primary flex-1"><i class="fa-solid fa-eye mr-1"></i>Chi tiết</button>
+              <button onclick="event.stopPropagation();deleteCoop(${coop.id},'${coop.name}')" class="btn btn-sm btn-ghost"><i class="fa-solid fa-trash-can"></i></button>
             </div>
           </div>
         `;
@@ -2552,7 +2447,7 @@
 
       // Animate progress bars
       setTimeout(() => {
-        container.querySelectorAll('.coop-mgmt-card').forEach((card, i) => {
+        container.querySelectorAll('.coop-card').forEach((card, i) => {
           const coop = filtered[i];
           if (!coop) return;
           const pct = Math.round((coop.chickens / coop.capacity) * 100);
@@ -2582,28 +2477,31 @@
       const barColor = capPct > 95 ? 'bg-red-500' : capPct > 80 ? 'bg-amber-500' : 'bg-emerald-500';
 
       content.innerHTML = `
-        <div class="flex items-center justify-between">${getCoopBadge(coop)}</div>
+        <div class="flex items-center justify-between mb-2">${getCoopBadge(coop)}</div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
-            <p class="text-xs text-stone-400 dark:text-stone-500">Đàn</p>
-            <p class="text-xl font-bold text-stone-800 dark:text-white">${formatNumber(coop.chickens)}</p>
-            <p class="text-xs text-stone-400">/ ${formatNumber(coop.capacity)} con</p>
+        <div class="detail-metrics">
+          <div class="dm-card">
+            <div class="dm-icon">🐔</div>
+            <div class="dm-value">${formatNumber(coop.chickens)}</div>
+            <div class="dm-label">Đàn / ${formatNumber(coop.capacity)}</div>
           </div>
-          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
-            <p class="text-xs text-stone-400 dark:text-stone-500">Sức chứa</p>
-            <p class="text-xl font-bold text-stone-800 dark:text-white">${capPct}%</p>
+          <div class="dm-card">
+            <div class="dm-icon">📊</div>
+            <div class="dm-value">${capPct}%</div>
+            <div class="dm-label">Sức chứa</div>
             <div class="h-1.5 bg-stone-200 dark:bg-stone-600 rounded-full mt-1 overflow-hidden">
               <div class="h-full rounded-full ${barColor}" style="width:${capPct}%"></div>
             </div>
           </div>
-          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
-            <p class="text-xs text-stone-400 dark:text-stone-500"><i class="fa-solid fa-temperature-half text-red-500 mr-1"></i>Nhiệt độ</p>
-            <p class="text-xl font-bold text-stone-800 dark:text-white">${coop.temp}<span class="text-sm font-normal text-stone-400">°C</span></p>
+          <div class="dm-card">
+            <div class="dm-icon" style="color:#d97706;">🌡️</div>
+            <div class="dm-value">${coop.temp}<span class="text-sm font-normal text-stone-400">°C</span></div>
+            <div class="dm-label">Nhiệt độ</div>
           </div>
-          <div class="rounded-lg bg-stone-50 dark:bg-stone-700/50 p-3 text-center">
-            <p class="text-xs text-stone-400 dark:text-stone-500"><i class="fa-solid fa-droplet text-sky-500 mr-1"></i>Độ ẩm</p>
-            <p class="text-xl font-bold text-stone-800 dark:text-white">${coop.humidity}<span class="text-sm font-normal text-stone-400">%</span></p>
+          <div class="dm-card">
+            <div class="dm-icon" style="color:#0284c7;">💧</div>
+            <div class="dm-value">${coop.humidity}<span class="text-sm font-normal text-stone-400">%</span></div>
+            <div class="dm-label">Độ ẩm</div>
           </div>
         </div>
 
@@ -2657,15 +2555,22 @@
           listEl.innerHTML = '<p class="text-sm text-stone-400">Không có thiết bị</p>';
           return;
         }
-        listEl.innerHTML = devices.map(d => `
-          <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-700/50">
-            <div class="flex items-center gap-2">
-              <i class="fa-solid ${getDeviceIcon(d.type)} text-farm-500 w-4 text-center"></i>
-              <span class="text-sm text-stone-700 dark:text-stone-200">${d.name}</span>
+        listEl.innerHTML = devices.map(d => {
+          const statusClass = d.status === 'online' || d.status === 'active' ? 'active' : d.status === 'error' ? 'error' : d.status === 'connecting' ? 'connecting' : 'waiting';
+          return `
+          <div class="device-card-detail status-${statusClass}">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2.5">
+                <span class="status-dot-detail ${statusClass}"></span>
+                <span class="text-sm font-medium text-stone-700 dark:text-stone-200">${d.name}</span>
+              </div>
+              <span class="status-pill ${statusClass === 'active' ? 'active' : statusClass === 'error' ? 'danger' : statusClass}">${getDeviceStatusLabel(d.status)}</span>
             </div>
-            <span class="text-xs px-2 py-0.5 rounded-full ${getDeviceStatusBg(d.status)}">${getDeviceStatusLabel(d.status)}</span>
+            <div class="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
+              <span><i class="fa-solid ${getDeviceIcon(d.type)} mr-1"></i>${d.type}</span>
+            </div>
           </div>
-        `).join('');
+        `}).join('');
       }).catch(e => {
         console.error('Failed to load devices:', e);
         const listEl = document.getElementById('detailDeviceList');
@@ -2983,15 +2888,22 @@
             const countEl = document.getElementById('detailDeviceCount');
             if (listEl && countEl) {
               countEl.textContent = devices.length;
-              listEl.innerHTML = devices.map(d => `
-                <div class="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-stone-700/50">
-                  <div class="flex items-center gap-2">
-                    <i class="fa-solid ${getDeviceIcon(d.type)} text-farm-500 w-4 text-center"></i>
-                    <span class="text-sm text-stone-700 dark:text-stone-200">${d.name}</span>
+              listEl.innerHTML = devices.map(d => {
+                const sc = d.status === 'online' || d.status === 'active' ? 'active' : d.status === 'error' ? 'error' : d.status === 'connecting' ? 'connecting' : 'waiting';
+                return `
+                <div class="device-card-detail status-${sc}">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                      <span class="status-dot-detail ${sc}"></span>
+                      <span class="text-sm font-medium text-stone-700 dark:text-stone-200">${d.name}</span>
+                    </div>
+                    <span class="status-pill ${sc === 'active' ? 'active' : sc === 'error' ? 'danger' : sc}">${getDeviceStatusLabel(d.status)}</span>
                   </div>
-                  <span class="text-xs px-2 py-0.5 rounded-full ${getDeviceStatusBg(d.status)}">${getDeviceStatusLabel(d.status)}</span>
+                  <div class="flex items-center gap-3 text-xs text-stone-500 dark:text-stone-400">
+                    <span><i class="fa-solid ${getDeviceIcon(d.type)} mr-1"></i>${d.type}</span>
+                  </div>
                 </div>
-              `).join('');
+              `}).join('');
             }
           });
       } catch (e) {
