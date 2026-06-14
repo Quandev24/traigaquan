@@ -645,6 +645,137 @@ class FeedConsumption(db.Model):
         }
 
 
+class ChickenBatch(db.Model):
+    """
+    Model quản lý đàn gà (Batch).
+    
+    Attributes:
+        id: Primary key
+        coop_id: Foreign key đến Coop
+        batch_name: Tên đàn gà (VD: Đợt gà Ai Cập tháng 6)
+        quantity: Số lượng gà ban đầu
+        breed: Giống gà
+        arrival_date: Ngày nhập đàn (dùng để tính tuổi)
+        status: Trạng thái (active/sold/deceased)
+        created_at: Thời gian tạo
+    """
+    __tablename__ = 'chicken_batches'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    batch_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, default=0)
+    breed = db.Column(db.String(50))
+    arrival_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(20), default='active')
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, default=False)
+    
+    vaccinations = db.relationship('VaccinationRecord', backref='batch', lazy='dynamic')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'batch_name': self.batch_name,
+            'quantity': self.quantity,
+            'breed': self.breed,
+            'arrival_date': self.arrival_date.isoformat() if self.arrival_date else None,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'age_days': (datetime.now().date() - self.arrival_date).days if self.arrival_date else 0
+        }
+
+
+class VaccinationRecord(db.Model):
+    """
+    Model nhật ký tiêm phòng cho đàn gà.
+    """
+    __tablename__ = 'vaccination_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('chicken_batches.id'), nullable=False)
+    vaccine_name = db.Column(db.String(100), nullable=False)
+    administered_date = db.Column(db.Date, nullable=False)
+    next_dose_date = db.Column(db.Date)
+    status = db.Column(db.String(20), default='completed')  # completed/scheduled
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'batch_id': self.batch_id,
+            'vaccine_name': self.vaccine_name,
+            'administered_date': self.administered_date.isoformat() if self.administered_date else None,
+            'next_dose_date': self.next_dose_date.isoformat() if self.next_dose_date else None,
+            'status': self.status,
+            'notes': self.notes,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class HealthRecord(db.Model):
+    """
+    Model nhật ký kiểm tra và khám sức khỏe cho đàn gà.
+    """
+    __tablename__ = 'health_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('chicken_batches.id'), nullable=False)
+    record_type = db.Column(db.String(50), nullable=False)  # inspection/medical_exam
+    check_date = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    inspector = db.Column(db.String(100))
+    result = db.Column(db.String(100))  # Khỏe mạnh, Cần theo dõi, Có dấu hiệu bệnh...
+    notes = db.Column(db.Text)
+    deleted = db.Column(db.Boolean, default=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'batch_id': self.batch_id,
+            'record_type': self.record_type,
+            'check_date': self.check_date.isoformat() if self.check_date else None,
+            'inspector': self.inspector,
+            'result': self.result,
+            'notes': self.notes
+        }
+
+
+class InventoryLog(db.Model):
+    """
+    Model nhật ký nhập/xuất kho.
+    """
+    __tablename__ = 'inventory_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('warehouse_inventory.id'), nullable=False)
+    transaction_type = db.Column(db.String(20), nullable=False)  # import/export/adjustment
+    quantity = db.Column(db.Float, nullable=False)
+    unit_price = db.Column(db.Float)
+    supplier = db.Column(db.String(100))
+    transaction_date = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    notes = db.Column(db.Text)
+    deleted = db.Column(db.Boolean, default=False)
+    
+    item = db.relationship('WarehouseInventory', backref='logs')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'item_id': self.item_id,
+            'item_name': self.item.item_name if self.item else None,
+            'transaction_type': self.transaction_type,
+            'quantity': self.quantity,
+            'unit_price': self.unit_price,
+            'supplier': self.supplier,
+            'transaction_date': self.transaction_date.isoformat() if self.transaction_date else None,
+            'notes': self.notes
+        }
+
+
 class MedicineConsumption(db.Model):
     __tablename__ = 'medicine_consumption'
 

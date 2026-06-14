@@ -37,12 +37,17 @@ class DetectionPipeline:
         self._initialized = True
         
         self.model = YOLO(MODEL_PATH)
+        self._app = None
         
         # Confidence threshold
         self.conf_threshold = 0.2
         
         logger.info("DetectionPipeline initialized with single model:")
         logger.info("  Model: %s", MODEL_PATH)
+    
+    def init_app(self, app):
+        """Initialize with Flask app for database operations in background threads"""
+        self._app = app
     
     def process_frame(self, frame, device_id, coop_id):
         """
@@ -115,10 +120,13 @@ class DetectionPipeline:
     def save_detection_to_db(self, device_id, coop_id, detections, source_file=None, annotated_frame=None):
         """Save detection results to database"""
         try:
-            from flask import current_app
             from models import db, AIDetection, Alert, Coop
 
-            with current_app.app_context():
+            if self._app is None:
+                logger.error("No Flask app initialized for database operations")
+                return None
+                
+            with self._app.app_context():
                 chicken_count = len(detections)
                 has_disease = any(d['has_disease'] for d in detections)
                 diseases = []

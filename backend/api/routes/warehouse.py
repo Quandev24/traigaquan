@@ -12,7 +12,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from models import db, Coop, WarehouseInventory, FeedConsumption, MedicineConsumption
+from models import db, Coop, WarehouseInventory, FeedConsumption, MedicineConsumption, InventoryLog
 
 warehouse_bp = Blueprint('warehouse', __name__)
 
@@ -26,7 +26,7 @@ def get_feed_items():
 
 @warehouse_bp.route('/feed/<int:item_id>', methods=['PUT'])
 def update_feed_item(item_id):
-    """Cập nhật số lượng thức ăn."""
+    """Cập nhật số lượng thức ăn (manual adjustment)."""
     data = request.get_json(silent=True)
     if not data or 'quantity_kg' not in data:
         return jsonify({'error': 'Thiếu trường quantity_kg'}), 400
@@ -35,9 +35,65 @@ def update_feed_item(item_id):
     if not item:
         return jsonify({'error': 'Không tìm thấy mặt hàng'}), 404
 
+    old_quantity = item.quantity_kg
     item.quantity_kg = float(data['quantity_kg'])
+    
+    # Create log for adjustment
+    log = InventoryLog(
+        item_id=item.id,
+        transaction_type='adjustment',
+        quantity=item.quantity_kg - old_quantity,
+        notes=data.get('notes', 'Cập nhật thủ công')
+    )
+    db.session.add(log)
     db.session.commit()
+    
     return jsonify(item.to_dict()), 200
+
+
+@warehouse_bp.route('/import', methods=['POST'])
+def import_inventory():
+    """Nhập hàng vào kho và tạo log."""
+    data = request.get_json(silent=True)
+    if not data or 'item_id' not in data or 'quantity' not in data:
+        return jsonify({'error': 'Thiếu thông tin item_id hoặc quantity'}), 400
+
+    item = WarehouseInventory.query.filter_by(id=data['item_id'], deleted=False).first()
+    if not item:
+        return jsonify({'error': 'Không tìm thấy mặt hàng'}), 404
+
+    quantity = float(data['quantity'])
+    item.quantity_kg += quantity
+    
+    log = InventoryLog(
+        item_id=item.id,
+        transaction_type='import',
+        quantity=quantity,
+        unit_price=data.get('unit_price'),
+        supplier=data.get('supplier'),
+        notes=data.get('notes')
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    return jsonify({
+        'message': 'Nhập hàng thành công',
+        'item': item.to_dict(),
+        'log': log.to_dict()
+    }), 201
+
+
+@warehouse_bp.route('/logs', methods=['GET'])
+def get_inventory_logs():
+    """Lấy lịch sử nhập/xuất kho."""
+    item_id = request.args.get('item_id', type=int)
+    query = InventoryLog.query.filter_by(deleted=False)
+    
+    if item_id:
+        query = query.filter_by(item_id=item_id)
+        
+    logs = query.order_by(InventoryLog.transaction_date.desc()).all()
+    return jsonify([log.to_dict() for log in logs]), 200
 
 
 @warehouse_bp.route('/consumption/feed/by-coop', methods=['GET'])

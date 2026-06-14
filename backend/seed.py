@@ -26,7 +26,7 @@ from flask import Flask
 from config import config
 
 # Import database models và db instance
-from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, UnconnectedDevice, WarehouseInventory, FeedConsumption, MedicineConsumption
+from models import db, User, Coop, Device, CoopDevice, Environment, FeedSchedule, Alert, VideoRecording, UnconnectedDevice, WarehouseInventory, FeedConsumption, MedicineConsumption, ChickenBatch, VaccinationRecord, InventoryLog, HealthRecord
 
 
 # =============================================================================
@@ -652,6 +652,110 @@ def seed_medicine_consumption(coops):
 
 
 # =============================================================================
+# SEED DỮ LIỆU ĐÀN GÀ & TIÊM PHÒNG
+# =============================================================================
+
+def seed_chicken_batches(coops):
+	"""Tạo dữ liệu đàn gà mẫu cho các chuồng."""
+	print("  Đang tạo dữ liệu đàn gà...")
+	breeds = ['Ai Cập', 'Gà Ta', 'Lương Phượng', 'Gà Mía']
+	batches = []
+	for coop in coops:
+		# Tạo 1-2 đàn cho mỗi chuồng
+		for i in range(random.randint(1, 2)):
+			arrival_date = datetime.now().date() - timedelta(days=random.randint(10, 100))
+			batch = ChickenBatch(
+				coop_id=coop.id,
+				batch_name=f"Đợt {coop.name[-1]}{i+1}",
+				quantity=random.randint(100, 250),
+				breed=random.choice(breeds),
+				arrival_date=arrival_date,
+				status='active'
+			)
+			db.session.add(batch)
+			batches.append(batch)
+		print(f"    [OK] {coop.name}: Đã tạo đàn gà")
+	db.session.commit()
+	return batches
+
+
+def seed_vaccinations(batches):
+	"""Tạo dữ liệu tiêm phòng mẫu cho các đàn gà."""
+	print("  Đang tạo dữ liệu tiêm phòng...")
+	vaccines = ['Newcastle', 'Gumboro', 'Cúm gia cầm', 'Đậu gà']
+	for batch in batches:
+		# Mỗi đàn tiêm 2-3 loại
+		selected_vaccines = random.sample(vaccines, random.randint(2, 3))
+		for v_name in selected_vaccines:
+			admin_date = batch.arrival_date + timedelta(days=random.randint(5, 15))
+			vaccination = VaccinationRecord(
+				batch_id=batch.id,
+				vaccine_name=v_name,
+				administered_date=admin_date,
+				next_dose_date=admin_date + timedelta(days=30),
+				status='completed',
+				notes=f"Tiêm định kỳ cho đàn {batch.batch_name}"
+			)
+			db.session.add(vaccination)
+	db.session.commit()
+	print("    [OK] Đã tạo lịch sử tiêm phòng")
+
+
+def seed_health_records(batches):
+	"""Tạo dữ liệu kiểm tra sức khỏe mẫu."""
+	print("  Đang tạo dữ liệu kiểm tra sức khỏe...")
+	inspectors = ['Nguyễn Văn An', 'Trần Thị Bình', 'Lê Văn Cường']
+	results = ['Khỏe mạnh', 'Gà ăn tốt', 'Cần theo dõi thêm', 'Phát hiện gà ủ rũ']
+	for batch in batches:
+		# Mỗi đàn có 2-4 lần kiểm tra
+		for i in range(random.randint(2, 4)):
+			check_date = datetime.now() - timedelta(days=random.randint(1, 20))
+			r_type = random.choice(['inspection', 'medical_exam'])
+			record = HealthRecord(
+				batch_id=batch.id,
+				record_type=r_type,
+				check_date=check_date,
+				inspector=random.choice(inspectors),
+				result=random.choice(results),
+				notes=f"Ghi chú kiểm tra ngày {check_date.strftime('%d/%m')}: Tình trạng đàn ổn định."
+			)
+			db.session.add(record)
+	db.session.commit()
+	print("    [OK] Đã tạo lịch sử kiểm tra sức khỏe")
+
+
+# =============================================================================
+# SEED DỮ LIỆU NHẬT KÝ KHO
+# =============================================================================
+
+def seed_inventory_logs():
+	"""Tạo nhật ký kho mẫu."""
+	print("  Đang tạo nhật ký kho...")
+	items = WarehouseInventory.query.all()
+	suppliers = ['Công ty CP', 'GreenFeed', 'De Heus', 'Dabaco']
+	for item in items:
+		# Tạo 3-5 log cho mỗi mặt hàng
+		for i in range(random.randint(3, 5)):
+			transaction_date = datetime.now() - timedelta(days=random.randint(1, 30))
+			t_type = random.choice(['import', 'export', 'adjustment'])
+			qty = random.uniform(50, 200)
+			if t_type == 'export': qty = -qty
+			
+			log = InventoryLog(
+				item_id=item.id,
+				transaction_type=t_type,
+				quantity=qty,
+				unit_price=random.uniform(10000, 20000) if t_type == 'import' else None,
+				supplier=random.choice(suppliers) if t_type == 'import' else None,
+				transaction_date=transaction_date,
+				notes=f"Giao dịch mẫu cho {item.item_name}"
+			)
+			db.session.add(log)
+	db.session.commit()
+	print("    [OK] Đã tạo nhật ký kho")
+
+
+# =============================================================================
 # SEED CẢNH BÁO MẪU
 # =============================================================================
 
@@ -707,24 +811,30 @@ def seed_alerts(coops):
 def reset_database():
 	"""
 	Xóa tất cả dữ liệu cũ trước khi seed dữ liệu mới.
-	
-	Thứ tự xóa rất quan trọng để tránh lỗi Foreign Key:
-	1. Alert (phụ thuộc Coop, Device)
-	2. Environment (phụ thuộc Coop)
-	3. FeedSchedule (phụ thuộc Coop)
-	4. CoopDevice (phụ thuộc Coop, Device)
-	5. Device (độc lập sau khi xóa CoopDevice)
-	6. Coop (độc lập sau khi xóa các bảng phụ thuộc)
-	7. User (độc lập)
 	"""
 	print("\n[1] Đang xóa dữ liệu cũ...")
 	
 	# Xóa theo thứ tự để tránh vi phạm ràng buộc khóa ngoài
+	print("    Xóa HealthRecord...")
+	HealthRecord.query.delete()
+
+	print("    Xóa VaccinationRecord...")
+	VaccinationRecord.query.delete()
+	
+	print("    Xóa ChickenBatch...")
+	ChickenBatch.query.delete()
+	
+	print("    Xóa InventoryLog...")
+	InventoryLog.query.delete()
+
 	print("    Xóa VideoRecording...")
 	VideoRecording.query.delete()
 
 	print("    Xóa FeedConsumption...")
 	FeedConsumption.query.delete()
+
+	print("    Xóa MedicineConsumption...")
+	MedicineConsumption.query.delete()
 
 	print("    Xóa WarehouseInventory...")
 	WarehouseInventory.query.delete()
@@ -764,45 +874,45 @@ def reset_database():
 
 def run_seed():
 	"""Hàm chính để chạy toàn bộ quá trình seed dữ liệu."""
-	
+
 	# Tạo ứng dụng Flask
 	app = create_app()
-	
+
 	# Chạy trong application context để có quyền truy cập database
 	with app.app_context():
-		
+
 		print("=" * 60)
 		print("  SEED DỮ LIỆU - HỆ THỐNG QUẢN LÝ TRANG TRẠI GÀ")
 		print("=" * 60)
-		
+
 		# Tạo bảng database nếu chưa tồn tại
 		print("\n[0] Đang tạo bảng database...")
 		db.create_all()
 		print("    [OK] Bảng database đã sẵn sàng")
-		
+
 		# Bước 1: Xóa dữ liệu cũ
 		reset_database()
-		
+
 		# Bước 2: Seed Users
 		print("\n[2] Seed Users...")
 		admin = seed_users()
-		
+
 		# Bước 3: Seed Coops
 		print("\n[3] Seed Coops...")
 		coops = seed_coops()
-		
+
 		# Bước 4: Seed Devices
 		print("\n[4] Seed Devices...")
 		devices = seed_devices(coops)
-		
+
 		# Bước 5: Seed CoopDevices (gán thiết bị vào chuồng)
 		print("\n[5] Seed CoopDevices...")
 		seed_coop_devices(coops, devices)
-		
+
 		# Bước 6: Seed Environments
 		print("\n[6] Seed Environments...")
 		seed_environments(coops)
-		
+
 		# Bước 7: Seed FeedSchedules
 		print("\n[7] Seed FeedSchedules...")
 		seed_feed_schedules(coops)
@@ -814,7 +924,7 @@ def run_seed():
 		# Bước 7.1: Seed Unconnected Devices
 		print("\n[7.1] Seed Unconnected Devices...")
 		seed_unconnected_devices()
-		
+
 		# Bước 7.2: Seed Warehouse
 		print("\n[7.2] Seed Warehouse...")
 		seed_warehouse()
@@ -827,27 +937,41 @@ def run_seed():
 		print("\n[7.4] Seed MedicineConsumption...")
 		seed_medicine_consumption(coops)
 
+		# Bước 7.5: Seed Chicken Batches & Vaccinations
+		print("\n[7.5] Seed Chicken Batches & Vaccinations...")
+		batches = seed_chicken_batches(coops)
+		seed_vaccinations(batches)
+		seed_health_records(batches)
+
+		# Bước 7.6: Seed Inventory Logs
+		print("\n[7.6] Seed Inventory Logs...")
+		seed_inventory_logs()
+
 		# Bước 8: Seed Alerts
 		print("\n[8] Seed Alerts...")
 		seed_alerts(coops)
-		
+
 		# In thống kê
 		print("\n" + "=" * 60)
 		print("  THỐNG KÊ DỮ LIỆU SAU KHI SEED")
 		print("=" * 60)
-		print(f"  Users:        {User.query.count()}")
-		print(f"  Coops:        {Coop.query.count()}")
-		print(f"  Devices:      {Device.query.count()}")
-		print(f"  CoopDevices:  {CoopDevice.query.count()}")
-		print(f"  Environments: {Environment.query.count()}")
-		print(f"  FeedSchedules: {FeedSchedule.query.count()}")
-		print(f"  VideoRecordings: {VideoRecording.query.count()}")
-		print(f"  WarehouseInventory: {WarehouseInventory.query.count()}")
-		print(f"  FeedConsumption: {FeedConsumption.query.count()}")
+		print(f"  Users:               {User.query.count()}")
+		print(f"  Coops:               {Coop.query.count()}")
+		print(f"  Devices:             {Device.query.count()}")
+		print(f"  CoopDevices:         {CoopDevice.query.count()}")
+		print(f"  Environments:        {Environment.query.count()}")
+		print(f"  FeedSchedules:       {FeedSchedule.query.count()}")
+		print(f"  VideoRecordings:     {VideoRecording.query.count()}")
+		print(f"  WarehouseInventory:  {WarehouseInventory.query.count()}")
+		print(f"  InventoryLogs:       {InventoryLog.query.count()}")
+		print(f"  ChickenBatches:      {ChickenBatch.query.count()}")
+		print(f"  VaccinationRecords:  {VaccinationRecord.query.count()}")
+		print(f"  HealthRecords:       {HealthRecord.query.count()}")
+		print(f"  FeedConsumption:     {FeedConsumption.query.count()}")
 		print(f"  MedicineConsumption: {MedicineConsumption.query.count()}")
-		print(f"  Alerts:       {Alert.query.count()}")
+		print(f"  Alerts:              {Alert.query.count()}")
 		print("=" * 60)
-		
+
 		print("\n[OK] Seed dữ liệu hoàn tất thành công!")
 		print("\nThông tin đăng nhập:")
 		print("  Username: admin")

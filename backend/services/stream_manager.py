@@ -64,8 +64,11 @@ class StreamManager:
         try:
             from models import Device, CoopDevice, db
             from app import create_app
+            from services.detection_pipeline import detection_pipeline
             
             app = create_app()
+            detection_pipeline.init_app(app)
+            
             with app.app_context():
                 # Get all Camera 2 devices
                 cameras = Device.query.filter(

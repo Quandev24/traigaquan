@@ -17481,3 +17481,5 @@ __marimo__/
 /yolov8n.pt
 /yolo26n.pt
 /backend/Camera_AI/yolov8n.pt
+/backend/Camera_AI/Model/yolov8n.pt
+/backend/Camera_AI/Model/yolov8s.pt
