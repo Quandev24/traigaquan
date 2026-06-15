@@ -34,3 +34,6 @@ eventlet==0.33.3
 # celery==5.3.4             # Background tasks (uncomment if needed)
 # redis==5.0.1              # Cache (uncomment if needed)
 # flask-mail==0.9.1         # Email (uncomment if needed)
+
+# AI / ChatBot
+google-generativeai>=0.8.0

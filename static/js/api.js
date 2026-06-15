@@ -751,6 +751,13 @@
             return await window.apiFetch('/coops/public/disease-images?coop_id=' + coopId);
         },
 
+        chatMessage: async function(message, coopId) {
+            return await window.apiFetch('/chat', {
+                method: 'POST',
+                body: JSON.stringify({ message: message, coop_id: coopId || null })
+            });
+        },
+
     };
 
     console.log('✓ api.js loaded - API helper ready');
