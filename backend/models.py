@@ -101,7 +101,10 @@ class Coop(db.Model):
     capacity = db.Column(db.Integer, default=500)
     current_count = db.Column(db.Integer, default=0)
     area = db.Column(db.Float, default=50.0)
-    
+    chicken_type = db.Column(db.String(20), default='broiler')
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
+
     temp_min = db.Column(db.Float, default=18.0)
     temp_max = db.Column(db.Float, default=28.0)
     humidity_min = db.Column(db.Float, default=40.0)
@@ -142,6 +145,9 @@ class Coop(db.Model):
             'capacity': self.capacity,
             'current_count': self.current_count,
             'area': self.area,
+            'chicken_type': self.chicken_type,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
             'temp_min': self.temp_min,
             'temp_max': self.temp_max,
             'humidity_min': self.humidity_min,
@@ -501,6 +507,8 @@ class WarehouseInventory(db.Model):
     quantity_kg = db.Column(db.Float, default=0)
     min_threshold_kg = db.Column(db.Float, default=0)
     unit = db.Column(db.String(20), default='kg')
+    status = db.Column(db.String(20), default='active')
+    depreciation_reason = db.Column(db.String(100), nullable=True)
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     deleted = db.Column(db.Boolean, default=False)
 
@@ -512,6 +520,8 @@ class WarehouseInventory(db.Model):
             'quantity_kg': self.quantity_kg,
             'min_threshold_kg': self.min_threshold_kg,
             'unit': self.unit,
+            'status': self.status,
+            'depreciation_reason': self.depreciation_reason,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
@@ -535,6 +545,104 @@ class FeedConsumption(db.Model):
             'coop_id': self.coop_id,
             'recorded_date': self.recorded_date.isoformat(),
             'quantity_kg': self.quantity_kg,
+        }
+
+
+class FlockHistory(db.Model):
+    __tablename__ = 'flock_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    record_date = db.Column(db.Date, nullable=False)
+    total_count = db.Column(db.Integer, nullable=False, default=0)
+    dead_count = db.Column(db.Integer, nullable=False, default=0)
+    sold_count = db.Column(db.Integer, nullable=False, default=0)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, nullable=False, default=False)
+    coop = db.relationship('Coop', backref=db.backref('flock_histories', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'record_date': self.record_date.isoformat(),
+            'total_count': self.total_count,
+            'dead_count': self.dead_count,
+            'sold_count': self.sold_count,
+            'notes': self.notes or '',
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'deleted': self.deleted,
+        }
+
+
+class FeedImport(db.Model):
+    __tablename__ = 'feed_import'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    import_date = db.Column(db.Date, nullable=False)
+    feed_type = db.Column(db.String(100), nullable=False)
+    quantity_kg = db.Column(db.Float, nullable=False, default=0)
+    supplier = db.Column(db.String(200), nullable=True)
+    cost = db.Column(db.Float, nullable=False, default=0)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, nullable=False, default=False)
+    coop = db.relationship('Coop', backref=db.backref('feed_imports', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'import_date': self.import_date.isoformat(),
+            'feed_type': self.feed_type,
+            'quantity_kg': self.quantity_kg,
+            'supplier': self.supplier or '',
+            'cost': self.cost,
+            'notes': self.notes or '',
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'deleted': self.deleted,
+        }
+
+
+class MedicineImport(db.Model):
+    __tablename__ = 'medicine_import'
+
+    id = db.Column(db.Integer, primary_key=True)
+    coop_id = db.Column(db.Integer, db.ForeignKey('coops.id'), nullable=False)
+    import_date = db.Column(db.Date, nullable=False)
+    medicine_name = db.Column(db.String(200), nullable=False)
+    quantity = db.Column(db.Float, nullable=False, default=0)
+    unit = db.Column(db.String(50), nullable=False, default='viên')
+    purpose = db.Column(db.String(20), nullable=False, default='phòng')  # phòng / trị
+    supplier = db.Column(db.String(200), nullable=True)
+    cost = db.Column(db.Float, nullable=False, default=0)
+    notes = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
+    deleted = db.Column(db.Boolean, nullable=False, default=False)
+    coop = db.relationship('Coop', backref=db.backref('medicine_imports', lazy=True))
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'coop_id': self.coop_id,
+            'import_date': self.import_date.isoformat(),
+            'medicine_name': self.medicine_name,
+            'quantity': self.quantity,
+            'unit': self.unit,
+            'purpose': self.purpose,
+            'supplier': self.supplier or '',
+            'cost': self.cost,
+            'notes': self.notes or '',
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'deleted': self.deleted,
         }
 
 

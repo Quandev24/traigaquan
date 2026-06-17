@@ -13,7 +13,7 @@ Các thông số cảnh báo (ngưỡng nhiệt độ, độ ẩm,...) được 
 
 from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime, UTC
+from datetime import datetime, UTC, date
 import sys
 import os
 import re
@@ -26,6 +26,15 @@ from models import db, Coop, CoopDevice, Device, Environment
 # Tạo Blueprint cho routes liên quan đến chuồng
 # URL: /api/coops
 coops_bp = Blueprint('coops', __name__)
+
+
+def parse_date(val):
+    if isinstance(val, str):
+        try:
+            return datetime.strptime(val, '%Y-%m-%d').date()
+        except:
+            return None
+    return val
 
 
 @coops_bp.route('/public', methods=['GET'])
@@ -82,6 +91,9 @@ def update_public_coop(coop_id):
     coop.capacity = data.get('capacity', coop.capacity)
     coop.current_count = data.get('current_count', coop.current_count)
     coop.area = data.get('area', coop.area)
+    coop.chicken_type = data.get('chicken_type', coop.chicken_type)
+    coop.start_date = parse_date(data.get('start_date')) if 'start_date' in data else coop.start_date
+    coop.end_date = parse_date(data.get('end_date')) if 'end_date' in data else coop.end_date
     coop.temp_min = data.get('temp_min', coop.temp_min)
     coop.temp_max = data.get('temp_max', coop.temp_max)
     coop.humidity_min = data.get('humidity_min', coop.humidity_min)
@@ -96,6 +108,50 @@ def update_public_coop(coop_id):
     db.session.commit()
     
     return jsonify(coop.to_dict()), 200
+
+
+@coops_bp.route('/public', methods=['POST'])
+def create_public_coop():
+    """
+    Tạo chuồng mới (Không cần auth - cho demo).
+    
+    Request Body (JSON):
+        - name (str): Tên chuồng (bắt buộc)
+        - location (str): Địa điểm
+        - capacity (int): Sức chứa tối đa
+        - current_count (int): Số gà hiện tại
+        - chicken_type (str): Loại gà ('layer'/'chick'/'broiler')
+        - start_date (str): Ngày bắt đầu (YYYY-MM-DD)
+        - end_date (str): Ngày kết thúc (YYYY-MM-DD)
+    
+    Returns:
+        201: Coop object đã tạo
+        400: Thiếu name
+    """
+    data = request.get_json()
+    name = data.get('name', '').strip()
+    if not name:
+        return jsonify({'error': 'Tên chuồng là bắt buộc'}), 400
+    
+    coop = Coop(
+        name=name,
+        location=data.get('location', ''),
+        capacity=data.get('capacity', 500),
+        current_count=data.get('current_count', 0),
+        chicken_type=data.get('chicken_type', 'broiler'),
+        start_date=parse_date(data.get('start_date')),
+        end_date=parse_date(data.get('end_date')),
+        status='normal'
+    )
+    db.session.add(coop)
+    db.session.flush()
+    
+    env = Environment(coop_id=coop.id, temperature=None, humidity=None,
+                      feed_level=None, water_level=None)
+    db.session.add(env)
+    db.session.commit()
+    
+    return jsonify(coop.to_dict()), 201
 
 
 @coops_bp.route('/public/<int:coop_id>/devices', methods=['GET'])
@@ -452,6 +508,9 @@ def create_coop():
         capacity=data.get('capacity', 500),
         current_count=data.get('current_count', 0),
         area=data.get('area', 50),
+        chicken_type=data.get('chicken_type', 'broiler'),
+        start_date=parse_date(data.get('start_date')),
+        end_date=parse_date(data.get('end_date')),
         # Ngưỡng cảnh báo nhiệt độ
         temp_min=data.get('temp_min', 18),
         temp_max=data.get('temp_max', 28),
@@ -535,6 +594,9 @@ def update_coop(coop_id):
     coop.capacity = data.get('capacity', coop.capacity)
     coop.current_count = data.get('current_count', coop.current_count)
     coop.area = data.get('area', coop.area)
+    coop.chicken_type = data.get('chicken_type', coop.chicken_type)
+    coop.start_date = parse_date(data.get('start_date')) if 'start_date' in data else coop.start_date
+    coop.end_date = parse_date(data.get('end_date')) if 'end_date' in data else coop.end_date
     coop.temp_min = data.get('temp_min', coop.temp_min)
     coop.temp_max = data.get('temp_max', coop.temp_max)
     coop.humidity_min = data.get('humidity_min', coop.humidity_min)

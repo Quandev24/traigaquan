@@ -35,6 +35,11 @@ from models import db, Device, CoopDevice, UnconnectedDevice
 # URL: /api/devices
 devices_bp = Blueprint('devices', __name__)
 
+# Stub cho broadcast functions (websocket chưa setup)
+def broadcast_device_update(*a, **kw): pass
+def broadcast_dashboard_update(*a, **kw): pass
+def broadcast_coop_update(*a, **kw): pass
+def broadcast_coop_deleted(*a, **kw): pass
 
 # ============================================================
 # PUBLIC ENDPOINTS (No Auth - for demo mode)

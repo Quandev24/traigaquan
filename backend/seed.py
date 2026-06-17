@@ -16,7 +16,7 @@ Dữ liệu được tạo:
 import sys
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 # Thêm thư mục hiện tại vào path để import được config và models
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -113,12 +113,13 @@ def seed_coops():
 	print("  Đang tạo 5 chuồng gà...")
 	
 	# Danh sách thông tin chuồng (tên, số gà hiện tại, vị trí)
+	today = date.today()
 	coop_data = [
-		{'name': 'Chuồng A', 'current_count': 480, 'location': 'Tầng 1 - Khu A'},
-		{'name': 'Chuồng B', 'current_count': 450, 'location': 'Tầng 1 - Khu B'},
-		{'name': 'Chuồng C', 'current_count': 420, 'location': 'Tầng 2 - Khu A'},
-		{'name': 'Chuồng D', 'current_count': 500, 'location': 'Tầng 2 - Khu B'},
-		{'name': 'Chuồng E', 'current_count': 380, 'location': 'Tầng 3 - Khu A'},
+		{'name': 'Chuồng A', 'current_count': 480, 'location': 'Tầng 1 - Khu A', 'chicken_type': 'layer',   'start_date': today - timedelta(days=10), 'end_date': today + timedelta(days=11)},
+		{'name': 'Chuồng B', 'current_count': 450, 'location': 'Tầng 1 - Khu B', 'chicken_type': 'layer',   'start_date': today - timedelta(days=5),  'end_date': today + timedelta(days=16)},
+		{'name': 'Chuồng C', 'current_count': 420, 'location': 'Tầng 2 - Khu A', 'chicken_type': 'chick',   'start_date': today - timedelta(days=20), 'end_date': today + timedelta(days=45)},
+		{'name': 'Chuồng D', 'current_count': 500, 'location': 'Tầng 2 - Khu B', 'chicken_type': 'broiler', 'start_date': today - timedelta(days=30), 'end_date': today + timedelta(days=15)},
+		{'name': 'Chuồng E', 'current_count': 380, 'location': 'Tầng 3 - Khu A', 'chicken_type': 'broiler', 'start_date': today - timedelta(days=45), 'end_date': today},
 	]
 	
 	coops = []
@@ -138,6 +139,9 @@ def seed_coops():
 			capacity=500,           # Sức chứa tối đa: 500 gà
 			current_count=data['current_count'],  # Số gà hiện tại
 			area=50.0,               # Diện tích: 50m²
+			chicken_type=data.get('chicken_type', 'broiler'),
+			start_date=data.get('start_date'),
+			end_date=data.get('end_date'),
 				
 			# Ngưỡng nhiệt độ: 20-30°C
 			temp_min=20.0,
@@ -509,6 +513,8 @@ def seed_warehouse():
 		{'item_name': 'Cám gà thịt',  'item_type': 'feed',     'quantity_kg': 800,  'min_threshold_kg': 150},
 		{'item_name': 'Premix khoáng', 'item_type': 'feed',     'quantity_kg': 200,  'min_threshold_kg': 50},
 		{'item_name': 'Thuốc phòng bệnh','item_type': 'medicine','quantity_kg': 50,  'min_threshold_kg': 10},
+		{'item_name': 'Cám gà cũ (khấu hao)','item_type': 'feed','quantity_kg': 0,'min_threshold_kg': 0,'status':'depreciated'},
+		{'item_name': 'Thuốc hết hạn','item_type': 'medicine','quantity_kg': 0,'min_threshold_kg': 0,'status':'depreciated'},
 	]
 
 	for item in items:
@@ -692,8 +698,9 @@ def run_seed():
 		print("  SEED DỮ LIỆU - HỆ THỐNG QUẢN LÝ TRANG TRẠI GÀ")
 		print("=" * 60)
 		
-		# Tạo bảng database nếu chưa tồn tại
-		print("\n[0] Đang tạo bảng database...")
+		# Tạo lại bảng database với schema mới
+		print("\n[0] Đang tạo lại bảng database...")
+		db.drop_all()
 		db.create_all()
 		print("    [OK] Bảng database đã sẵn sàng")
 		

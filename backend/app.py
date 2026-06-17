@@ -11,6 +11,7 @@ Hỗ trợ cấu hình đa môi trường (Development/Production/Testing).
 # ============================================================
 
 import os
+import atexit
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -143,11 +144,49 @@ def create_app(config_name='development'):
                 except Exception as e:
                     db.session.rollback()
                     print(f"Migration skipped (column may exist): {e}")
+
+        # Auto-migrate: add depreciation_reason to warehouse_inventory
+        if 'warehouse_inventory' in inspector.get_table_names():
+            existing_cols = {col['name'] for col in inspector.get_columns('warehouse_inventory')}
+            if 'depreciation_reason' not in existing_cols:
+                try:
+                    db.session.execute(text('ALTER TABLE warehouse_inventory ADD COLUMN depreciation_reason VARCHAR(100)'))
+                    db.session.commit()
+                    print("Migration applied: ADD COLUMN depreciation_reason to warehouse_inventory")
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Migration skipped: {e}")
         
 
+        
+        # ============================================================
+        # 6. START DISEASE DETECTOR (lazy on first request)
+        # ============================================================
+        
+        _detector_started = False
+        
+        @app.before_request
+        def start_detector_once():
+            nonlocal _detector_started
+            if _detector_started:
+                return
+            _detector_started = True
+            try:
+                from services.disease_detector import DiseaseDetector
+                model_path = _os.path.join(project_root, 'runs', 'detect', 'runs', 'my_project', 'model_detect_disease', 'weights', 'best.pt')
+                if _os.path.exists(model_path):
+                    d = DiseaseDetector(model_path, project_root, app, interval=60, conf_threshold=0.2)
+                    d.start()
+                    atexit.register(d.stop)
+                    print("Disease detector started (first request)")
+                else:
+                    print(f"Disease detector model not found at: {model_path}")
+            except Exception as e:
+                print(f"Failed to start disease detector: {e}")
     
-    # ============================================================
-    # 6. API HEALTH CHECK ROUTE
+
+        # ============================================================
+        # 7. API HEALTH CHECK ROUTE
     # ============================================================
     
     @app.route('/health')

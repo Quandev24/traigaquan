@@ -8,6 +8,7 @@ from api.routes.devices import devices_bp
 from api.routes.dashboard import dashboard_bp
 from api.routes.warehouse import warehouse_bp
 from api.routes.chat_routes import chat_bp
+from api.routes.farm_book import farm_book_bp
 
 # Đăng ký các blueprints vào api_bp với url_prefix tương ứng
 api_bp.register_blueprint(coops_bp, url_prefix='/coops')
@@ -15,3 +16,4 @@ api_bp.register_blueprint(devices_bp, url_prefix='/devices')
 api_bp.register_blueprint(dashboard_bp, url_prefix='/dashboard')
 api_bp.register_blueprint(warehouse_bp, url_prefix='/warehouse')
 api_bp.register_blueprint(chat_bp, url_prefix='/chat')
+api_bp.register_blueprint(farm_book_bp, url_prefix='/farm-book')

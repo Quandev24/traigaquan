@@ -664,6 +664,9 @@
                     location: c.location || '',
                     chickens: c.current_count || 0,
                     capacity: c.capacity || 0,
+                    chickenType: c.chicken_type || 'broiler',
+                    start_date: c.start_date || null,
+                    end_date: c.end_date || null,
                     temp: c.environment ? c.environment.temperature : null,
                     humidity: c.environment ? c.environment.humidity : null,
                     feedLevel: c.environment ? Math.round(c.environment.feed_level) : 50,
@@ -673,6 +676,13 @@
                     deviceCount: deviceCounts[c.id] || 0,
                     onlineDeviceCount: onlineCounts[c.id] || 0
                 };
+            });
+        },
+
+        createCoop: async function(data) {
+            return await window.apiFetch('/coops/public', {
+                method: 'POST',
+                body: JSON.stringify(data)
             });
         },
 
@@ -743,6 +753,46 @@
             }
         },
 
+        getWhBalanceFlow: async function(params) {
+            try {
+                return await window.apiFetch('/warehouse/balance-flow?' + new URLSearchParams(params||{}));
+            } catch (e) {
+                console.warn('getWhBalanceFlow not available:', e);
+                return null;
+            }
+        },
+
+        getWhPriceTrend: async function(params) {
+            try {
+                return await window.apiFetch('/warehouse/unit-price-trend?' + new URLSearchParams(params||{}));
+            } catch (e) {
+                console.warn('getWhPriceTrend not available:', e);
+                return { trend: [] };
+            }
+        },
+
+        getWhEfficiency: async function(params) {
+            try {
+                return await window.apiFetch('/warehouse/consumption/efficiency?' + new URLSearchParams(params||{}));
+            } catch (e) {
+                console.warn('getWhEfficiency not available:', e);
+                return { coops: [] };
+            }
+        },
+
+        toggleItemStatus: async function(id, reason) {
+            try {
+                var body = reason !== undefined ? JSON.stringify({reason: reason}) : '{}';
+                return await window.apiFetch('/warehouse/feed/' + id + '/status', {
+                    method: 'PUT',
+                    body: body
+                });
+            } catch (e) {
+                console.warn('toggleItemStatus not available:', e);
+                throw e;
+            }
+        },
+
         getVideoPaths: async function() {
             return await window.apiFetch('/coops/public/video-paths');
         },
@@ -757,6 +807,21 @@
                 body: JSON.stringify({ message: message, coop_id: coopId || null })
             });
         },
+
+        // Farm Book
+        getFlockHistory: function(p) { return window.apiFetch('/farm-book/flock?' + new URLSearchParams(p||{})); },
+        createFlockHistory: function(d) { return window.apiFetch('/farm-book/flock',{method:'POST',body:JSON.stringify(d)}); },
+        updateFlockHistory: function(id,d) { return window.apiFetch('/farm-book/flock/'+id,{method:'PUT',body:JSON.stringify(d)}); },
+        deleteFlockHistory: function(id) { return window.apiFetch('/farm-book/flock/'+id,{method:'DELETE'}); },
+        getFeedImports: function(p) { return window.apiFetch('/farm-book/feed?' + new URLSearchParams(p||{})); },
+        createFeedImport: function(d) { return window.apiFetch('/farm-book/feed',{method:'POST',body:JSON.stringify(d)}); },
+        updateFeedImport: function(id,d) { return window.apiFetch('/farm-book/feed/'+id,{method:'PUT',body:JSON.stringify(d)}); },
+        deleteFeedImport: function(id) { return window.apiFetch('/farm-book/feed/'+id,{method:'DELETE'}); },
+        getMedicineImports: function(p) { return window.apiFetch('/farm-book/medicine?' + new URLSearchParams(p||{})); },
+        createMedicineImport: function(d) { return window.apiFetch('/farm-book/medicine',{method:'POST',body:JSON.stringify(d)}); },
+        updateMedicineImport: function(id,d) { return window.apiFetch('/farm-book/medicine/'+id,{method:'PUT',body:JSON.stringify(d)}); },
+        deleteMedicineImport: function(id) { return window.apiFetch('/farm-book/medicine/'+id,{method:'DELETE'}); },
+        getFarmBookMonthlySummary: function(p) { return window.apiFetch('/farm-book/summary/monthly?' + new URLSearchParams(p||{})); },
 
     };
 
