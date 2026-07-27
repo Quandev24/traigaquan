@@ -11,7 +11,12 @@ import time
 import zipfile
 from datetime import datetime
 
-import cv2
+try:
+    import cv2
+    OPENCV_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    OPENCV_AVAILABLE = False
 
 # ==================== CẤU HÌNH ANNOTATION ====================
 CLASS_COLORS = {
@@ -48,11 +53,18 @@ class DiseaseDetector:
         self._disease_dir = os.path.join(project_root, 'disease_detect')
 
     def load_model(self):
-        from ultralytics import YOLO
-        self.model = YOLO(self.model_path)
+        try:
+            from ultralytics import YOLO
+            self.model = YOLO(self.model_path)
+        except ImportError:
+            print("[DiseaseDetector] ultralytics/YOLO is not installed. AI Detector running in mock mode.")
+            self.model = None
 
     def start(self):
         self.load_model()
+        if self.model is None or not OPENCV_AVAILABLE:
+            print("[DiseaseDetector] AI Detector disabled due to missing dependencies (YOLO or OpenCV).")
+            return
         self._thread = threading.Thread(target=self._run_loop, daemon=True)
         self._thread.start()
 

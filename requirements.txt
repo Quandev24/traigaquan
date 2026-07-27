@@ -13,12 +13,12 @@ flask-socketio==5.3.6
 werkzeug==3.0.1
 python-dotenv==1.0.0
 
-# Computer Vision / AI
-opencv-python>=4.8.0
+# Computer Vision / AI (Commented out for Vercel deployment to stay under 50MB limit)
+# opencv-python>=4.8.0
 numpy>=2.0.0
-ultralytics==8.4.60
-torch==2.12.0
-torchvision==0.27.0
+# ultralytics==8.4.60
+# torch==2.12.0
+# torchvision==0.27.0
 
 # Real-time / WebSocket
 python-socketio==5.8.0
