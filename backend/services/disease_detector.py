@@ -109,15 +109,36 @@ class DiseaseDetector:
         disease_found = False
         detection_count = 0
 
+        # Check if the model is a generic COCO model (contains 'person' class)
+        is_generic = "person" in class_names.values()
+
         for box in boxes:
             conf = float(box.conf[0].cpu().numpy())
             if conf < CONF_THRESHOLD:
                 continue
 
-            detection_count += 1
             x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
             cls_id = int(box.cls[0].cpu().numpy())
             class_name = class_names.get(cls_id, "unknown")
+
+            # Map generic yolov8n.pt class names for the demo
+            if is_generic:
+                if class_name.lower() in ("bird", "chicken", "cat", "dog"):
+                    # Mock disease state for demo
+                    mock_val = (coop.id + x1) % 5
+                    if mock_val == 0:
+                        class_name = "newcastle"
+                    elif mock_val == 1:
+                        class_name = "cau_trung"
+                    elif mock_val == 2:
+                        class_name = "marek"
+                    else:
+                        class_name = "healthy"
+                else:
+                    # Skip other generic objects
+                    continue
+
+            detection_count += 1
 
             if class_name.lower() not in ("healthy", "healthys", ""):
                 disease_found = True

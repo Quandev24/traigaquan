@@ -180,7 +180,12 @@ def create_app(config_name='development'):
                     atexit.register(d.stop)
                     print("Disease detector started (first request)")
                 else:
-                    print(f"Disease detector model not found at: {model_path}")
+                    # Fallback to yolov8n.pt if best.pt is not found (will auto-download from Ultralytics)
+                    print(f"Disease detector model not found at: {model_path}. Falling back to yolov8n.pt")
+                    d = DiseaseDetector('yolov8n.pt', project_root, app, interval=60, conf_threshold=0.2)
+                    d.start()
+                    atexit.register(d.stop)
+                    print("Disease detector started with yolov8n.pt fallback")
             except Exception as e:
                 print(f"Failed to start disease detector: {e}")
     

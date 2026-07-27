@@ -1,0 +1,47 @@
+[
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh Newcastle (Gà rù) ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do virus\nTác nhân: Paramyxovirus\nMức độ: Rất nguy hiểm, lây lan nhanh\nTriệu chứng: Gà ủ rũ, kém ăn, khó thở, chảy nước dãi, phân xanh/trắng, triệu chứng thần kinh (quay đầu, vẹo cổ, liệt chân cánh).\nPhòng và trị bệnh: Không có thuốc đặc trị. Phòng bệnh bằng tiêm vaccine định kỳ và sát trùng chuồng trại."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh cúm gia cầm ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do virus\nTác nhân: Avian Influenza Virus (H5N1, H5N6,...)\nMức độ: Cực kỳ nguy hiểm, lây sang người\nTriệu chứng: Sốt cao, mào và tích tím tái, chảy nước mắt, xuất huyết dưới da (đặc biệt ở chân), chết đột ngột với tỷ lệ rất cao. Lây sang người.\nPhòng và trị bệnh: Tiêm phòng vaccine, tiêu hủy theo quy định thú y nếu có ổ dịch xuất hiện, cách ly nghiêm ngặt."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh Gumboro (Viêm túi Fabricius) ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do virus\nTác nhân: Birnavirus\nMức độ: Nguy hiểm ở gà con\nTriệu chứng: Thường gặp ở gà thịt từ 3 - 6 tuần tuổi. Gà ốm nhanh, lông xơ xác, tự mổ hậu môn, tiêu chảy phân trắng, suy giảm miễn dịch.\nPhòng và trị bệnh: Dùng vaccine nhỏ mắt/mũi hoặc pha nước uống cho gà giống/gà con theo đúng lịch."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh Marek ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do virus\nTác nhân: Alphaherpesvirus\nMức độ: Nguy hiểm, gây u và liệt\nTriệu chứng: Gây bại liệt một chân hoặc một cánh, đồng dạng mắt bị méo mó, xuất hiện khối u ở da hoặc nội tạng.\nPhòng và trị bệnh: Tiêm vaccine Marek cho gà ngay khi mới nở (trong vòng 24 giờ đầu)."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh tả gà (Pasteurellosis) ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do vi khuẩn\nTác nhân: Pasteurella multocida\nMức độ: Nguy hiểm, chết nhanh\nTriệu chứng: Gà chết đột ngột không rõ biểu hiện (thể quá cấp), hoặc sốt cao, mào tím, chảy dịch nhờn miệng, phân loãng vàng/xanh.\nPhòng và trị bệnh: Dùng kháng sinh như Ampicillin, Enrofloxacin; tiêm vaccine phòng bệnh định kỳ."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh thương hàn gà (Pullorum) ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do vi khuẩn\nTác nhân: Salmonella pullorum\nMức độ: Nguy hiểm cho gà con\nTriệu chứng: Gà con ốm yếu, xù lông, sát nguồn nhiệt, tiêu chảy phân trắng dính bết quanh hậu môn.\nPhòng và trị bệnh: Dùng kháng sinh đặc trị (Neomycin, Florfenicol), vệ sinh chuồng trại, tiêu độc khử trùng."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh CRD (Viêm đường hô hấp mạn tính) ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh do vi khuẩn\nTác nhân: Mycoplasma gallisepticum\nMức độ: Trung bình - ảnh hưởng sinh trưởng\nTriệu chứng: Gà ho, khò khò, vảy mỏ, thở khò khè về đêm, chảy nước mũi, giảm ăn, chậm lớn.\nPhòng và trị bệnh: Sử dụng kháng sinh Tylosin, Doxycycline hoặc Tiamulin kết hợp nâng cao sức đề kháng."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Bệnh cầu trùng ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh ký sinh trùng và đơn bào\nTác nhân: Eimeria spp.\nMức độ: Nguy hiểm nếu không điều trị kịp thời\nTriệu chứng: Gặp ở gà 2-8 tuần tuổi hoặc chuồng ẩm. Gà ủ rũ, xù lông, ăn nhiều nhưng còi cọc, phân lẫn máu tươi hoặc nhầy nâu đỏ.\nPhòng và trị bệnh: Dùng thuốc đặc trị cầu trùng (Toltrazuril, Amprolium); giữ chuồng trại khô ráo."
+    },
+    {
+        "instruction": "Hãy cho biết triệu chứng và cách phòng trị bệnh Mạt, rận, ve ở loài gà.",
+        "input": "",
+        "output": "Loại bệnh: Bệnh ký sinh trùng ngoài da\nTác nhân: Ký sinh trùng ngoài da\nMức độ: Ảnh hưởng năng suất\nTriệu chứng: Gà ngứa ngáy, hay rỉa lông, gầy mòn, thiếu máu (mào nhợt nhạt), đẻ trứng giảm.\nPhòng và trị bệnh: Phun thuốc sát trùng, dùng thuốc xịt/nhỏ gáy trị ký sinh trùng, vệ sinh độn chuồng."
+    }
+]

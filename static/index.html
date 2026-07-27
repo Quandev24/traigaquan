@@ -1309,11 +1309,24 @@
     /* Suggestions */
     .chat-suggestions {
       display: flex; gap: 0.4rem;
-      padding: 0.6rem 1rem 0.4rem;
+      padding: 0.6rem 1rem 0.6rem;
       overflow-x: auto; flex-shrink: 0;
-      scrollbar-width: none;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
     }
-    .chat-suggestions::-webkit-scrollbar { display: none; }
+    .chat-suggestions::-webkit-scrollbar {
+      height: 4px;
+    }
+    .chat-suggestions::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-suggestions::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    .chat-suggestions::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
     .chat-suggestion-chip {
       flex-shrink: 0;
       padding: 0.3rem 0.75rem;

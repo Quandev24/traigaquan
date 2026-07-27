@@ -16,7 +16,7 @@ import requests
 
 # ==================== CẤU HÌNH AI ====================
 AI_PROVIDER = "gemini"        # "gemini" | "groq" | "ollama"
-API_KEY = "PASTE_API_KEY_HERE"  # Dán API key vào đây
+API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "PASTE_API_KEY_HERE"  # Dán API key vào đây
 MODEL_NAME = "gemini-2.0-flash"
 # ======================================================
 
@@ -105,6 +105,49 @@ class ChatBot:
     def __init__(self, project_root=None):
         self.project_root = project_root or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self._api_base = "http://localhost:5000/api"
+
+    def get_system_prompt(self):
+        base_prompt = """Bạn là trợ lý AI của trang trại gà thông minh. Trả lời tiếng Việt, ngắn gọn, dễ hiểu với người nông dân.
+
+Khả năng của bạn:
+- Xem dữ liệu chuồng (số lượng gà, nhiệt độ, độ ẩm, thiết bị)
+- Xem danh sách tất cả chuồng
+- Điều khiển thiết bị (bật/tắt quạt, đèn, v.v.) — LUÔN hỏi xác nhận trước khi thực hiện
+- Xem ảnh phát hiện bệnh từ AI
+- Xem lịch thức ăn
+
+Tri thức và thông tin bệnh gà:
+"""
+        # Load dataset_benh_cua_loai_ga.json
+        dataset_path = os.path.join(self.project_root, '.vscode', 'dataset_benh_cua_loai_ga.json')
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(self.project_root, 'dataset_benh_cua_loai_ga.json')
+            
+        disease_info = ""
+        if os.path.exists(dataset_path):
+            try:
+                with open(dataset_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                blocks = []
+                for item in data:
+                    output = item.get('output', '').strip()
+                    if output:
+                        blocks.append(output)
+                disease_info = "\n\n---\n\n".join(blocks)
+                # Printing for server log visibility
+                print(f"[Chatbot] Loaded {len(data)} diseases dynamically from dataset_benh_cua_loai_ga.json")
+            except Exception as e:
+                print(f"[Chatbot] Error loading disease dataset: {e}")
+                
+        if not disease_info:
+            disease_info = """- Newcastle: sốt, khó thở, vẹo cổ → cách ly ngay, tiêm vaccine Newcastle
+- Cầu trùng: phân máu, gầy yếu, kém ăn → dùng Amprolium, vệ sinh chuồng
+- Tụ huyết trùng: chết đột ngột, sốt cao, mào tím → kháng sinh Oxytetracycline
+- Marek: liệt chân, u tạng → tiêm vaccine từ 1 ngày tuổi"""
+
+        final_prompt = base_prompt + disease_info + "\n\nKhi được hỏi về bệnh, hãy tư vấn triệu chứng, tác nhân, mức độ nguy hiểm, cách phòng và trị bệnh chi tiết dựa trên tri thức ở trên. Nếu cần dữ liệu thực tế từ chuồng, hãy dùng các công cụ có sẵn."
+        return final_prompt
 
     # ------------------------------------------------------------------
     # INTERNAL API CALLS
@@ -229,7 +272,7 @@ class ChatBot:
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel(
             model_name=MODEL_NAME,
-            system_instruction=SYSTEM_PROMPT,
+            system_instruction=self.get_system_prompt(),
             tools=TOOLS,
         )
 
@@ -284,7 +327,7 @@ class ChatBot:
             genai.configure(api_key=API_KEY)
             model = genai.GenerativeModel(
                 model_name=MODEL_NAME,
-                system_instruction=SYSTEM_PROMPT,
+                system_instruction=self.get_system_prompt(),
                 tools=TOOLS,
             )
             chat = model.start_chat()
@@ -308,6 +351,151 @@ class ChatBot:
         except Exception as e:
             return {"reply": f"Đã thực hiện {tool_name}. Kết quả: {tool_result}", "tool_used": tool_name}
 
+    def _process_local_fallback(self, message, coop_id=None):
+        import re
+        msg_lower = message.lower().strip()
+        
+        # 1. Check if the user is asking about a disease from the dataset
+        dataset_path = os.path.join(self.project_root, '.vscode', 'dataset_benh_cua_loai_ga.json')
+        if not os.path.exists(dataset_path):
+            dataset_path = os.path.join(self.project_root, 'dataset_benh_cua_loai_ga.json')
+            
+        if os.path.exists(dataset_path):
+            try:
+                with open(dataset_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                # NLP-based scoring matching engine
+                best_match = None
+                highest_score = 0
+                
+                # Stop words in Vietnamese to clean query
+                stop_words = {"và", "hoặc", "là", "thì", "mà", "ở", "của", "cho", "cách", "làm", "sao", "bị", "gà", "bệnh", "hãy", "cho", "biết", "triệu", "chứng", "phòng", "trị", "nào", "gì", "thế", "nào"}
+                query_words = [w for w in re.findall(r'\w+', msg_lower) if w not in stop_words and len(w) > 1]
+                
+                for item in data:
+                    instruction = item.get('instruction', '').lower()
+                    output = item.get('output', '').lower()
+                    
+                    score = 0
+                    
+                    # A. Direct match on disease name (highest score)
+                    disease_names = []
+                    if "newcastle" in instruction or "gà rù" in instruction: disease_names.extend(["newcastle", "gà rù", "ru"])
+                    elif "cúm" in instruction: disease_names.extend(["cúm", "h5n1", "h5n6", "influenza"])
+                    elif "gumboro" in instruction: disease_names.append("gumboro")
+                    elif "marek" in instruction: disease_names.append("marek")
+                    elif "tả gà" in instruction or "pasteurellosis" in instruction: disease_names.extend(["tả gà", "tả", "pasteurellosis"])
+                    elif "thương hàn" in instruction or "pullorum" in instruction: disease_names.extend(["thương hàn", "pullorum"])
+                    elif "crd" in instruction or "hô hấp" in instruction: disease_names.extend(["crd", "hô hấp", "khò khè"])
+                    elif "cầu trùng" in instruction: disease_names.append("cầu trùng")
+                    elif "mạt" in instruction or "rận" in instruction or "ve" in instruction: disease_names.extend(["mạt", "rận", "ve", "ký sinh"])
+                    
+                    for name in disease_names:
+                        if name in msg_lower:
+                            score += 20  # Direct name hits get massive score
+
+                    # B. Token overlapping matches
+                    for word in query_words:
+                        if word in output:
+                            score += 1
+                        if word in instruction:
+                            score += 1
+                            
+                    # C. Multi-word symptom/condition patterns
+                    symptom_patterns = {
+                        "vẹo cổ": 8, "quay đầu": 8, "liệt chân": 8, "liệt cánh": 8, "chảy dãi": 8, "phân xanh": 6, "phân trắng": 6,
+                        "tím tái": 8, "xuất huyết": 8, "chết đột ngột": 8, "lây sang người": 8,
+                        "suy giảm miễn dịch": 6, "xù lông": 4, "ốm nhanh": 4, "kém ăn": 4, "ủ rũ": 4,
+                        "khối u": 8, "bại liệt": 8, "méo mắt": 8,
+                        "khò khè": 6, "ho": 6, "chảy nước mũi": 6, "vảy mỏ": 6,
+                        "phân máu": 8, "nhầy nâu": 8, "còi cọc": 4,
+                        "ngứa": 6, "rỉa lông": 6, "thiếu máu": 6, "nhợt nhạt": 6
+                    }
+                    for pattern, bonus in symptom_patterns.items():
+                        if pattern in msg_lower and pattern in output:
+                            score += bonus
+                            
+                    if score > highest_score:
+                        highest_score = score
+                        best_match = item
+                        
+                # Return the best match if score passes threshold
+                if best_match and highest_score >= 3:
+                    disease_name = "Chẩn đoán bệnh"
+                    instruction_lower = best_match.get('instruction', '').lower()
+                    if "newcastle" in instruction_lower: disease_name = "Bệnh Newcastle (Gà rù)"
+                    elif "cúm gia cầm" in instruction_lower: disease_name = "Bệnh cúm gia cầm"
+                    elif "gumboro" in instruction_lower: disease_name = "Bệnh Gumboro"
+                    elif "marek" in instruction_lower: disease_name = "Bệnh Marek"
+                    elif "tả gà" in instruction_lower: disease_name = "Bệnh tả gà (Pasteurellosis)"
+                    elif "thương hàn" in instruction_lower: disease_name = "Bệnh thương hàn gà"
+                    elif "crd" in instruction_lower: disease_name = "Bệnh CRD (Viêm đường hô hấp mạn tính)"
+                    elif "cầu trùng" in instruction_lower: disease_name = "Bệnh cầu trùng gà"
+                    elif "mạt" in instruction_lower: disease_name = "Mạt, rận, ve ngoài da"
+                    
+                    return {
+                        "reply": f"🤖 **[Chẩn đoán AI Siêu cấp - Độ tin cậy: {highest_score} điểm]**\n\nDựa trên mô tả triệu chứng của bạn, tôi chẩn đoán gà có khả năng cao mắc: **{disease_name}**.\n\n**Thông tin chi tiết từ hệ thống dữ liệu:**\n{best_match.get('output', '')}",
+                        "tool_used": None
+                    }
+            except Exception as e:
+                print(f"[Chatbot Local] Error matching disease: {e}")
+
+        # 2. Check for coop / device control queries (simple keywords mapping to tools)
+        if any(kw in msg_lower for kw in ["danh sách chuồng", "tất cả chuồng", "xem chuồng", "coop"]):
+            result = self._get_all_coops()
+            return {"reply": f"🤖 [Trợ lý AI]: Dưới đây là thông tin các chuồng:\n\n{result}", "tool_used": "get_all_coops"}
+            
+        if any(kw in msg_lower for kw in ["thiết bị nào lỗi", "lỗi", "thiết bị lỗi", "hỏng", "không kết nối"]):
+            try:
+                resp = requests.get(f"{self._api_base}/devices/unconnected", timeout=10)
+                if resp.status_code == 200:
+                    devices = resp.json()
+                    dl = devices if isinstance(devices, list) else devices.get('value', []) if isinstance(devices, dict) else []
+                    if not dl:
+                        return {"reply": "🤖 [Trợ lý AI]: Hiện tại không có thiết bị nào bị lỗi hoặc mất kết nối.", "tool_used": None}
+                    lines = ["🤖 [Trợ lý AI]: Danh sách thiết bị mất kết nối / lỗi:"]
+                    for d in dl:
+                        lines.append(f"- {d.get('name', 'N/A')} (Loại: {d.get('type', 'N/A')}, MAC: {d.get('mac_address', 'N/A')})")
+                    return {"reply": "\n".join(lines), "tool_used": None}
+            except Exception:
+                pass
+            return {"reply": "🤖 [Trợ lý AI]: Hiện tại không phát hiện thiết bị nào bị lỗi.", "tool_used": None}
+
+        # 3. Check for single coop statistics
+        if "chuồng" in msg_lower:
+            match = re.search(r'\d+', msg_lower)
+            c_id = int(match.group()) if match else coop_id
+            if c_id:
+                result = self._get_coop_stats(c_id)
+                return {"reply": f"🤖 [Trợ lý AI]: Dưới đây là thông tin chuồng {c_id}:\n\n{result}", "tool_used": "get_coop_stats"}
+
+        # 4. Check for device control requests (e.g., "bật quạt", "tắt đèn")
+        action = None
+        if "bật" in msg_lower or "mở" in msg_lower:
+            action = "on"
+        elif "tắt" in msg_lower or "đóng" in msg_lower:
+            action = "off"
+            
+        device_name = None
+        if "quạt" in msg_lower:
+            device_name = "Quạt thông gió"
+        elif "đèn" in msg_lower:
+            device_name = "Đèn LED"
+        elif "bơm" in msg_lower or "nước" in msg_lower:
+            device_name = "Máy bơm"
+
+        if action and device_name:
+            c_id = coop_id or 1
+            result = self._control_device(c_id, device_name, action)
+            return {"reply": f"🤖 [Trợ lý AI]: {result}", "tool_used": "control_device"}
+
+        # 5. Default generic guidance
+        return {
+            "reply": "🤖 **[Trợ lý AI Siêu cấp]**\n\nXin chào! Tôi là AI chẩn đoán bệnh cho trang trại gà của bạn. Bạn hãy mô tả chi tiết các triệu chứng của gà (ví dụ: *gà bại liệt chân*, *vẹo cổ*, *phân xanh phân trắng*, *khó thở khò khè*...) để tôi đối chiếu dữ liệu và đưa ra chẩn đoán chính xác nhất nhé!",
+            "tool_used": None
+        }
+
     # ------------------------------------------------------------------
     # MAIN ENTRY POINT
     # ------------------------------------------------------------------
@@ -321,7 +509,7 @@ class ChatBot:
             return {"reply": f"Provider '{AI_PROVIDER}' chưa được hỗ trợ trong phiên bản này. Vui lòng đổi sang 'gemini'.", "tool_used": None}
 
         if API_KEY == "PASTE_API_KEY_HERE":
-            return {"reply": "Chatbot chưa được cấu hình. Vui lòng thêm API key.", "tool_used": None}
+            return self._process_local_fallback(message, coop_id)
 
         # Thêm context coop_id nếu có
         context = ""
@@ -335,7 +523,7 @@ class ChatBot:
             response = self._call_gemini(messages)
             if isinstance(response, dict) and "error" in response:
                 if response["error"] == "API_KEY_CHUA_DUOC_CAU_HINH":
-                    return {"reply": "Chatbot chưa được cấu hình. Vui lòng thêm API key.", "tool_used": None}
+                    return self._process_local_fallback(message, coop_id)
                 return {"reply": "Đã xảy ra lỗi khi xử lý câu hỏi. Vui lòng thử lại sau.", "tool_used": None}
             return self._process_gemini_response(response)
         except ImportError:

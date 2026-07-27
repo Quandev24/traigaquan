@@ -1,2 +1,2 @@
-D:\Share_Projects\AutomatedChickenFarmManagement\backend\Camera_AI\Data\Test_data\Videos\video_test.mp4
-D:\Share_Projects\AutomatedChickenFarmManagement\avian-pox-in-chickens-1024x705-1-768x529.jpg
+c:\Users\TUF\OneDrive\文档\FPT POLY Quan\VTV\traigaquan\backend\Camera_AI\Data\Test_data\Videos\DEMO.mp4
+c:\Users\TUF\OneDrive\文档\FPT POLY Quan\VTV\traigaquan\avian-pox-in-chickens-1024x705-1-768x529.jpg

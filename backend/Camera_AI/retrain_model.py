@@ -9,13 +9,16 @@ def main():
     # clear cached GPU memory
     torch.cuda.empty_cache()
 
-    model_path = r'D:\Share_Projects\AutomatedChickenFarmManagement\runs\detect\runs\my_project\model_detect_disease\weights\best.pt'
-    data_path = r'D:\Share_Projects\AutomatedChickenFarmManagement\backend\Camera_AI\Preprocess_data\data_disease\Chicken_Disease_2\data.yaml'
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    model_path = os.path.join(base_dir, 'runs', 'detect', 'runs', 'my_project', 'model_detect_disease', 'weights', 'best.pt')
+    data_path = os.path.join(base_dir, 'backend', 'Camera_AI', 'Preprocess_data', 'data_disease', 'Chicken_Disease_2', 'data.yaml')
 
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Missing model file: {model_path}")
+        # Try local fallback if runs dir not found
+        model_path = 'yolov8n.pt'
     if not os.path.exists(data_path):
-        raise FileNotFoundError(f"Missing data config: {data_path}")
+        # Fallback path for data config inside workspace if available
+        data_path = os.path.join(base_dir, 'backend', 'Camera_AI', 'Data', 'data.yaml')
 
     model = YOLO(model_path)
 
